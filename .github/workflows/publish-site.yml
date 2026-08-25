@@ -8,11 +8,14 @@ name: Publish site
 # part, to stop workflows triggering each other forever — so `on: push` would never
 # fire here, and the site would sit at whatever was last deployed by hand.
 #
-# `workflow_run` fires whether or not the ingest committed anything. That is fine and
-# cheap: the build id is derived from the contents of data/, so a run with unchanged
-# data produces byte-identical output and the push carries one commit object and no
-# files. It is only the build minutes that are spent, and on a public repository
-# those are unmetered.
+# `workflow_run` fires whether or not the ingest committed anything, and five
+# schedules add up to twelve triggers a day. Most find nothing, so the job first
+# compares the tip of main-node against the commit the live site was built from and
+# stops there when they match.
+#
+# When it does build, only what changed is pushed: the build id is derived from the
+# contents of data/, so identical data gives byte-identical output and git sends
+# nothing but the commit object.
 
 on:
   workflow_run:
@@ -59,18 +62,41 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main-node
+          # Deep enough to read the published branch's marker file below.
+          fetch-depth: 0
+
+      # Five schedules finishing is twelve triggers a day, and an ingest that found
+      # nothing still finishes successfully. build-static.mjs records the commit it
+      # built from; if that is still the tip of main-node, the output would be
+      # identical to what is already live and there is nothing to do.
+      - name: Has the source moved?
+        id: moved
+        run: |
+          git fetch --depth 1 origin main-selfhost 2>/dev/null || true
+          published=$(git show origin/main-selfhost:.source 2>/dev/null || echo none)
+          current=$(git rev-parse HEAD)
+          echo "published=$published"
+          echo "current=$current"
+          if [ "$published" = "$current" ] && [ "${{ github.event_name }}" != 'workflow_dispatch' ]; then
+            echo 'Source unchanged since the last publish — nothing to build.'
+            echo 'skip=true' >> "$GITHUB_OUTPUT"
+          fi
 
       - uses: actions/setup-node@v4
+        if: steps.moved.outputs.skip != 'true'
         with:
           node-version: 22
           cache: npm
 
       - run: npm ci
+        if: steps.moved.outputs.skip != 'true'
 
       - name: Build the static site
+        if: steps.moved.outputs.skip != 'true'
         run: npm run build:static
 
       - name: Push to main-selfhost
+        if: steps.moved.outputs.skip != 'true'
         env:
           # The workflow token, in the URL. It is scoped to this repository and
           # expires with the job.
@@ -80,6 +106,12 @@ jobs:
       - name: Summary
         if: always()
         run: |
+          if [ ! -d out ]; then
+            echo '## Nothing to publish' >> "$GITHUB_STEP_SUMMARY"
+            echo >> "$GITHUB_STEP_SUMMARY"
+            echo 'The source has not moved since the last build.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           {
             echo '## Site published'
             echo
@@ -88,5 +120,6 @@ jobs:
             echo "| files | $(find out -type f | wc -l) |"
             echo "| size | $(du -sh out | cut -f1) |"
             echo "| build id | $(cat .next/BUILD_ID 2>/dev/null || echo '—') |"
+            echo "| source | $(cat out/.source 2>/dev/null || echo '—') |"
             echo "| branch | main-selfhost |"
           } >> "$GITHUB_STEP_SUMMARY"

@@ -141,6 +141,16 @@ changed:
 | `update-decks` | 2×/day | New tournaments, then `build:indexes` |
 | `update-rules` | every 8h | Banlist and Top Decks archives |
 | `update-spoilers` | every 6h | Unreleased-set reveals |
+| `publish-site` | after any of them | Builds `out/` and pushes it to `main-selfhost` |
+
+`publish-site` runs on `workflow_run` rather than on a push, because a commit made
+with `GITHUB_TOKEN` never triggers another workflow. Those five schedules add up to
+twelve triggers a day and most find nothing, so it compares the tip of `main-node`
+against the commit the live site was built from and stops when they match.
+
+**Actions minutes are unmetered on a public repository.** A private one gets 2,000 a
+month on the free plan, and `update-decks` alone spends about 1,800 — a 300-request
+budget waits out six rate-limit windows, and waiting is billed like working.
 
 `node scripts/ingest.mjs --check` exits `0` when upstream has moved and `3` when
 the archive is current, so a scheduled run costs a second on the days nothing

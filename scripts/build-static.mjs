@@ -234,6 +234,17 @@ async function main() {
   /* Jekyll would otherwise drop _next/ and take the whole application with it. */
   await writeFile(path.join(OUT, '.nojekyll'), '');
 
+  /*
+   * Which source commit this was built from.
+   *
+   * The publish workflow reads it back off the deployed branch and skips the build
+   * when the source has not moved. Five ingest schedules finishing means twelve
+   * triggers a day, and most of them commit nothing — without this, twelve full
+   * builds a day to produce output identical to what is already published.
+   */
+  const head = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' });
+  if (head.status === 0) await writeFile(path.join(OUT, '.source'), head.stdout.trim());
+
   await stripArtMirror();
   await flattenPrefetchPayloads();
 
