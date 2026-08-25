@@ -214,9 +214,23 @@ slashes on disk, so every prefetch misses — and on a static host a miss is ans
 with the full 40 KB `404.html`. Fifteen links on a page is half a megabyte of error
 pages. The build writes each payload under the flat name too.
 
+**The build id must be derived, not random.** Next generates a random `BUILD_ID` per
+build and writes it into every page and every RSC payload — 4,735 files. Two builds
+of *identical data* differed in 23,667 of 24,196 files, so each deploy force-pushed
+466 MB of new git objects; twice a day, the repository passes a gigabyte in two days.
+`generateBuildId` in `next.config.mjs` hashes `data/` instead, and two builds of the
+same data are now byte-identical — measured, 0 files changed. Do not replace it with
+a timestamp or a random value.
+
+That was not the bundler: switching Turbopack to webpack changed nothing, the same
+23,667 files still moved. webpack is kept anyway because its chunk names are content
+addressed, so unchanged code keeps its filenames.
+
 `serve:static` is the only way to test this locally. `npm run start` runs the Next
 server, which resolves routes itself and will happily render a page the export never
-wrote.
+wrote. It reads `NEXT_PUBLIC_BASE_PATH` and mounts `out/` under it — serving at the
+root answers every asset with `404.html` and shows an unstyled page, which fails
+differently from production and so proves nothing.
 
 ## Rendered in the browser, not prerendered
 
@@ -346,6 +360,23 @@ Pre-release art is not ours to re-host.
 `update-spoilers` (6h). Each commits only when the substantive files changed —
 `meta.json` carries a fresh timestamp every run and must be excluded from that
 comparison.
+
+**Always `git add data public/data`.** Two workflows did not: `update-decks` staged
+only `data/`, and `update-rules` named individual files, an list that went stale the
+moment the per-entity shards appeared. Both run `build-indexes.mjs`, which writes
+every payload the browser fetches into `public/data` — so the archive refreshed and
+the site kept serving the previous ingest. Nothing fails when a payload is missing;
+the page just reads "not found".
+
+`publish-site` builds and force-pushes to `main-selfhost`. It runs on `workflow_run`,
+not `on: push`, because **a commit made with `GITHUB_TOKEN` does not trigger another
+workflow** — GitHub's own loop protection — so a push trigger would never fire and
+the site would sit at the last manual deploy.
+
+**Actions minutes are only unmetered on a public repository.** A private one gets
+2,000 a month on the free plan, and `update-decks` alone spends about 1,800 of them:
+a 300-request budget waits out six rate-limit windows, roughly 30 minutes per run,
+twice a day, and waiting is billed like working.
 
 ---
 

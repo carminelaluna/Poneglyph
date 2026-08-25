@@ -35,7 +35,10 @@ jobs:
         run: |
           git config user.name 'poneglyph-bot'
           git config user.email 'poneglyph-bot@users.noreply.github.com'
-          git add data/banlist.json data/decks-jp.json data/decks-en.json public/data/decks-en-index.json public/data/decks-en-archive.json public/data/decks-jp-index.json public/data/decks-jp-archive.json public/data/decks-en public/data/decks-jp data/regions.json
+          # Both directories wholesale. Naming the files by hand went stale the
+          # moment build-indexes.mjs started writing the per-entity shards, and a
+          # missing payload does not fail anything — the page just says "not found".
+          git add data public/data
           if git diff --cached --quiet; then
             echo 'Nothing changed.'
             exit 0

@@ -210,7 +210,13 @@ async function main() {
   let status = 1;
   try {
     log('building — this generates about 4,700 pages, so give it a minute');
-    status = spawnSync('npx', ['next', 'build'], {
+    /*
+     * webpack, not Turbopack. Turbopack renames every chunk on every build even when
+     * nothing changed, so each deploy rewrote 23,667 of 24,176 files — 466 MB of new
+     * git objects, twice a day. webpack names chunks by content, so a build with the
+     * same input produces the same files and the push carries only what moved.
+     */
+    status = spawnSync('npx', ['next', 'build', '--webpack'], {
       stdio: 'inherit',
       shell: process.platform === 'win32',
       env: { ...process.env, STATIC_EXPORT: '1' },

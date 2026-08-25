@@ -1,0 +1,92 @@
+name: Publish site
+
+# Builds the static site and force-pushes it to main-selfhost, which is what
+# GitHub Pages serves.
+#
+# Triggered by the ingest workflows finishing rather than by a push. A commit made
+# with GITHUB_TOKEN does not start another workflow — that is deliberate on GitHub's
+# part, to stop workflows triggering each other forever — so `on: push` would never
+# fire here, and the site would sit at whatever was last deployed by hand.
+#
+# `workflow_run` fires whether or not the ingest committed anything. That is fine and
+# cheap: the build id is derived from the contents of data/, so a run with unchanged
+# data produces byte-identical output and the push carries one commit object and no
+# files. It is only the build minutes that are spent, and on a public repository
+# those are unmetered.
+
+on:
+  workflow_run:
+    workflows:
+      - Update decklists
+      - Update card archive
+      - Update rules data
+      - Update spoilers
+      - Refresh prices
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# One deploy at a time. Two force pushes racing at the same ref is how a deploy
+# ends up neither of the two builds.
+concurrency:
+  group: publish-site
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    # Do not publish on top of a failed ingest.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    env:
+      # None of these are secret — every NEXT_PUBLIC_ value is compiled into the
+      # browser bundle anyway. They live here rather than in .env.local because that
+      # file is gitignored and never reaches a runner.
+      NEXT_PUBLIC_CDN_URL: https://poneglyph-art.pages.dev
+      NEXT_PUBLIC_BASE_PATH: /Poneglyph
+      NEXT_PUBLIC_SITE_URL: https://carminelaluna.github.io/Poneglyph
+      PONEGLYPH_SITE_BRANCH: main-selfhost
+
+    steps:
+      # Always the source branch. A workflow_run event carries the SHA of the run
+      # that triggered it, and checking that out would build whatever the ingest
+      # started from rather than what it just committed.
+      - uses: actions/checkout@v4
+        with:
+          ref: main-node
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build the static site
+        run: npm run build:static
+
+      - name: Push to main-selfhost
+        env:
+          # The workflow token, in the URL. It is scoped to this repository and
+          # expires with the job.
+          PONEGLYPH_SITE_REMOTE: https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+        run: npm run deploy:site
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo '## Site published'
+            echo
+            echo "| | |"
+            echo "| --- | --- |"
+            echo "| files | $(find out -type f | wc -l) |"
+            echo "| size | $(du -sh out | cut -f1) |"
+            echo "| build id | $(cat .next/BUILD_ID 2>/dev/null || echo '—') |"
+            echo "| branch | main-selfhost |"
+          } >> "$GITHUB_STEP_SUMMARY"
