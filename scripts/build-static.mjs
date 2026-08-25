@@ -132,9 +132,11 @@ async function stripArtMirror() {
  * a full 40 KB page. A screen with fifteen links quietly pulls half a megabyte of
  * error pages, which would undo the payload work this whole build is for.
  *
- * So each payload is also written under the flat name, beside the directory. They
- * are small, and it costs one copy rather than turning prefetching off across the
- * site.
+ * So each payload is rewritten under the flat name and the nested directory is
+ * removed. Moved rather than copied: the nested path is not a URL the router ever
+ * asks for — it asks for `__next._tree.txt` and the flat `__PAGE__` names, both of
+ * which are files — so keeping both would be 89 MB of duplication in a repository
+ * GitHub starts warning about at 750 MB.
  */
 async function flattenPrefetchPayloads() {
   let written = 0;
@@ -160,6 +162,8 @@ async function flattenPrefetchPayloads() {
           }
         };
         await collect(full, []);
+        /* Nothing requests the nested form; leaving it is duplicated weight. */
+        await rm(full, { recursive: true, force: true });
       } else {
         await walk(full);
       }
