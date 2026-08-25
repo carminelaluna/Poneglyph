@@ -1,0 +1,89 @@
+name: Update decklists
+
+# Pulls new tournament results from Limitless.
+#
+# Limitless allows 50 requests per 5 minutes, so a run is bounded by a request
+# budget rather than by how many tournaments exist. The ingest is resumable: it
+# records which tournaments it has already read and continues from there, so
+# running this on a schedule backfills the archive over a few days and then just
+# keeps up with new events.
+on:
+  schedule:
+    # Twice daily. Most online events finish in the evening in one region or
+    # another, so two passes keep the metagame within about half a day.
+    - cron: '20 7,19 * * *'
+  workflow_dispatch:
+    inputs:
+      max:
+        description: 'Request budget for this run'
+        type: string
+        default: '300'
+      since:
+        description: 'Ignore tournaments before this date (YYYY-MM-DD)'
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-decks
+  cancel-in-progress: false
+
+jobs:
+  decks:
+    runs-on: ubuntu-latest
+    # A budget of 300 requests spends roughly 30 minutes waiting out rate-limit
+    # windows, so the job needs room well past the 6-hour default.
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Pull tournament decklists
+        run: |
+          ARGS="--max ${{ inputs.max || '300' }}"
+          if [ -n "${{ inputs.since }}" ]; then
+            ARGS="$ARGS --since ${{ inputs.since }}"
+          else
+            # Rolling three-month window: the current metagame, not its history.
+            ARGS="$ARGS --since $(date -u -d '3 months ago' +%Y-%m-%d)"
+          fi
+          echo "Running: node scripts/ingest-decks.mjs $ARGS"
+          node scripts/ingest-decks.mjs $ARGS
+
+      # Region indexes are derived from every corpus, so they rebuild after any ingest.
+      - run: node scripts/build-indexes.mjs
+
+      - name: Commit new decks
+        run: |
+          git config user.name 'poneglyph-bot'
+          git config user.email 'poneglyph-bot@users.noreply.github.com'
+          git add data
+          # decks-meta.json changes on every run; only commit if real data moved.
+          if git diff --cached --quiet -- data/decks.json data/archetypes.json data/tournaments.json data/card-play.json; then
+            git reset
+            echo 'No new decklists.'
+            exit 0
+          fi
+          decks=$(node -p "require('./data/decks-meta.json').counts.decks")
+          events=$(node -p "require('./data/decks-meta.json').counts.tournaments")
+          git commit -m "data: refresh decklists ($decks decks, $events tournaments)"
+          git push
+
+      - name: Summary
+        if: always()
+        run: |
+          node -e "
+            const m = require('./data/decks-meta.json');
+            const rows = Object.entries(m.thisRun).map(([k, v]) => '| ' + k + ' | ' + v + ' |').join('\n');
+            console.log('## Deck ingest\n');
+            console.log('| metric | value |\n| --- | --- |');
+            console.log('| decks total | ' + m.counts.decks + ' |');
+            console.log('| tournaments total | ' + m.counts.tournaments + ' |');
+            console.log('| archetypes | ' + m.counts.archetypes + ' |');
+            console.log(rows);
+          " >> "$GITHUB_STEP_SUMMARY"

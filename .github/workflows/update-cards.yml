@@ -1,0 +1,78 @@
+name: Update card archive
+
+# Rebuilds data/ from upstream and commits the result. The check step means most
+# runs cost a few seconds and produce no commit — the archive is only rebuilt on
+# days the upstream card list actually moved.
+on:
+  schedule:
+    # 06:15 UTC daily. Bandai publishes new sets in the JST morning, so this
+    # picks them up on the same day the upstream scrapers do.
+    - cron: '15 6 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Rebuild even if upstream has not changed'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-cards
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Is there anything new upstream?
+        id: check
+        run: |
+          if [ "${{ inputs.force }}" = "true" ]; then
+            echo "stale=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          set +e
+          node scripts/ingest.mjs --check
+          code=$?
+          set -e
+          case "$code" in
+            0) echo "stale=true"  >> "$GITHUB_OUTPUT" ;;  # upstream moved
+            3) echo "stale=false" >> "$GITHUB_OUTPUT" ;;  # archive already current
+            *) exit "$code" ;;                            # a real failure
+          esac
+
+      - name: Rebuild the archive
+        if: steps.check.outputs.stale == 'true'
+        run: node scripts/ingest.mjs
+
+      - name: Commit the new data
+        if: steps.check.outputs.stale == 'true'
+        run: |
+          git config user.name 'poneglyph-bot'
+          git config user.email 'poneglyph-bot@users.noreply.github.com'
+          git add data public/data
+          if git diff --cached --quiet; then
+            echo 'Upstream moved but nothing changed in the merged output.'
+            exit 0
+          fi
+          cards=$(node -p "require('./data/meta.json').counts.cards")
+          sets=$(node -p "require('./data/meta.json').counts.sets")
+          git commit -m "data: refresh archive ($cards cards, $sets sets)"
+          git push
+
+      - name: Summary
+        if: always()
+        run: |
+          if [ "${{ steps.check.outputs.stale }}" = "true" ]; then
+            node -e "const m=require('./data/meta.json');console.log('| metric | value |\n| --- | --- |\n| cards | '+m.counts.cards+' |\n| printings | '+m.counts.printings+' |\n| sets | '+m.counts.sets+' |\n| rules text | '+m.coverage.effect+'% |\n| priced | '+m.coverage.price+'% |')" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'Archive already current — nothing to do.' >> "$GITHUB_STEP_SUMMARY"
+          fi

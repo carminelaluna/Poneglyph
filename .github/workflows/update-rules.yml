@@ -1,0 +1,44 @@
+name: Update rules data
+
+# The banlist changes rarely but matters immediately when it does, and Japanese
+# deck-list pages gain entries daily. Both are cheap, so they share a schedule.
+on:
+  schedule:
+    - cron: '25 */8 * * *' # every 8 hours
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-rules
+  cancel-in-progress: true
+
+jobs:
+  rules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Each refuses to write a broken result, so a failure here leaves the last
+      # good data in place rather than clearing the page.
+      - run: node scripts/ingest-banlist.mjs
+      - run: node scripts/ingest-topdecks.mjs
+
+      # Region indexes are derived from every corpus, so they rebuild after any ingest.
+      - run: node scripts/build-indexes.mjs
+
+      - name: Commit what moved
+        run: |
+          git config user.name 'poneglyph-bot'
+          git config user.email 'poneglyph-bot@users.noreply.github.com'
+          git add data/banlist.json data/decks-jp.json data/decks-en.json public/data/decks-en-index.json public/data/decks-en-archive.json public/data/decks-jp-index.json public/data/decks-jp-archive.json public/data/decks-en public/data/decks-jp data/regions.json
+          if git diff --cached --quiet; then
+            echo 'Nothing changed.'
+            exit 0
+          fi
+          git commit -m 'data: refresh banlist and Top Decks archives'
+          git push

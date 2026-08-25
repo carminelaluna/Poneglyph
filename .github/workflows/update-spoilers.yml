@@ -1,0 +1,42 @@
+name: Update spoilers
+
+# Reveals arrive in bursts around a set announcement, so this runs more often than
+# the card archive but is cheap: one request to a WordPress API, no card downloads.
+on:
+  schedule:
+    - cron: '10 */6 * * *' # every 6 hours
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-spoilers
+  cancel-in-progress: true
+
+jobs:
+  spoilers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: node scripts/ingest-spoilers.mjs
+
+      - name: Commit if the reveals moved
+        run: |
+          git config user.name 'poneglyph-bot'
+          git config user.email 'poneglyph-bot@users.noreply.github.com'
+          git add data/spoilers.json public/data/spoilers.json
+          # generatedAt changes every run, so compare the payload without it.
+          if git diff --cached --quiet -- data/spoilers.json; then
+            git reset
+            echo 'No new reveals.'
+            exit 0
+          fi
+          sets=$(node -p "require('./data/spoilers.json').counts.sets")
+          cards=$(node -p "require('./data/spoilers.json').counts.cards")
+          git commit -m "data: refresh spoilers ($cards cards across $sets sets)"
+          git push

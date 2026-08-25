@@ -1,0 +1,989 @@
+/*
+ * Poneglyph — an archive carved in stone.
+ *
+ * The chrome is achromatic basalt on purpose: every saturated colour on the page
+ * comes from the cards themselves, because colour is the One Piece TCG's own
+ * primary axis. The only pigment the site owns is `--rune`, the red poneglyph,
+ * and it appears in exactly two places: the mark and the live-data indicator.
+ */
+
+:root {
+  /* stone */
+  --void: #0a0c10;
+  --slab: #131720;
+  --slab-hi: #1b212c;
+  --slab-lift: #212938;
+  --groove: #05070b;
+  --edge: rgba(255, 255, 255, 0.055);
+  --edge-strong: rgba(255, 255, 255, 0.11);
+
+  /* limestone dust */
+  --glyph: #e6e0d2;
+  --glyph-mid: #a8afba;
+  --glyph-dim: #79818f;
+  --glyph-faint: #4d5561;
+
+  /* the red poneglyph */
+  --rune: #c0512e;
+  --rune-lit: #e2683f;
+
+  /* card pigments — the game's six colours */
+  --c-red: #d8402f;
+  --c-green: #2e9e62;
+  --c-blue: #3080d8;
+  --c-purple: #8a4fd8;
+  --c-black: #59616f;
+  --c-yellow: #e0b02a;
+
+  --shell: 1440px;
+  --gutter: clamp(1rem, 3.2vw, 2.75rem);
+  --radius: 3px;
+
+  --carve: inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 -1px 0 rgba(0, 0, 0, 0.55);
+  --lift: 0 1px 0 rgba(255, 255, 255, 0.06), 0 10px 30px -12px rgba(0, 0, 0, 0.9);
+
+  --ease: cubic-bezier(0.22, 0.7, 0.24, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--void);
+  color: var(--glyph);
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  font-feature-settings: 'kern' 1;
+  -webkit-font-smoothing: antialiased;
+  /* Basalt grain: two offset radial washes, never a gradient sweep. */
+  background-image:
+    radial-gradient(1100px 620px at 12% -8%, rgba(60, 72, 92, 0.2), transparent 65%),
+    radial-gradient(900px 520px at 92% 4%, rgba(120, 60, 44, 0.09), transparent 60%);
+  background-attachment: fixed;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--rune-lit);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ---------------------------------------------------------------- type */
+
+.display {
+  font-family: var(--font-display), 'Arial Narrow', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.015em;
+  line-height: 1.02;
+  text-transform: uppercase;
+}
+
+/* Inscriptional caps set small and wide — the label style carved above a slab. */
+.eyebrow {
+  font-family: var(--font-display), 'Arial Narrow', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--glyph-dim);
+}
+
+.mono {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.muted {
+  color: var(--glyph-dim);
+}
+
+/* ------------------------------------------------------------- layout */
+
+.shell {
+  width: 100%;
+  max-width: var(--shell);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.section {
+  padding-block: clamp(2.75rem, 6vw, 4.75rem);
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--edge);
+}
+
+.section-head h2 {
+  margin: 0;
+  font-size: clamp(1.15rem, 2vw, 1.5rem);
+}
+
+/* --------------------------------------------------------------- rule */
+
+/* A carved groove: dark channel with a lit lower lip, the page's only divider. */
+.groove {
+  height: 2px;
+  border: 0;
+  margin: 0;
+  background: linear-gradient(180deg, var(--groove), var(--groove) 50%, rgba(255, 255, 255, 0.05) 50%);
+}
+
+/* -------------------------------------------------------------- header */
+
+.masthead {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(10, 12, 16, 0.86);
+  backdrop-filter: blur(14px) saturate(1.2);
+  border-bottom: 1px solid var(--edge);
+}
+
+.masthead-inner {
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 3vw, 2.5rem);
+  height: 62px;
+}
+
+.mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.mark-glyph {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.mark-word {
+  font-family: var(--font-display), 'Arial Narrow', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.nav a {
+  font-size: 0.8rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--glyph-mid);
+  padding-block: 0.35rem;
+  border-bottom: 1px solid transparent;
+  transition: color 0.16s var(--ease), border-color 0.16s var(--ease);
+}
+
+.nav a:hover,
+.nav a[aria-current='page'] {
+  color: var(--glyph);
+  border-bottom-color: var(--rune);
+}
+
+/* ---------------------------------------------------------------- hero */
+
+.hero {
+  padding-block: clamp(3rem, 8vw, 6rem) clamp(2rem, 5vw, 3.5rem);
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: clamp(2rem, 5vw, 4rem);
+  align-items: center;
+}
+
+.hero h1 {
+  margin: 0.85rem 0 0;
+  font-size: clamp(2.35rem, 6.4vw, 4.6rem);
+}
+
+/* Each line rises out of the groove once on load. */
+.hero-line {
+  display: block;
+  overflow: hidden;
+}
+
+.hero-line > span {
+  display: block;
+  animation: rise 0.85s var(--ease) both;
+}
+
+.hero-line:nth-child(2) > span {
+  animation-delay: 0.09s;
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(105%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.hero-sub {
+  margin: 1.5rem 0 0;
+  max-width: 46ch;
+  color: var(--glyph-mid);
+  font-size: 1.02rem;
+}
+
+.hero-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 2.25rem;
+  margin-top: 1.75rem;
+}
+
+.hero-stat {
+  padding-block: 0.4rem;
+}
+
+.hero-stat b {
+  display: block;
+  font-family: var(--font-mono), monospace;
+  font-size: 1.5rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-stat span {
+  font-size: 0.66rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--glyph-dim);
+}
+
+/* Six card fronts, one per colour, tilted like tablets leaning on a wall. */
+.hero-fan {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.7rem;
+}
+
+.hero-fan figure {
+  margin: 0;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--lift);
+  animation: settle 0.9s var(--ease) both;
+  transform-origin: center bottom;
+}
+
+.hero-fan figure:nth-child(1) { animation-delay: 0.10s; }
+.hero-fan figure:nth-child(2) { animation-delay: 0.16s; }
+.hero-fan figure:nth-child(3) { animation-delay: 0.22s; }
+.hero-fan figure:nth-child(4) { animation-delay: 0.28s; }
+.hero-fan figure:nth-child(5) { animation-delay: 0.34s; }
+.hero-fan figure:nth-child(6) { animation-delay: 0.40s; }
+
+.hero-fan img {
+  width: 100%;
+  aspect-ratio: 5 / 7;
+  object-fit: cover;
+  background: var(--slab);
+}
+
+@keyframes settle {
+  from {
+    transform: translateY(16px) scale(0.97);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* --------------------------------------------------- signature: spectrum */
+
+/*
+ * The colour band. Segment widths are the real share of cards in each colour, so
+ * the one saturated element on the page is also the page's densest statistic.
+ */
+.spectrum {
+  display: flex;
+  width: 100%;
+  height: 92px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--carve);
+  background: var(--groove);
+}
+
+.spectrum-seg {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0.7rem 0.8rem;
+  min-width: 0;
+  border: 0;
+  border-right: 1px solid var(--groove);
+  background: var(--seg);
+  color: #fff;
+  cursor: pointer;
+  text-align: left;
+  transition: flex-grow 0.4s var(--ease), filter 0.2s var(--ease);
+  filter: saturate(0.86) brightness(0.82);
+}
+
+.spectrum-seg:last-child {
+  border-right: 0;
+}
+
+.spectrum-seg:hover,
+.spectrum-seg:focus-visible {
+  filter: saturate(1.1) brightness(1);
+}
+
+.spectrum-seg b {
+  font-family: var(--font-display), 'Arial Narrow', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+
+.spectrum-seg span {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.88;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+
+/* --------------------------------------------------------------- slabs */
+
+.slab {
+  background: linear-gradient(180deg, var(--slab-hi), var(--slab));
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+  box-shadow: var(--carve);
+}
+
+.slab-pad {
+  padding: clamp(1rem, 2.2vw, 1.6rem);
+}
+
+/* ---------------------------------------------------------- card tiles */
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+  gap: clamp(0.7rem, 1.4vw, 1.1rem);
+}
+
+.tile {
+  display: block;
+  position: relative;
+  border-radius: var(--radius);
+  transition: transform 0.22s var(--ease);
+}
+
+.tile-art {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--slab);
+  box-shadow: var(--carve);
+  transition: box-shadow 0.24s var(--ease);
+}
+
+.tile-art img {
+  width: 100%;
+  aspect-ratio: 5 / 7;
+  object-fit: cover;
+  transition: transform 0.35s var(--ease);
+}
+
+/* The tile lifts out of the stone and its own pigment bleeds into the groove. */
+.tile:hover {
+  transform: translateY(-5px);
+}
+
+.tile:hover .tile-art,
+.tile:focus-visible .tile-art {
+  box-shadow:
+    0 0 0 1px var(--pigment, var(--edge-strong)),
+    0 14px 34px -14px rgba(0, 0, 0, 0.95),
+    0 0 30px -10px var(--pigment, transparent);
+}
+
+.tile:hover .tile-art img {
+  transform: scale(1.03);
+}
+
+.tile-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  min-width: 0;
+}
+
+.tile-name {
+  font-size: 0.82rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.tile-code {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.66rem;
+  color: var(--glyph-faint);
+  flex-shrink: 0;
+}
+
+.tile-price {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.7rem;
+  color: var(--glyph-dim);
+}
+
+/* Variant count, printed on the art like a stamp. */
+.tile-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 1px 6px;
+  border-radius: 2px;
+  background: rgba(5, 7, 11, 0.82);
+  backdrop-filter: blur(4px);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.62rem;
+  color: var(--glyph-mid);
+}
+
+/* --------------------------------------------------------------- pips */
+
+.pips {
+  display: inline-flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.pip {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--pip);
+  box-shadow: inset 0 -1px 1px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+
+/* --------------------------------------------------------------- chips */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.16rem 0.5rem;
+  border: 1px solid var(--edge);
+  border-radius: 2px;
+  background: var(--slab);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: var(--glyph-mid);
+  white-space: nowrap;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+/* --------------------------------------------------------------- table */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.table th {
+  text-align: left;
+  padding: 0.55rem 0.7rem;
+  font-family: var(--font-display), 'Arial Narrow', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--glyph-dim);
+  border-bottom: 1px solid var(--edge-strong);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 0.5rem 0.7rem;
+  border-bottom: 1px solid var(--edge);
+  vertical-align: middle;
+}
+
+.table tbody tr {
+  transition: background 0.14s var(--ease);
+}
+
+.table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.028);
+}
+
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* -------------------------------------------------------------- footer */
+
+.footer {
+  margin-top: clamp(3rem, 7vw, 5rem);
+  border-top: 1px solid var(--edge);
+  background: linear-gradient(180deg, transparent, rgba(5, 7, 11, 0.6));
+  padding-block: 2.5rem 3.25rem;
+  font-size: 0.82rem;
+  color: var(--glyph-dim);
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) repeat(3, minmax(0, 1fr));
+  gap: 2rem;
+}
+
+.footer h3 {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-display), 'Arial Narrow', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--glyph-mid);
+}
+
+.footer ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.footer a:hover {
+  color: var(--glyph);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* The Bandai notice is a permanent fixture, not a dismissible banner. */
+.disclaimer {
+  margin-top: 2.25rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--edge);
+  font-size: 0.76rem;
+  line-height: 1.65;
+  color: var(--glyph-faint);
+  max-width: 92ch;
+}
+
+.disclaimer strong {
+  color: var(--glyph-dim);
+  font-weight: 600;
+}
+
+/* -------------------------------------------------------- reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .tile:hover {
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------- responsive */
+
+@media (max-width: 1000px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+  .hero-fan {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  .footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .masthead-inner {
+    height: auto;
+    padding-block: 0.7rem;
+    flex-wrap: wrap;
+  }
+  .nav {
+    width: 100%;
+    margin-left: 0;
+    gap: 1rem;
+  }
+  .hero-fan {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .spectrum {
+    height: 76px;
+  }
+  .spectrum-seg b {
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+  }
+  .footer-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ====================================================================
+   Stat lines, rules text and meta blocks — shared by card, data and legal
+   ==================================================================== */
+
+/* --------------------------------------------------------------- stats */
+
+/* The stat line is the card's spine — carved cells, monospaced figures. */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 1px;
+  margin-top: 1.5rem;
+  background: var(--edge);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.stat {
+  background: linear-gradient(180deg, var(--slab-hi), var(--slab));
+  padding: 0.85rem 0.9rem;
+}
+
+.stat dt {
+  font-family: var(--font-display), 'Arial Narrow', sans-serif;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--glyph-dim);
+}
+
+.stat dd {
+  margin: 0.3rem 0 0;
+  font-family: var(--font-mono), monospace;
+  font-size: 1.32rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.stat dd.small {
+  font-size: 0.92rem;
+  line-height: 1.35;
+  padding-top: 0.2rem;
+}
+
+.stat dd.none {
+  color: var(--glyph-faint);
+}
+
+/* ---------------------------------------------------------- rules text */
+
+.rules {
+  margin-top: 1.5rem;
+  padding: 1.15rem 1.3rem;
+  border-left: 2px solid var(--rune);
+  background: linear-gradient(90deg, rgba(192, 81, 46, 0.06), transparent 60%), var(--slab);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.rules-line {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.62;
+}
+
+.rules-line + .rules-line {
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--edge);
+}
+
+.rules-keyword {
+  font-family: var(--font-display), 'Arial Narrow', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--glyph);
+  background: var(--slab-lift);
+  border: 1px solid var(--edge-strong);
+  border-radius: 2px;
+  padding: 0.1rem 0.4rem;
+  margin-right: 0.15rem;
+  white-space: nowrap;
+}
+
+.rules-trait {
+  color: var(--glyph);
+  border-bottom: 1px dotted var(--glyph-faint);
+}
+
+.rules-attribute {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.86em;
+  color: var(--rune-lit);
+}
+
+.trigger {
+  margin-top: 0.9rem;
+  padding: 0.75rem 1rem;
+  border: 1px dashed var(--edge-strong);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.trigger .eyebrow {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+/* --------------------------------------------------------------- meta */
+
+.meta-block {
+  margin-top: 1.75rem;
+}
+
+.meta-block > h2 {
+  margin: 0 0 0.7rem;
+  font-family: var(--font-display), 'Arial Narrow', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--glyph-dim);
+}
+
+.chip-link:hover {
+  border-color: var(--edge-strong);
+  color: var(--glyph);
+}
+
+/* ==================================================================== 
+   Spoilers — unreleased sets
+   ==================================================================== */
+
+/* Reveals are provisional, so the page says so before it shows anything. */
+.notice {
+  margin: 1.5rem 0 0;
+  padding: 1rem 1.15rem;
+  border: 1px dashed var(--rune);
+  border-radius: var(--radius);
+  background: rgba(192, 81, 46, 0.06);
+  font-size: 0.84rem;
+  line-height: 1.6;
+  color: var(--glyph-mid);
+  max-width: 78ch;
+}
+
+.notice strong {
+  color: var(--glyph);
+}
+
+.spoiler-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+  gap: clamp(0.7rem, 1.4vw, 1.1rem);
+}
+
+.spoiler-card {
+  margin: 0;
+}
+
+.spoiler-card img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+  background: var(--slab);
+  box-shadow: var(--carve);
+}
+
+.spoiler-card figcaption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  min-width: 0;
+}
+
+.spoiler-card figcaption b {
+  font-size: 0.82rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spoiler-card figcaption span {
+  font-size: 0.66rem;
+  color: var(--glyph-faint);
+  flex-shrink: 0;
+}
+
+.spoiler-sources {
+  margin: 0 0 0.6rem;
+  font-family: var(--font-display), 'Arial Narrow', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--glyph-dim);
+}
+
+.spoiler-links {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.84rem;
+}
+
+.spoiler-links a {
+  color: var(--glyph-mid);
+  border-bottom: 1px solid var(--edge-strong);
+}
+
+.spoiler-links a:hover {
+  color: var(--glyph);
+  border-bottom-color: var(--rune);
+}
+
+/* ---------------------------------------------------------------- banlist */
+
+/* A banned pair is one rule about two cards, so it is drawn as one object. */
+.pair-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: start;
+  gap: 1rem;
+  max-width: 430px;
+  padding: 0.9rem;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--slab-hi), var(--slab));
+  box-shadow: var(--carve);
+}
+
+.pair-join {
+  align-self: center;
+  font-family: var(--font-mono), monospace;
+  font-size: 1.2rem;
+  color: var(--rune-lit);
+}
+
+/* Format legality, stated wherever a card is shown in full. */
+.legal-yes,
+.legal-no {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.12rem 0.45rem;
+  border-radius: 2px;
+  border: 1px solid var(--edge-strong);
+}
+
+.legal-yes {
+  color: #7fd3a3;
+  border-color: rgba(127, 211, 163, 0.35);
+  background: rgba(127, 211, 163, 0.08);
+}
+
+.legal-no {
+  color: var(--rune-lit);
+  border-color: rgba(226, 104, 63, 0.4);
+  background: rgba(226, 104, 63, 0.08);
+}
+
+/* Sets that have graduated from Spoilers to the archive. */
+.released-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.released-card {
+  transition: border-color 0.16s var(--ease);
+}
+
+.released-card:hover {
+  border-color: var(--edge-strong);
+}

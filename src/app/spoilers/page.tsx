@@ -1,0 +1,168 @@
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import spoilersJson from '@data/spoilers.json';
+
+type SpoilerCard = { id: string; name: string | null; image: string };
+type SpoilerSet = {
+  set: string;
+  code: string;
+  release: string | null;
+  kind: string;
+  revealed: number;
+  cards: SpoilerCard[];
+  articles: { title: string; url: string; date: string }[];
+  lastCoverage: string | null;
+};
+type ReleasedSet = {
+  set: string;
+  code: string;
+  name: string | null;
+  cards: number;
+  slug: string;
+  lastCoverage: string;
+};
+
+type Spoilers = {
+  generatedAt: string;
+  source: { id: string; label: string; home: string; category: string };
+  counts: { sets: number; cards: number; named: number; articles: number };
+  sets: SpoilerSet[];
+  released: ReleasedSet[];
+};
+
+const spoilers = spoilersJson as Spoilers;
+
+export const metadata: Metadata = {
+  title: 'Spoilers',
+  description:
+    'ONE PIECE CARD GAME sets that have not shipped yet: revealed card numbers, release windows, and where the reveals came from.',
+};
+
+export default function SpoilersPage() {
+  const { sets, source, counts } = spoilers;
+  const released = spoilers.released ?? [];
+  const updated = new Date(spoilers.generatedAt).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+
+  return (
+    <div className="shell" style={{ paddingBlock: '2rem 3rem' }}>
+      <p className="eyebrow">Spoilers</p>
+      <h1
+        className="display"
+        style={{ fontSize: 'clamp(1.7rem, 3.4vw, 2.5rem)', margin: '0.5rem 0 0' }}
+      >
+        What is coming next
+      </h1>
+      <p className="muted" style={{ maxWidth: '64ch', marginTop: '0.8rem' }}>
+        Sets that have not reached the official card list yet, with the card numbers revealed so
+        far. A set leaves this page by itself the moment its cards appear in the archive — nothing
+        here is maintained by hand.
+      </p>
+
+      <div className="notice">
+        <p style={{ margin: 0 }}>
+          <strong>These are community reveals, not official releases.</strong> Card numbers, names
+          and release windows come from{' '}
+          <a href={source.home} target="_blank" rel="noreferrer noopener">
+            {source.label}
+          </a>
+          &rsquo;s {source.category} coverage and can change before a set ships. The card images
+          are theirs and are shown from their site — follow the article links below for the full
+          reveals.
+        </p>
+      </div>
+
+      {sets.length === 0 ? (
+        <p className="empty">No unreleased sets are being covered right now.</p>
+      ) : (
+        sets.map((set) => (
+          <section key={set.set} className="section" style={{ paddingBottom: 0 }}>
+            <div className="section-head">
+              <h2 className="display">
+                {set.code} <span className="muted">— {set.kind}</span>
+              </h2>
+              <span className="muted mono" style={{ fontSize: '0.78rem' }}>
+                {set.release ?? 'release date unknown'} · {set.revealed} card
+                {set.revealed === 1 ? '' : 's'} revealed
+              </span>
+            </div>
+
+            {set.cards.length > 0 ? (
+              <div className="spoiler-grid">
+                {set.cards.map((card) => (
+                  <figure key={card.id} className="spoiler-card">
+                    <img
+                      src={card.image}
+                      alt={card.name ? `${card.name} (${card.id})` : card.id}
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                    />
+                    <figcaption>
+                      <b>{card.name ?? 'Name not listed'}</b>
+                      <span className="mono">{card.id}</span>
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
+            ) : (
+              <p className="muted">Announced, but no card images have surfaced yet.</p>
+            )}
+
+            <div className="meta-block">
+              <h3 className="spoiler-sources">Reveals from</h3>
+              <ul className="spoiler-links">
+                {set.articles.map((article) => (
+                  <li key={article.url}>
+                    <a href={article.url} target="_blank" rel="noreferrer noopener">
+                      {article.title}
+                    </a>{' '}
+                    <span className="muted mono">{article.date.slice(0, 10)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        ))
+      )}
+
+      {released.length > 0 ? (
+        <section className="section" style={{ paddingBottom: 0 }}>
+          <div className="section-head">
+            <h2 className="display">
+              Now released <span className="muted">— {released.length}</span>
+            </h2>
+            <span className="muted" style={{ fontSize: '0.78rem' }}>
+              Revealed here, now complete in the archive
+            </span>
+          </div>
+          <div className="released-grid">
+            {released.map((set) => (
+              <Link key={set.set} href={`/sets/${set.slug}`} className="slab slab-pad released-card">
+                <p className="mono" style={{ margin: 0, fontSize: '0.7rem', color: 'var(--glyph-faint)' }}>
+                  {set.code}
+                </p>
+                <p style={{ margin: '0.25rem 0 0.5rem', fontWeight: 500 }}>
+                  {set.name ?? set.code}
+                </p>
+                <p className="mono muted" style={{ margin: 0, fontSize: '0.72rem' }}>
+                  {set.cards} cards · revealed {set.lastCoverage.slice(0, 10)}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      <p className="muted" style={{ fontSize: '0.76rem', marginTop: '2.5rem', maxWidth: '74ch' }}>
+        {counts.cards} card{counts.cards === 1 ? '' : 's'} across {counts.sets} unreleased set
+        {counts.sets === 1 ? '' : 's'}, from {counts.articles} article
+        {counts.articles === 1 ? '' : 's'}. Last checked {updated}. A set moves to{' '}
+        <Link href="/sets">Sets</Link> with its full card data as soon as its cards reach the
+        official card list — this page tracks that handover rather than requiring an edit.
+      </p>
+    </div>
+  );
+}

@@ -1,0 +1,654 @@
+#!/usr/bin/env node
+/**
+ * Poneglyph — browser indexes for the metagame page.
+ *
+ *   node scripts/build-indexes.mjs
+ *
+ * There are two regions a player thinks in — **English** and **Japanese** — and
+ * three upstream corpora. Limitless and Top Decks both cover English events, so
+ * they belong in one index; splitting them into "West" and "English" described our
+ * plumbing rather than the game.
+ *
+ * They are not, however, sampled the same way. Limitless publishes whole Swiss
+ * fields; Top Decks publishes decks that placed. Merging them without saying so
+ * would quietly turn a win rate into an artefact, so **sampling is recorded per
+ * deck**, not per corpus:
+ *
+ *   - share      counted over every deck in the window
+ *   - win rate   counted only over field-sampled decks, with its own sample size
+ *
+ * Reading this file is how you find out what a number on the metagame page means.
+ *
+ * It also writes data/decks-merged.json — the canonical, deduplicated deck set the
+ * single-deck and player pages read, so those never disagree with the tables.
+ *
+ * Writes public/data/decks-{en,jp}-index.json, public/data/decks-{en,jp}/*.json and
+ * data/decks-merged.json.
+ */
+
+import { writeFile, readFile, mkdir, readdir, rm } from 'node:fs/promises';
+import path from 'node:path';
+
+const DATA = path.resolve('data');
+const PUBLIC = path.resolve('public', 'data');
+const log = (...m) => console.log('[indexes]', ...m);
+
+/** How much history the first payload carries — every default window fits inside. */
+const RECENT_DAYS = 90;
+
+/**
+ * How many buckets the per-entity payloads are split into.
+ *
+ * The event, player and deck pages are rendered in the browser, because
+ * prerendering all 37,000 of them costs 5.5 GB against GitHub Pages' 1 GB. Each
+ * page therefore needs its own slice of the corpus, and there are two bad ways to
+ * supply it: ship the whole region (362 KB gzipped, to draw one three-deck event)
+ * or write one file per entity (37,000 files, rewritten twice a day by the deck
+ * workflow — an unreadable diff and a heavy repo).
+ *
+ * 64 buckets is the middle: about 110 events or 140 players each, so a page pulls
+ * ~10 KB, and the deck ingest rewrites 192 files instead of 37,000.
+ */
+const SHARDS = 64;
+
+/**
+ * Which bucket a key falls in — FNV-1a, chosen because it is eight lines with no
+ * dependency and gives the same answer in Node and in the browser.
+ *
+ * **`src/lib/shards.ts` holds an identical copy** and the two must agree exactly,
+ * or every lookup misses. It is duplicated rather than shared because this file is
+ * a build script and that one ships to the browser.
+ */
+function shardOf(key) {
+  let hash = 2166136261;
+  for (let i = 0; i < key.length; i++) {
+    hash ^= key.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return String((hash >>> 0) % SHARDS).padStart(2, '0');
+}
+
+function shiftDays(day, by) {
+  const d = new Date(`${day}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + by);
+  return d.toISOString().slice(0, 10);
+}
+
+const load = async (file, fallback = null) => {
+  try {
+    return JSON.parse(await readFile(path.join(DATA, file), 'utf8'));
+  } catch {
+    return fallback;
+  }
+};
+
+/**
+ * The identity of an event.
+ *
+ * Limitless gives every tournament a real id. Top Decks does not — it records a
+ * venue and a date, and the venue names are generic: "Cardshop" appears on 509
+ * different days and "LGS" on 246. Date plus name is therefore the best available
+ * key, and it is honest about its limits: two different shops both calling
+ * themselves "LGS" on the same day would collapse into one event here.
+ */
+const eventKey = (deck) =>
+  deck.source === 'limitless'
+    ? `l-${deck.tournamentId}`
+    : `t-${deck.region.toLowerCase()}-${deck.date.slice(0, 10)}-${slugify(deck.eventName)}`;
+
+const slugify = (text) =>
+  String(text ?? '')
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .slice(0, 48);
+
+/* ------------------------------------------------------- shared vocabulary */
+
+const TIERS = [
+  { id: 'worlds', label: 'Worlds' },
+  { id: 'finals', label: 'Finals' },
+  { id: 'championship', label: 'Championship' },
+  { id: 'treasure', label: 'Treasure Cup' },
+  { id: 'regional', label: 'Regional' },
+  { id: 'store', label: 'Store / shop' },
+  { id: 'qualifier', label: 'Qualifier' },
+  { id: 'local', label: 'Local' },
+];
+
+/**
+ * Placeholders for fields an upstream did not publish.
+ *
+ * A blank cell reads as a rendering bug; a named placeholder reads as "this was
+ * not recorded", which is the true statement. They are deliberately obvious so
+ * nobody mistakes one for real data.
+ */
+const UNKNOWN_PLAYER = 'Player not recorded';
+const UNKNOWN_EVENT = 'Event not recorded';
+
+const named = (value, placeholder) => {
+  const text = String(value ?? '').trim();
+  if (!text || text.toLowerCase() === 'unknown') return placeholder;
+  return text;
+};
+
+/* ------------------------------------------------------------------- eras */
+
+const ADOPTION_THRESHOLD = 10;
+const ADOPTION_WINDOW_DAYS = 7;
+const MIN_DISTINCT_CARDS = 3;
+
+/**
+ * When each set entered play in *this* corpus. Same three tests as the card-side
+ * derivation: the set must first appear after the corpus starts, reach real
+ * adoption, and arrive with several cards rather than one. Each region gets its
+ * sets on its own date, so each derives its own eras from its own decks.
+ */
+function buildEras(decks) {
+  if (decks.length < 100) return [];
+
+  const rows = decks
+    .filter((d) => d.date)
+    .map((d) => {
+      const ids = [d.leaderId, ...d.cards.map((c) => c.id)];
+      return { day: d.date.slice(0, 10), ids, sets: new Set(ids.map((i) => i.split('-')[0])) };
+    })
+    .sort((a, b) => a.day.localeCompare(b.day));
+  if (rows.length === 0) return [];
+
+  const corpusStart = rows[0].day;
+  const firstSeen = new Map();
+  const distinct = new Map();
+  for (const row of rows) {
+    for (const set of row.sets) if (!firstSeen.has(set)) firstSeen.set(set, row.day);
+    for (const id of row.ids) {
+      const set = id.split('-')[0];
+      if (!distinct.has(set)) distinct.set(set, new Set());
+      distinct.get(set).add(id);
+    }
+  }
+
+  const days = [...new Set(rows.map((r) => r.day))].sort();
+  const dayMs = days.map((d) => Date.parse(`${d}T00:00:00Z`));
+  const dayIndex = new Map(days.map((d, i) => [d, i]));
+  const totalByDay = new Array(days.length).fill(0);
+  const hitsBySet = new Map();
+
+  for (const row of rows) {
+    const i = dayIndex.get(row.day);
+    totalByDay[i]++;
+    for (const set of row.sets) {
+      let hits = hitsBySet.get(set);
+      if (!hits) {
+        hits = new Array(days.length).fill(0);
+        hitsBySet.set(set, hits);
+      }
+      hits[i]++;
+    }
+  }
+
+  const peakAdoption = (set) => {
+    const hits = hitsBySet.get(set);
+    if (!hits) return 0;
+    let peak = 0;
+    for (let start = 0; start < days.length; start++) {
+      const cutoff = dayMs[start] + ADOPTION_WINDOW_DAYS * 86_400_000;
+      let total = 0;
+      let hit = 0;
+      for (let i = start; i < days.length && dayMs[i] < cutoff; i++) {
+        total += totalByDay[i];
+        hit += hits[i];
+      }
+      if (total < 30) continue;
+      const share = (hit / total) * 100;
+      if (share > peak) peak = share;
+    }
+    return peak;
+  };
+
+  return [...firstSeen.entries()]
+    .filter(([set, day]) => /^(OP|EB|PRB|ST)\d+$/.test(set) && day > corpusStart)
+    .filter(([set]) => (distinct.get(set)?.size ?? 0) >= MIN_DISTINCT_CARDS)
+    .map(([set, day]) => ({ set, day, peak: peakAdoption(set), cards: distinct.get(set).size }))
+    .filter((e) => e.peak >= ADOPTION_THRESHOLD)
+    .map(({ set, day, peak, cards }) => ({
+      code: set.replace(/^([A-Z]+)(\d+)$/, '$1-$2'),
+      set,
+      from: day,
+      kind: set.startsWith('ST') ? 'Starter deck' : 'Expansion',
+      peak: +peak.toFixed(1),
+      cards,
+    }))
+    .reduce(groupSameDay, [])
+    .map((era) => ({
+      ...era,
+      decks: decks.filter((d) => d.date && d.date.slice(0, 10) >= era.from).length,
+    }))
+    .sort((a, b) => b.from.localeCompare(a.from));
+}
+
+/** Starter decks ship in waves; three identical dates are one question. */
+function groupSameDay(eras, era) {
+  const existing = eras.find((e) => e.from === era.from && e.kind === era.kind);
+  if (!existing) return [...eras, { ...era, codes: [era.code] }];
+  existing.codes.push(era.code);
+  existing.code = existing.codes.join(', ');
+  existing.cards += era.cards;
+  existing.peak = Math.max(existing.peak, era.peak);
+  return eras;
+}
+
+/* ---------------------------------------------------------------- writing */
+
+async function writeRegion(region, decks, cardsById) {
+  const leaders = {};
+  const cardNames = {};
+  const byLeader = new Map();
+
+  for (const deck of decks) {
+    leaders[deck.leaderId] ??= { n: deck.leaderName, c: deck.colors };
+    for (const card of deck.cards) {
+      cardNames[card.id] ??= [cardsById.get(card.id)?.name ?? card.id, card.category];
+    }
+    if (!byLeader.has(deck.leaderId)) byLeader.set(deck.leaderId, {});
+    byLeader.get(deck.leaderId)[deck.id] = deck.cards.map((c) => [c.id, c.count]);
+  }
+
+  const dates = decks.map((d) => d.date?.slice(0, 10)).filter(Boolean).sort();
+  const fieldDecks = decks.filter((d) => d.sampling === 'field').length;
+
+  const rows = decks.map((d) => ({
+    i: d.id,
+    l: d.leaderId,
+    d: d.date.slice(0, 10),
+    p: d.placing,
+    w: d.record?.wins ?? 0,
+    s: d.record?.losses ?? 0,
+    t: d.record?.ties ?? 0,
+    n: d.players ?? 0,
+    e: d.eventName,
+    /* Event identity, so a table row can link to the event without a lookup table. */
+    x: eventKey(d),
+    a: d.player,
+    v: d.venue,
+    k: d.tier,
+    /* 1 when this deck came from a whole-field sample. */
+    f: d.sampling === 'field' ? 1 : 0,
+    /*
+     * Source and its permalink, for the event page's attribution.
+     *
+     * `f` happens to imply this today — every Limitless row is a whole field and
+     * every Top Decks row is winners-only — but that is a coincidence of the two
+     * upstreams we have, not a rule. Deriving attribution from a sampling flag
+     * would credit the wrong site the day a source publishes full fields.
+     *
+     * Both are omitted on Limitless rows, and JSON.stringify drops undefined, so
+     * they cost nothing there. The 11,636 Top Decks rows share just 40 distinct
+     * URLs; they are written inline rather than interned because interning event
+     * and player names made these files *larger* — gzip already collapses
+     * repetition, and a lookup table only adds indirection.
+     */
+    o: d.source === 'topdecks' ? 1 : undefined,
+    u: d.sourceUrl || undefined,
+  }));
+
+  const index = {
+    generatedAt: new Date().toISOString(),
+    region: region.id,
+    regionLabel: region.label,
+    /* Mixed corpora: sampling is per deck, in the `f` column. */
+    sampling: fieldDecks === decks.length ? 'field' : fieldDecks === 0 ? 'winners' : 'mixed',
+    fieldDecks,
+    sources: region.sources,
+    window: { from: dates[0] ?? null, to: dates.at(-1) ?? null },
+    eras: buildEras(decks),
+    tiers: TIERS,
+    leaders,
+    cards: cardNames,
+    decks: rows,
+  };
+
+  const dir = path.join(PUBLIC, region.file);
+  await mkdir(dir, { recursive: true });
+
+  /*
+   * The corpus is split by recency rather than shipped whole. Every window the page
+   * offers by default — 7 to 90 days — is answered from the first file; picking
+   * "All" or an era older than that fetches the archive once. Whole, English is
+   * 324 KB gzipped for a page most people open to ask about the last month.
+   */
+  const recentFrom = shiftDays(index.window.to, -RECENT_DAYS);
+  const recent = rows.filter((r) => r.d >= recentFrom);
+  const older = rows.filter((r) => r.d < recentFrom);
+
+  index.decks = recent;
+  index.recentFrom = recentFrom;
+  index.archived = older.length;
+  /* The whole corpus, so summaries do not report the recent slice as the total. */
+  index.totalDecks = rows.length;
+
+  const json = JSON.stringify(index);
+  await writeFile(path.join(PUBLIC, `${region.file}-index.json`), json);
+  await writeFile(
+    path.join(PUBLIC, `${region.file}-archive.json`),
+    JSON.stringify({ region: region.id, until: recentFrom, decks: older })
+  );
+
+  const existing = await readdir(dir).catch(() => []);
+  const wanted = new Set([...byLeader.keys()].map((id) => `${id}.json`));
+  await Promise.all(
+    existing.filter((f) => f.endsWith('.json') && !wanted.has(f)).map((f) => rm(path.join(dir, f)))
+  );
+  await Promise.all(
+    [...byLeader.entries()].map(([leaderId, lists]) =>
+      writeFile(path.join(dir, `${leaderId}.json`), JSON.stringify(lists))
+    )
+  );
+
+  log(
+    `${region.label.padEnd(9)} ${String(decks.length).padStart(6)} decks ` +
+      `(${fieldDecks} field, ${decks.length - fieldDecks} winners) · ` +
+      `${index.eras.length} eras · ${byLeader.size} archetypes`
+  );
+  log(
+    `          index ${String(recent.length).padStart(6)} recent = ` +
+      `${(Buffer.byteLength(json) / 1024).toFixed(0)} KB · archive ${older.length} older`
+  );
+
+  /*
+   * The whole row set, for the entity shards below. `index.decks` was narrowed to
+   * the recent slice a few lines up, and it has already been serialised, so this
+   * neither changes what was written nor what regions.json reads.
+   */
+  index.allRows = rows;
+  return index;
+}
+
+/* --------------------------------------------------------- entity shards */
+
+/**
+ * Names that are not people. `NA` is the single most common value in the raw data
+ * (172 rows) and would otherwise top every leaderboard. Must match the copy in
+ * src/lib/meta.ts.
+ */
+const NOT_A_PLAYER = new Set([
+  'na', 'n/a', 'unknown', 'none', 'null', 'nan', '-', '--', '?', '??',
+  'anon', 'anonymous', 'player not recorded',
+]);
+
+const namedPlayer = (name) => {
+  const text = String(name ?? '').trim();
+  return text.length > 0 && !NOT_A_PLAYER.has(text.toLowerCase());
+};
+
+/**
+ * URL form of a player name — **must match `playerSlug` in src/lib/meta.ts**, or a
+ * shard lookup lands in the wrong bucket and the page reads as "player not found".
+ *
+ * Deliberately not the `slugify` above: that one truncates at 48 characters and
+ * this one at 64, so reusing it would silently break the longest handles.
+ *
+ * The combining-marks range is written as an escape rather than as literal
+ * diacritics. It is the same set either way, but a literal is invisible in a diff —
+ * which is exactly how a backspace character got into three regexes in this repo.
+ */
+const playerSlugOf = (name) =>
+  String(name ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .slice(0, 64);
+
+/**
+ * Per-entity payloads for the event, player and deck pages.
+ *
+ * Those three are rendered in the browser rather than prerendered, so each needs
+ * its slice of the corpus at request time. Rows are the same terse shape the
+ * metagame index already uses, with `g` added for the region — a player can appear
+ * in both, and a deck page needs to know which archetype file to read.
+ */
+async function writeEntityShards(regions) {
+  const events = new Map();
+  const players = new Map();
+  const decksById = new Map();
+  const leaders = {};
+  const cardNames = {};
+
+  const push = (map, key, row) => {
+    const list = map.get(key);
+    if (list) list.push(row);
+    else map.set(key, [row]);
+  };
+
+  for (const { id, index } of regions) {
+    Object.assign(leaders, index.leaders);
+    Object.assign(cardNames, index.cards);
+    for (const base of index.allRows) {
+      const row = { ...base, g: id };
+      decksById.set(row.i, row);
+      if (row.x) push(events, row.x, row);
+      if (namedPlayer(row.a)) {
+        const slug = playerSlugOf(row.a);
+        if (slug) push(players, slug, row);
+      }
+    }
+  }
+
+  const write = async (name, entries) => {
+    const buckets = new Map();
+    for (const [key, value] of entries) {
+      const bucket = shardOf(key);
+      const held = buckets.get(bucket) ?? {};
+      held[key] = value;
+      buckets.set(bucket, held);
+    }
+
+    const dir = path.join(PUBLIC, name);
+    await mkdir(dir, { recursive: true });
+
+    /* Drop buckets an earlier run wrote that this one no longer fills. */
+    const wanted = new Set([...buckets.keys()].map((b) => `${b}.json`));
+    const existing = await readdir(dir).catch(() => []);
+    await Promise.all(
+      existing.filter((f) => f.endsWith('.json') && !wanted.has(f)).map((f) => rm(path.join(dir, f)))
+    );
+
+    let bytes = 0;
+    await Promise.all(
+      [...buckets.entries()].map(([bucket, held]) => {
+        const json = JSON.stringify(held);
+        bytes += Buffer.byteLength(json);
+        return writeFile(path.join(dir, `${bucket}.json`), json);
+      })
+    );
+
+    log(
+      `  ${name.padEnd(8)} ${String(entries.length).padStart(6)} in ${buckets.size} shards · ` +
+        `${(bytes / 1024 / 1024).toFixed(1)} MB · ${(bytes / buckets.size / 1024).toFixed(0)} KB each`
+    );
+  };
+
+  await write('events', [...events.entries()]);
+  await write('players', [...players.entries()]);
+  await write('deck', [...decksById.entries()].map(([id, row]) => [id, row]));
+
+  /*
+   * Shared lookups every shell needs: archetype names and colours, and card names
+   * for a decklist. Both are small and change rarely, and pulling them from the
+   * region index instead would cost 109 KB to render one page.
+   */
+  await writeFile(path.join(PUBLIC, 'leaders.json'), JSON.stringify(leaders));
+  await writeFile(path.join(PUBLIC, 'card-names.json'), JSON.stringify(cardNames));
+}
+
+/* ------------------------------------------------------------------- main */
+
+async function main() {
+  const started = Date.now();
+
+  const cards = await load('cards.json', []);
+  const cardsById = new Map(cards.map((c) => [c.id, c]));
+
+  const limitless = await load('decks.json', []);
+  const tournaments = await load('tournaments.json', []);
+  const venueById = new Map(tournaments.map((t) => [t.id, t.venue ?? 'unknown']));
+  const tierById = new Map(tournaments.map((t) => [t.id, t.tier ?? 'local']));
+
+  const en = (await load('decks-en.json', { decks: [] })).decks;
+  const jp = (await load('decks-jp.json', { decks: [] })).decks;
+
+  /* Limitless: whole Swiss fields. */
+  const west = limitless.map((d) => ({
+    id: d.id,
+    tournamentId: d.tournamentId,
+    /* Limitless dates carry a time; everything else is a day. One shape downstream. */
+    date: d.date.slice(0, 10),
+    leaderId: d.leaderId,
+    leaderName: d.leaderName,
+    colors: d.colors,
+    placing: d.placing,
+    record: d.record,
+    players: d.tournamentPlayers ?? 0,
+    eventName: named(d.tournamentName, UNKNOWN_EVENT),
+    player: named(d.player, UNKNOWN_PLAYER),
+    venue: venueById.get(d.tournamentId) ?? 'unknown',
+    tier: tierById.get(d.tournamentId) ?? 'local',
+    cards: d.cards,
+    sampling: 'field',
+    region: 'EN',
+    source: 'limitless',
+  }));
+
+  /* Top Decks: decks that placed, on paper. */
+  const fromTopDecks = (decks) =>
+    decks.map((d) => ({
+      id: d.id,
+      tournamentId: null,
+      date: d.date.slice(0, 10),
+      leaderId: d.leaderId,
+      leaderName: d.leaderName,
+      colors: d.colors,
+      placing: d.placing,
+      record: d.record,
+      players: 0,
+      eventName: named(d.eventName, UNKNOWN_EVENT),
+      player: named(d.player, UNKNOWN_PLAYER),
+      venue: 'offline',
+      tier: d.tier ?? 'local',
+      cards: d.cards,
+      sampling: 'winners',
+      region: d.region,
+      source: 'topdecks',
+      eventType: d.eventType,
+      sourceUrl: d.sourceUrl,
+    }));
+
+  /*
+   * Limitless and Top Decks both cover 2026 English events, so 223 lists appear
+   * twice. A duplicate is the same player, on the same day, with the same Leader and
+   * the same fifty cards — anything short of that is kept, because a player can
+   * genuinely bring one deck to two events in a day. Limitless wins the tie: it
+   * carries the field size, the Swiss record and the real event name.
+   */
+  const listKey = (d) =>
+    [
+      d.date.slice(0, 10),
+      d.player.trim().toLowerCase(),
+      d.leaderId,
+      d.cards
+        .slice()
+        .sort((a, b) => a.id.localeCompare(b.id))
+        .map((c) => `${c.count}x${c.id}`)
+        .join(','),
+    ].join('|');
+
+  const limitlessKeys = new Set(west.map(listKey));
+  const topDecksEn = fromTopDecks(en);
+  const deduped = topDecksEn.filter((d) => !limitlessKeys.has(listKey(d)));
+  const dropped = topDecksEn.length - deduped.length;
+  if (dropped) log(`deduplicated ${dropped} English lists already recorded by Limitless`);
+
+  const english = [...west, ...deduped].sort((a, b) => b.date.localeCompare(a.date));
+  const japanese = fromTopDecks(jp).sort((a, b) => b.date.localeCompare(a.date));
+
+  await mkdir(PUBLIC, { recursive: true });
+
+  const built = {};
+  built.en = await writeRegion(
+    {
+      id: 'EN',
+      label: 'English',
+      file: 'decks-en',
+      sources: ['Limitless', 'One Piece Top Decks'],
+    },
+    english,
+    cardsById
+  );
+  built.jp = await writeRegion(
+    { id: 'JP', label: 'Japanese', file: 'decks-jp', sources: ['One Piece Top Decks'] },
+    japanese,
+    cardsById
+  );
+
+  /*
+   * Per-entity payloads for the three pages the browser renders. Written from both
+   * regions at once because a player can compete in either, so the slice for one
+   * name is not a property of a single corpus.
+   */
+  await writeEntityShards([
+    { id: 'en', index: built.en },
+    { id: 'jp', index: built.jp },
+  ]);
+
+  /* One canonical set for the pages that resolve a single deck or a player. */
+  await writeFile(
+    path.join(DATA, 'decks-merged.json'),
+    JSON.stringify({
+      generatedAt: new Date().toISOString(),
+      counts: { english: english.length, japanese: japanese.length, deduplicated: dropped },
+      decks: [...english, ...japanese].map((d) => ({ ...d, eventId: eventKey(d) })),
+    })
+  );
+
+  /* The old three-region index is gone; remove it so nothing serves stale data. */
+  await rm(path.join(PUBLIC, 'decks-index.json')).catch(() => {});
+  await rm(path.join(PUBLIC, 'decks'), { recursive: true, force: true }).catch(() => {});
+
+  await writeFile(
+    path.join(DATA, 'regions.json'),
+    JSON.stringify(
+      {
+        generatedAt: new Date().toISOString(),
+        regions: Object.values(built).map((i) => ({
+          id: i.region,
+          label: i.regionLabel,
+          decks: i.totalDecks,
+          recent: i.decks.length,
+          archived: i.archived,
+          fieldDecks: i.fieldDecks,
+          sampling: i.sampling,
+          window: i.window,
+          eras: i.eras.length,
+          sources: i.sources,
+        })),
+      },
+      null,
+      2
+    )
+  );
+
+  log(`done in ${((Date.now() - started) / 1000).toFixed(1)}s`);
+  for (const index of Object.values(built)) {
+    log(`  ${index.regionLabel}: eras ${index.eras.map((e) => e.code).join(', ') || 'none'}`);
+  }
+}
+
+main().catch((err) => {
+  console.error('[indexes] FAILED —', err.message);
+  process.exit(1);
+});

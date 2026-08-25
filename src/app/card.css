@@ -1,0 +1,249 @@
+/*
+ * Card detail — the stat line, rules text, and printing table for one card.
+ */
+
+.card-page {
+  display: grid;
+  grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+  gap: clamp(1.5rem, 4vw, 3.25rem);
+  align-items: start;
+  padding-block: 2rem clamp(2rem, 5vw, 3.5rem);
+}
+
+.card-art {
+  position: sticky;
+  top: 84px;
+}
+
+/* The art is a button so a click enlarges it in place rather than navigating. */
+.card-art-open {
+  display: block;
+  position: relative;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+  border-radius: 6px;
+}
+
+.card-art-open > img {
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.07), 0 26px 60px -22px rgba(0, 0, 0, 0.95);
+  background: var(--slab);
+}
+
+.card-art-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  padding: 0.2rem 0.6rem;
+  border-radius: 2px;
+  background: rgba(5, 7, 11, 0.82);
+  backdrop-filter: blur(4px);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--glyph-mid);
+  opacity: 0;
+  transition: opacity 0.16s var(--ease);
+  pointer-events: none;
+}
+
+.card-art-open:hover .card-art-hint,
+.card-art-open:focus-visible .card-art-hint {
+  opacity: 1;
+}
+
+/* Every other printing of this card, as thumbnails under the main art. */
+.variants {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+.variant {
+  position: relative;
+  display: block;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  overflow: hidden;
+  background: none;
+  cursor: pointer;
+  transition: border-color 0.16s var(--ease), opacity 0.16s var(--ease);
+  opacity: 0.62;
+}
+
+/* Which version this thumbnail is, in the same language as the card number. */
+.variant-tag {
+  position: absolute;
+  left: 3px;
+  bottom: 3px;
+  padding: 0 4px;
+  border-radius: 2px;
+  background: rgba(5, 7, 11, 0.85);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.6rem;
+  color: var(--glyph-mid);
+}
+
+.variant[aria-current='true'] .variant-tag {
+  color: var(--glyph);
+}
+
+.variant-caption {
+  margin: 0.55rem 0 0;
+  font-size: 0.72rem;
+  color: var(--glyph-dim);
+  text-align: center;
+}
+
+.variant:hover {
+  opacity: 1;
+  border-color: var(--edge-strong);
+}
+
+.variant[aria-current='true'] {
+  opacity: 1;
+  border-color: var(--rune);
+}
+
+.variant img {
+  width: 100%;
+  aspect-ratio: 5 / 7;
+  object-fit: cover;
+  background: var(--slab);
+}
+
+/* ------------------------------------------------------------- headline */
+
+.card-head h1 {
+  margin: 0.35rem 0 0;
+  font-size: clamp(1.7rem, 3.6vw, 2.6rem);
+}
+
+.card-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+  color: var(--glyph-mid);
+  font-size: 0.88rem;
+}
+
+.card-line .dot {
+  color: var(--glyph-faint);
+}
+
+/* ------------------------------------------------------------ related */
+
+.related {
+  border-top: 1px solid var(--edge);
+  padding-block: clamp(2rem, 4vw, 3rem);
+}
+
+@media (max-width: 860px) {
+  .card-page {
+    grid-template-columns: 1fr;
+  }
+  .card-art {
+    position: static;
+    max-width: 340px;
+  }
+}
+
+/* ---------------------------------------------------------------- lightbox */
+
+/*
+ * Enlarging fits the art to the viewport. Opening the raw file in a tab showed it
+ * at its natural 600x838 — too small on a large screen, overflowing on a phone,
+ * and it lost the page.
+ */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: clamp(1rem, 4vw, 2.5rem);
+  background: rgba(5, 7, 11, 0.93);
+  backdrop-filter: blur(10px);
+  cursor: zoom-out;
+  animation: fade 0.16s var(--ease);
+}
+
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.lightbox > img {
+  max-width: min(100%, 620px);
+  max-height: 78vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.9);
+  cursor: default;
+}
+
+.lightbox-close {
+  position: absolute;
+  top: clamp(0.75rem, 2vw, 1.25rem);
+  right: clamp(0.75rem, 2vw, 1.25rem);
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius);
+  background: var(--slab);
+  color: var(--glyph-mid);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.lightbox-close:hover {
+  color: var(--glyph);
+  border-color: var(--rune);
+}
+
+.lightbox-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem;
+  cursor: default;
+}
+
+.lightbox-pip {
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--edge);
+  border-radius: 2px;
+  background: var(--slab);
+  color: var(--glyph-dim);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.74rem;
+  cursor: pointer;
+  transition: border-color 0.14s var(--ease), color 0.14s var(--ease);
+}
+
+.lightbox-pip:hover {
+  color: var(--glyph);
+  border-color: var(--edge-strong);
+}
+
+.lightbox-pip[aria-current='true'] {
+  border-color: var(--rune);
+  color: var(--glyph);
+  background: var(--slab-lift);
+}

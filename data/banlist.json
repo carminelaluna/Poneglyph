@@ -1,0 +1,161 @@
+{
+  "generatedAt": "2026-08-25T13:38:03.182Z",
+  "effectiveFrom": "April 10, 2026",
+  "source": {
+    "label": "ONE PIECE CARD GAME — official site",
+    "url": "https://en.onepiece-cardgame.com/rules/restriction/",
+    "home": "https://en.onepiece-cardgame.com/"
+  },
+  "counts": {
+    "banned": 5,
+    "restricted": 0,
+    "pairs": 3
+  },
+  "banned": [
+    {
+      "id": "OP06-047",
+      "name": "Charlotte Pudding",
+      "colors": [
+        "Blue"
+      ],
+      "category": "Character",
+      "setCode": "OP-06",
+      "blockNumber": 2,
+      "standardLegal": true,
+      "known": true
+    },
+    {
+      "id": "OP03-040",
+      "name": "Nami",
+      "colors": [
+        "Blue"
+      ],
+      "category": "Leader",
+      "setCode": "OP-03",
+      "blockNumber": 1,
+      "standardLegal": false,
+      "known": true
+    },
+    {
+      "id": "OP06-086",
+      "name": "Gecko Moria",
+      "colors": [
+        "Black"
+      ],
+      "category": "Character",
+      "setCode": "OP-06",
+      "blockNumber": 2,
+      "standardLegal": true,
+      "known": true
+    },
+    {
+      "id": "ST10-001",
+      "name": "Trafalgar Law",
+      "colors": [
+        "Red",
+        "Purple"
+      ],
+      "category": "Leader",
+      "setCode": "ST-10",
+      "blockNumber": 2,
+      "standardLegal": true,
+      "known": true
+    },
+    {
+      "id": "OP06-116",
+      "name": "Reject",
+      "colors": [
+        "Yellow"
+      ],
+      "category": "Event",
+      "setCode": "OP-06",
+      "blockNumber": 2,
+      "standardLegal": true,
+      "known": true
+    }
+  ],
+  "restricted": [],
+  "pairs": [
+    [
+      {
+        "id": "OP07-115",
+        "name": "I Re-Quasar Helllp!!",
+        "colors": [
+          "Yellow"
+        ],
+        "category": "Event",
+        "setCode": "OP-07",
+        "blockNumber": 2,
+        "standardLegal": true,
+        "known": true
+      },
+      {
+        "id": "EB04-058",
+        "name": "Borsalino",
+        "colors": [
+          "Yellow"
+        ],
+        "category": "Character",
+        "setCode": "OP15-EB04",
+        "blockNumber": 4,
+        "standardLegal": true,
+        "known": true
+      }
+    ],
+    [
+      {
+        "id": "OP11-040",
+        "name": "Monkey.D.Luffy",
+        "colors": [
+          "Blue",
+          "Purple"
+        ],
+        "category": "Leader",
+        "setCode": "OP-11",
+        "blockNumber": 3,
+        "standardLegal": true,
+        "known": true
+      },
+      {
+        "id": "OP11-067",
+        "name": "Charlotte Katakuri",
+        "colors": [
+          "Purple"
+        ],
+        "category": "Character",
+        "setCode": "OP-11",
+        "blockNumber": 3,
+        "standardLegal": true,
+        "known": true
+      }
+    ],
+    [
+      {
+        "id": "OP11-040",
+        "name": "Monkey.D.Luffy",
+        "colors": [
+          "Blue",
+          "Purple"
+        ],
+        "category": "Leader",
+        "setCode": "OP-11",
+        "blockNumber": 3,
+        "standardLegal": true,
+        "known": true
+      },
+      {
+        "id": "OP08-069",
+        "name": "Charlotte Linlin",
+        "colors": [
+          "Purple"
+        ],
+        "category": "Character",
+        "setCode": "OP-08",
+        "blockNumber": 2,
+        "standardLegal": true,
+        "known": true
+      }
+    ]
+  ],
+  "durationMs": 2632
+}

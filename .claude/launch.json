@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "poneglyph",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "port": 4321
+    },
+    {
+      "name": "poneglyph-static",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "serve:static"
+      ],
+      "port": 4322
+    }
+  ]
+}

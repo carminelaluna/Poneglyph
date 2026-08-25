@@ -1,0 +1,401 @@
+#!/usr/bin/env node
+/**
+ * Poneglyph — Top Decks archives (Japanese and English).
+ *
+ *   node scripts/ingest-topdecks.mjs [--region jp|en|both] [--limit N]
+ *
+ * Limitless only goes back to 2026 and covers the Western scene almost exclusively
+ * — one Japanese player in 8,500. One Piece Top Decks fills both gaps: it keeps
+ * per-set deck-list pages for Japan *and* English running back to OP-01, and every
+ * deck on them is a link carrying its whole contents in the query string:
+ *
+ *   deckgen?dn=Boa&date=8/24/2026&cn=JP&au=Torasu&pl=1st (6-1)
+ *          &tn=ShopEvent&hs=ShumaiCup&dg=1nOP14-041a3nOP17-107a4nOP17-109…
+ *
+ * `dg` is the decklist: `{count}n{cardId}` groups joined by `a`. That makes these
+ * pages structured data wearing HTML, which is why they are worth reading at all —
+ * the rest of the site is prose.
+ *
+ * Pages are discovered from the /deck-list/ index rather than the WordPress search,
+ * because the older pages use different URL prefixes — `en-format-`, `jp-format-`,
+ * `japanese-` — and searching for "deck list" misses twelve of the forty.
+ *
+ * Each region becomes its own corpus and neither is merged with Limitless. Two
+ * reasons, and the second matters more: they cover different scenes, and they are
+ * sampled differently. Top Decks publishes decks that *placed*, so a win rate taken
+ * from it would be an artefact of the sampling. Every corpus therefore declares its
+ * `sampling` and the interface adapts to it.
+ *
+ * Writes data/decks-{jp,en}.json plus browser indexes in the same shape the
+ * Limitless corpus uses, so the metagame page switches region without new code.
+ */
+
+import { writeFile, readFile, mkdir, readdir, rm } from 'node:fs/promises';
+import path from 'node:path';
+import { DECK_SOURCES } from './sources.mjs';
+
+const args = process.argv.slice(2);
+const flag = (name, fallback = null) => {
+  const i = args.indexOf(`--${name}`);
+  return i === -1 ? fallback : args[i + 1];
+};
+
+const SRC = DECK_SOURCES.topdecks;
+const DATA = path.resolve('data');
+const log = (...m) => console.log('[topdecks]', ...m);
+
+/**
+ * Which URL prefixes belong to which region. Top Decks has renamed its pages twice,
+ * so each region needs every historical spelling or the older sets are missed.
+ */
+const REGIONS = {
+  jp: {
+    key: 'jp',
+    id: 'JP',
+    label: 'Japan',
+    match: /\/deck-list\/(japan|japanese|jp-format)/i,
+    file: 'decks-jp',
+  },
+  en: {
+    key: 'en',
+    id: 'EN',
+    label: 'English archive',
+    match: /\/deck-list\/(english|en-format)/i,
+    file: 'decks-en',
+  },
+};
+
+async function get(url, { retries = 3 } = {}) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url, {
+        headers: { 'user-agent': 'poneglyph-topdecks/1.0' },
+        signal: AbortSignal.timeout(60_000),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.text();
+    } catch (err) {
+      if (attempt === retries) throw new Error(`${url}: ${err.message}`);
+      await new Promise((r) => setTimeout(r, 700 * attempt ** 2));
+    }
+  }
+  return null;
+}
+
+/* ------------------------------------------------------------- extraction */
+
+/** `1nOP14-041a3nOP17-107a4nOP17-109` -> [{id, count}, …]. */
+function decodeDeck(dg) {
+  const out = [];
+  for (const chunk of decodeURIComponent(dg).split('a')) {
+    const m = chunk.match(/^(\d+)n([A-Z]{1,4}\d{0,2}-\d{1,4})$/i);
+    if (!m) continue;
+    out.push({ id: m[2].toUpperCase(), count: Number(m[1]) });
+  }
+  return out;
+}
+
+/** `1st (6-1)` -> placing 1, record 6–1. `2nd Place` -> placing 2, no record. */
+function parsePlacing(raw) {
+  const text = decodeURIComponent(raw ?? '').replace(/\+/g, ' ').trim();
+  const place = text.match(/^(\d+)\s*(?:st|nd|rd|th)/i);
+  const record = text.match(/\((\d+)\s*-\s*(\d+)(?:\s*-\s*(\d+))?\)/);
+  return {
+    placing: place ? Number(place[1]) : null,
+    record: record
+      ? { wins: Number(record[1]), losses: Number(record[2]), ties: Number(record[3] ?? 0) }
+      : { wins: 0, losses: 0, ties: 0 },
+  };
+}
+
+/** `8/24/2026` -> `2026-08-24`. */
+function parseDate(raw) {
+  const m = decodeURIComponent(raw ?? '')
+    .replace(/\+/g, ' ')
+    .trim()
+    .match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!m) return null;
+  return `${m[3]}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`;
+}
+
+/**
+ * Event vocabulary, mapped onto the tiers used for Limitless events so both sides
+ * of the site speak one language. `SB` is a Shop Battle, `FS` a Flagship. Values
+ * arrive dirty — `SB(4-1)Postban` — so the match is on a prefix, not equality.
+ */
+const TIER_PATTERNS = [
+  [/final/i, 'finals'],
+  [/champ/i, 'championship'],
+  [/region/i, 'regional'],
+  [/store|shop|^sb|^fs|flagship/i, 'store'],
+  [/3v3|team/i, 'local'],
+];
+
+function tierOf(tn) {
+  const text = decodeURIComponent(tn ?? '').replace(/\+/g, ' ').trim();
+  for (const [pattern, tier] of TIER_PATTERNS) if (pattern.test(text)) return tier;
+  return 'local';
+}
+
+const clean = (v) => decodeURIComponent(v ?? '').replace(/\+/g, ' ').trim();
+
+function decksFromPage(html, link) {
+  const decks = [];
+  const seen = new Set();
+
+  /* The query string holds `pl=1st (6-1)` — spaces and all — so it runs to the
+     closing quote rather than stopping at the first whitespace. */
+  for (const m of html.matchAll(/deckgen\/?\?([^"']+)/g)) {
+    const params = new URLSearchParams(m[1].replace(/&amp;/g, '&'));
+    const dg = params.get('dg');
+    if (!dg) continue;
+
+    const cards = decodeDeck(dg);
+    if (cards.length === 0) continue;
+
+    const date = parseDate(params.get('date'));
+    const { placing, record } = parsePlacing(params.get('pl'));
+
+    /* Pages repeat a deck across sections; the list itself is the identity. */
+    const key = `${date}|${clean(params.get('au'))}|${dg.slice(0, 80)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    decks.push({
+      date,
+      player: clean(params.get('au')) || 'Unknown',
+      country: clean(params.get('cn')) || null,
+      leaderName: clean(params.get('dn')),
+      placing,
+      record,
+      host: clean(params.get('hs')),
+      eventType: clean(params.get('tn')),
+      tier: tierOf(params.get('tn')),
+      cards,
+      page: link,
+    });
+  }
+
+  return decks;
+}
+
+/* ------------------------------------------------------------------- main */
+
+async function main() {
+  const started = Date.now();
+
+  const archive = JSON.parse(await readFile(path.join(DATA, 'cards.json'), 'utf8'));
+  const byId = new Map(archive.map((c) => [c.id, c]));
+
+  log('reading the deck-list index…');
+  const index = await get(SRC.indexUrl);
+  const links = [
+    ...new Set(
+      [...index.matchAll(/href=["']([^"']*\/deck-list\/[^"']+)["']/g)]
+        .map((m) => m[1].replace(/^https?:\/\/onepiecetopdecks\.com/, ''))
+        .filter((u) => u !== '/deck-list/' && !/\/deckgen/.test(u))
+    ),
+  ].map((u) => `https://onepiecetopdecks.com${u.startsWith('/') ? u : `/${u}`}`);
+
+  log(`  ${links.length} deck-list pages on the index`);
+
+  const chosen = flag('region', 'both');
+  const wantRegions = (chosen === 'both' ? ['jp', 'en'] : [chosen]).filter((r) => REGIONS[r]);
+  if (wantRegions.length === 0) throw new Error('--region must be jp, en, or both');
+
+  const limit = Number(flag('limit', 0)) || Infinity;
+  const summary = {};
+
+  for (const key of wantRegions) {
+    const region = REGIONS[key];
+    const pages = links.filter((u) => region.match.test(u)).slice(0, limit);
+    log('');
+    log(`${region.label}: ${pages.length} pages`);
+    if (pages.length === 0) continue;
+
+    const collected = [];
+    const stats = { pages: 0, wrongSize: 0, unresolved: 0, noDate: 0 };
+
+    for (const link of pages) {
+      const html = await get(link);
+      const found = decksFromPage(html, link);
+      stats.pages++;
+      log(`  ${String(found.length).padStart(4)} decks — ${link.replace(SRC.home, '')}`);
+
+      for (const deck of found) {
+        if (!deck.date) {
+          stats.noDate++;
+          continue;
+        }
+
+        const leader = deck.cards.find((c) => byId.get(c.id)?.category === 'Leader');
+        const rest = deck.cards.filter((c) => c !== leader);
+        const total = rest.reduce((n, c) => n + c.count, 0);
+
+        /* Same validation as the Limitless corpus: 50 cards plus one Leader. */
+        if (!leader || total !== 50) {
+          stats.wrongSize++;
+          continue;
+        }
+
+        const resolved = [];
+        for (const c of rest) {
+          const card = byId.get(c.id);
+          if (!card) {
+            stats.unresolved++;
+            continue;
+          }
+          resolved.push({ id: c.id, count: c.count, category: card.category });
+        }
+
+        const leaderCard = byId.get(leader.id);
+        collected.push({
+          id: `${key}-${deck.date}-${deck.player}-${leader.id}`
+            .toLowerCase()
+            .replace(/[^a-z0-9-]+/g, '-'),
+          region: region.id,
+          source: SRC.id,
+          date: deck.date,
+          player: deck.player,
+          country: deck.country,
+          placing: deck.placing,
+          record: deck.record,
+          leaderId: leader.id,
+          leaderName: leaderCard?.name ?? deck.leaderName,
+          colors: leaderCard?.colors ?? [],
+          eventName: deck.host || deck.eventType || `${region.label} event`,
+          eventType: deck.eventType,
+          tier: deck.tier,
+          cards: resolved,
+          total,
+          sourceUrl: deck.page,
+        });
+      }
+    }
+
+    const decks = [...new Map(collected.map((d) => [d.id, d])).values()].sort((a, b) =>
+      b.date.localeCompare(a.date)
+    );
+
+    const meta = {
+      generatedAt: new Date().toISOString(),
+      region: region.id,
+      regionLabel: region.label,
+      source: { id: SRC.id, label: SRC.label, home: SRC.home },
+      counts: {
+        decks: decks.length,
+        pages: stats.pages,
+        archetypes: new Set(decks.map((d) => d.leaderId)).size,
+      },
+      dropped: {
+        wrongSize: stats.wrongSize,
+        unresolvedCards: stats.unresolved,
+        noDate: stats.noDate,
+      },
+      window: { from: decks.at(-1)?.date ?? null, to: decks[0]?.date ?? null },
+      tiers: decks.reduce((tally, d) => {
+        tally[d.tier] = (tally[d.tier] ?? 0) + 1;
+        return tally;
+      }, {}),
+      durationMs: Date.now() - started,
+    };
+
+    await mkdir(DATA, { recursive: true });
+    await writeFile(path.join(DATA, `${region.file}.json`), JSON.stringify({ ...meta, decks }));
+    await writeBrowserIndex(decks, byId, meta, region);
+
+    summary[region.label] = decks.length;
+    log(`  -> ${decks.length} decks, ${meta.counts.archetypes} archetypes, ${meta.window.from} to ${meta.window.to}`);
+    log(`     dropped: ${stats.wrongSize} wrong-size, ${stats.unresolved} unresolved cards, ${stats.noDate} undated`);
+  }
+
+  log('');
+  log(`done in ${((Date.now() - started) / 1000).toFixed(1)}s`);
+  console.table(summary);
+}
+
+/**
+ * The same two-file layout the Limitless corpus uses — a light index for the table
+ * and per-archetype card lists — so the metagame page reads any region through one
+ * code path and pays for card lists only on the archetype it is showing.
+ */
+async function writeBrowserIndex(decks, byId, meta, region) {
+  const dir = path.resolve('public', 'data');
+  const deckDir = path.join(dir, region.file);
+  await mkdir(deckDir, { recursive: true });
+
+  const leaders = {};
+  const cardNames = {};
+  const byLeader = new Map();
+
+  for (const deck of decks) {
+    leaders[deck.leaderId] ??= { n: deck.leaderName, c: deck.colors };
+    for (const card of deck.cards) {
+      cardNames[card.id] ??= [byId.get(card.id)?.name ?? card.id, card.category];
+    }
+    if (!byLeader.has(deck.leaderId)) byLeader.set(deck.leaderId, {});
+    byLeader.get(deck.leaderId)[deck.id] = deck.cards.map((c) => [c.id, c.count]);
+  }
+
+  const index = {
+    generatedAt: meta.generatedAt,
+    region: meta.region,
+    /*
+     * These pages publish decks that *placed*. Share still answers "what is
+     * winning", but a win rate from a winners-only sample would read near 100% and
+     * mean nothing, so the sampling is declared and the interface drops the column.
+     */
+    sampling: 'winners',
+    window: meta.window,
+    /* Release eras are derived from the Limitless corpus, and each region gets its
+       sets on its own date, so none are claimed here rather than borrowing wrong ones. */
+    eras: [],
+    tiers: [
+      { id: 'finals', label: 'Finals' },
+      { id: 'championship', label: 'Championship' },
+      { id: 'regional', label: 'Regional' },
+      { id: 'store', label: 'Shop event' },
+      { id: 'local', label: 'Local' },
+    ],
+    leaders,
+    cards: cardNames,
+    decks: decks.map((d) => ({
+      i: d.id,
+      l: d.leaderId,
+      d: d.date,
+      p: d.placing,
+      w: d.record.wins ?? 0,
+      s: d.record.losses ?? 0,
+      t: d.record.ties ?? 0,
+      n: 0,
+      e: d.eventName,
+      /* Top Decks covers paper events on both sides. */
+      v: 'offline',
+      k: d.tier,
+    })),
+  };
+
+  const json = JSON.stringify(index);
+  await writeFile(path.join(dir, `${region.file}-index.json`), json);
+
+  /* Stale archetype files would silently serve last season's lists. */
+  const existing = await readdir(deckDir).catch(() => []);
+  const wanted = new Set([...byLeader.keys()].map((id) => `${id}.json`));
+  await Promise.all(
+    existing
+      .filter((f) => f.endsWith('.json') && !wanted.has(f))
+      .map((f) => rm(path.join(deckDir, f)))
+  );
+  await Promise.all(
+    [...byLeader.entries()].map(([leaderId, lists]) =>
+      writeFile(path.join(deckDir, `${leaderId}.json`), JSON.stringify(lists))
+    )
+  );
+
+  log(`     index -> public/data/${region.file}-index.json (${(Buffer.byteLength(json) / 1024).toFixed(0)} KB), ${byLeader.size} archetype files`);
+}
+
+main().catch((err) => {
+  console.error('[topdecks] FAILED —', err.message);
+  process.exit(1);
+});

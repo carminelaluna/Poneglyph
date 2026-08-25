@@ -1,0 +1,16 @@
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
+.env*.local
+
+# Mirrored card art — regenerate with `npm run ingest:images`
+public/cards/
+
+# Derived from public/cards by `npm run build:cdn`, uploaded to Cloudflare Pages
+cdn/
+
+# Parked by build-static.mjs while the export runs
+.art-route-parked/

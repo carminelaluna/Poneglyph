@@ -1,0 +1,48 @@
+{
+  "site": "Poneglyph",
+  "language": "english",
+  "generatedAt": "2026-08-25T15:33:40.778Z",
+  "upstreamBuiltAt": "2026-08-21T11:10:21.000Z",
+  "counts": {
+    "cards": 2785,
+    "printings": 4843,
+    "sets": 60,
+    "withEffect": 2785,
+    "withPrice": 2651,
+    "traits": 171,
+    "keywords": 45
+  },
+  "coverage": {
+    "effect": 100,
+    "price": 95.2,
+    "block": 100
+  },
+  "formats": {
+    "standardMinBlock": 2,
+    "note": "Block 1 rotated out of Standard on 1 April 2026",
+    "keptByBlockUpdate": 20,
+    "standardLegal": 2172,
+    "extraOnly": 613
+  },
+  "sources": [
+    {
+      "id": "punk-records",
+      "label": "Punk Records (buhbbl)",
+      "home": "https://github.com/buhbbl/punk-records",
+      "role": "primary"
+    },
+    {
+      "id": "vegapull-records",
+      "label": "Vegapull Records (Coko7)",
+      "home": "https://github.com/Coko7/vegapull-records",
+      "role": "rules text"
+    },
+    {
+      "id": "optcgapi",
+      "label": "OPTCG API",
+      "home": "https://optcgapi.com/",
+      "role": "prices & set names"
+    }
+  ],
+  "durationMs": 13296
+}

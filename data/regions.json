@@ -1,0 +1,40 @@
+{
+  "generatedAt": "2026-08-25T20:13:05.864Z",
+  "regions": [
+    {
+      "id": "EN",
+      "label": "English",
+      "decks": 15092,
+      "recent": 4358,
+      "archived": 10734,
+      "fieldDecks": 9305,
+      "sampling": "mixed",
+      "window": {
+        "from": "2022-10-29",
+        "to": "2026-08-24"
+      },
+      "eras": 43,
+      "sources": [
+        "Limitless",
+        "One Piece Top Decks"
+      ]
+    },
+    {
+      "id": "JP",
+      "label": "Japanese",
+      "decks": 5849,
+      "recent": 573,
+      "archived": 5276,
+      "fieldDecks": 0,
+      "sampling": "winners",
+      "window": {
+        "from": "2022-07-09",
+        "to": "2026-08-24"
+      },
+      "eras": 46,
+      "sources": [
+        "One Piece Top Decks"
+      ]
+    }
+  ]
+}
