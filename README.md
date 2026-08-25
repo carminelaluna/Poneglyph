@@ -167,10 +167,42 @@ the default here because a bad upstream day is then a visible diff and a
 | `npm run build:indexes` | **After any deck ingest** |
 | `npm run ingest:images` | Mirror card art locally |
 | `npm run build:cdn` / `deploy:cdn` | Build the WebP bundle / upload to Cloudflare |
+| `npm run build:static` | `out/` for GitHub Pages. Needs `NEXT_PUBLIC_CDN_URL` |
+| `npm run serve:static` | Serve `out/` on 4322 the way Pages does |
+| `npm run deploy:site` | Push `out/` to the site repository |
 
 ## Deploying
 
-Any Node host. Everything is static except `/art/[id]`, which needs a server the
-first time each image is requested — mirror the art ahead of time and even that
-goes away. Set `NEXT_PUBLIC_SITE_URL` so `sitemap.xml` and `robots.txt` point at
-the real domain. `public/cards` is gitignored; cache it between CI runs.
+**Any Node host.** `npm run build && npm run start`. Everything is static except
+`/art/[id]`, which needs a server the first time each image is requested — mirror
+the art ahead of time and even that goes away.
+
+**GitHub Pages**, with no server at all:
+
+```bash
+npm run build:static     # -> out/, about 580 MB
+npm run serve:static     # check it on :4322 before pushing
+npm run deploy:site      # -> the site repository
+```
+
+That splits the project in two. This repository holds the code and the data and is
+where changes are made; a second one holds `out/` and is what Pages serves. The
+second is rebuilt from scratch each deploy and keeps no history — it is 28,000
+generated files that change twice a day, and the history that matters is here.
+
+Configure it in `.env.local`:
+
+```
+NEXT_PUBLIC_CDN_URL=https://<project>.pages.dev
+NEXT_PUBLIC_SITE_URL=https://<user>.github.io/<site-repo>
+NEXT_PUBLIC_BASE_PATH=/<site-repo>     # only for a project page
+PONEGLYPH_SITE_REMOTE=git@github.com:<user>/<site-repo>.git
+```
+
+The static build needs a CDN — there is no image proxy in an export — and refuses
+to start without one. `serve:static` answers unmatched paths with `404.html` exactly
+as Pages does, which is what the event, player and deck pages rely on; `npm run
+start` resolves routes itself and will happily render pages the export never wrote,
+so it cannot tell you whether the deploy will work.
+
+`public/cards` is gitignored; cache it between CI runs.

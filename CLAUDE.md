@@ -25,6 +25,9 @@ that implies official standing.** `/legal` is the full notice.
 | `npm run ingest:images` | Mirror card art from the official CDN into `public/cards` |
 | `npm run build:cdn` | Convert that mirror to WebP at 3 widths, into `cdn/` |
 | `npm run deploy:cdn` | Upload `cdn/` to Cloudflare Pages |
+| `npm run build:static` | `out/` for GitHub Pages — needs `NEXT_PUBLIC_CDN_URL` |
+| `npm run serve:static` | Serve `out/` on 4322 **the way Pages does** — see below |
+| `npm run deploy:site` | Push `out/` to the site repo |
 
 `build:indexes` is not optional plumbing: it merges the corpora, deduplicates,
 derives release eras, and writes both the browser payloads and
@@ -43,7 +46,11 @@ ingest-spoilers.mjs  leaks    -> data/spoilers.json
 ingest-banlist.mjs   Bandai   -> data/banlist.json
 build-indexes.mjs    all      -> public/data/decks-{en,jp}-{index,archive}.json,
                                 public/data/decks-{en,jp}/*.json,
+                                public/data/{events,players,deck}/*.json (64 each),
+                                public/data/{leaders,card-names}.json,
                                 data/decks-merged.json, data/regions.json
+build-static.mjs     the app  -> out/            (GitHub Pages)
+deploy-site.mjs      out/     -> the site repo
 ```
 
 `data/*.json` is imported at build time. `public/data/*.json` is fetched by the
@@ -110,7 +117,14 @@ because the client grids need them and importing from `cards.ts` would drag 4.4 
 of card JSON into the browser bundle.
 
 With `NEXT_PUBLIC_CDN_URL` unset the proxy answers instead, so a fresh checkout
-works with no CDN configured.
+works with no CDN configured. `build:static` refuses to run without it — there is no
+proxy in an export, so every image would 404.
+
+**Never `fetch('/data/…')`.** Next rewrites `<Link>` hrefs and asset URLs when
+`basePath` is set; it does not touch `fetch`. On a project page that asks the account
+root for a file one directory down and gets the 404 page back — as JSON, which fails
+to parse and reads like a corrupt payload rather than a wrong URL. Everything goes
+through `dataUrl()` in `lib/paths.ts`.
 
 ---
 
@@ -138,6 +152,79 @@ The deploy passes `--branch poneglyph-art` because that is the project's product
 branch: this folder is not a git repo, so without it wrangler cannot infer a branch
 and the upload lands as a *preview* on a different hostname.
 
+## Two repositories
+
+**This one** holds the code, the ingests and the data. It runs with `npm`, it is
+where every change is made, and it is the only history that matters.
+
+**The site repo** holds `out/` and nothing else. `deploy:site` rebuilds it from
+scratch each time — fresh `git init`, one commit, force push — because it is 28,000
+generated files that change twice a day and a history of that is unreadable. Roll
+back by checking out an older commit *here* and building again.
+
+Set the destination in `.env.local`:
+
+```
+PONEGLYPH_SITE_REMOTE=git@github.com:<user>/<site-repo>.git
+PONEGLYPH_SITE_BRANCH=main
+NEXT_PUBLIC_BASE_PATH=/<site-repo>     # only for a project page, not a user page
+```
+
+## The static build
+
+`npm run build:static` is not `npm run build` with a flag — four things have to be
+true that are not true of the server build, and each was found by the deploy
+failing.
+
+**`/art/[id]` cannot exist.** `output: 'export'` refuses to build while any route
+handler does, correctly — nothing can run it. `build-static.mjs` moves it to
+`.art-route-parked` *outside* `src/app` and puts it back in a `finally`. Parking it
+in place does not work: everything under the app directory is a route, dot-prefixed
+or not, and it was collected as `/.art-parked-during-export/[id]`.
+
+**`.next` must be deleted first.** Next caches a type validator naming every route
+it has seen. A cache from a normal build still names the art proxy, and the export
+then fails typechecking on a file that was just moved — reported as a broken import
+inside a generated file.
+
+**`.nojekyll` must be in `out/`.** GitHub Pages runs Jekyll, and Jekyll skips
+anything whose name starts with an underscore. Next puts the whole application in
+`_next/`. Without that file the deploy succeeds and the site is unstyled and inert.
+
+**Prefetch payloads need flattening.** The router asks for
+`/decks/__next.decks.__PAGE__.txt`; the export writes
+`out/decks/__next.decks/__PAGE__.txt`. Segments are joined with dots in the URL and
+slashes on disk, so every prefetch misses — and on a static host a miss is answered
+with the full 40 KB `404.html`. Fifteen links on a page is half a megabyte of error
+pages. The build writes each payload under the flat name too.
+
+`serve:static` is the only way to test this locally. `npm run start` runs the Next
+server, which resolves routes itself and will happily render a page the export never
+wrote.
+
+## Rendered in the browser, not prerendered
+
+`/event/[id]`, `/player/[slug]` and `/deck/[id]` fetch their own data. Prerendering
+all 37,000 costs **5.5 GB** against GitHub Pages' 1 GB; shipping a whole region so a
+page can find its three rows costs 362 KB gzipped to draw one small event.
+
+So `build-indexes.mjs` groups the corpus by entity into **64 buckets** and a page
+pulls the one its id falls in — 11–15 KB. `shardOf` is FNV-1a and exists **twice**,
+in `build-indexes.mjs` and `src/lib/shards.ts`; if they drift every lookup misses and
+every page reads "not found". Same for `playerSlugOf` against `playerSlug` in
+`lib/meta.ts` — note it is *not* the script's `slugify`, which truncates at 48 rather
+than 64.
+
+The prerender lists stay: an event with a real field, a regular, a notable finish.
+What they buy is a 200 and a title written from the data. **Everything else is
+reached through `404.html`**, which reads `location.pathname` and renders the same
+view — a real HTTP 404 under a correct page, which is the trade for not spending the
+5.5 GB. Those pages carry no search value; the Regionals do, and they are prerendered.
+
+`out/cards` holds both the card pages and the mirrored PNGs — `/cards/OP01-025.png`
+beside `/cards/op01-025/`. The build strips the images only; removing the directory
+takes the archive with it.
+
 ## Payload budget
 
 The metagame page is the heaviest thing on the site. Keep it honest.
@@ -149,6 +236,10 @@ The metagame page is the heaviest thing on the site. Keep it honest.
 | `decks-jp-index.json` | 33 KB | Japanese table, last 90 days |
 | `decks-{en,jp}-archive.json` | 219 / 100 KB | fetched only for "All" or an old era |
 | `decks-{en,jp}/{leaderId}.json` | 6–15 KB | one archetype's card lists |
+| `events/{NN}.json` | 11 KB | one event page (64 buckets) |
+| `players/{NN}.json` | 13 KB | one player page (64 buckets) |
+| `deck/{NN}.json` | 15 KB | one decklist's row (64 buckets) |
+| `leaders.json` · `card-names.json` | 1.5 / 19 KB | archetype names · decklist names |
 
 Two things were tried and are worth not repeating: **interning** repeated event and
 player names made the file *larger* (gzip already collapses that), and shipping the
