@@ -4,24 +4,29 @@
  *
  *   npm run deploy:site
  *
- * Two repositories, one source. This one holds the code, the ingests and the data,
- * and is where every change is made. The other holds nothing but the built site and
- * is what GitHub Pages serves.
+ * One repository, two branches, one source.
  *
- * The site repository is rebuilt from scratch on every deploy: a fresh `git init`,
- * one commit, a force push. It keeps no history, deliberately. It is 28,000
- * generated files that change twice a day, and a history of that is unreadable and
- * grows without bound — while the history that matters, of the source and the data
- * the site was built from, is in this repository. Rolling back means checking out
- * an older commit here and building again.
+ *   main-node       the code, the ingests and the data — where changes are made
+ *   main-selfhost   nothing but the built site, which is what GitHub Pages serves
+ *
+ * The site branch is an orphan: it shares no history with main-node, and it is
+ * rebuilt from scratch on every deploy — a fresh `git init`, one commit, a force
+ * push. It keeps no history, deliberately. It is 28,000 generated files that change
+ * twice a day, and a history of that is unreadable and grows without bound, while
+ * the history that matters — of the source and the data the site was built from — is
+ * on main-node. Rolling back means checking out an older commit there and building
+ * again.
+ *
+ * Because it is a force push onto a branch that holds only generated output, it can
+ * never lose work: there is nothing on it that did not come out of a build.
  *
  * Set the destination once, in .env.local:
  *
- *   PONEGLYPH_SITE_REMOTE=git@github.com:<user>/<site-repo>.git
- *   PONEGLYPH_SITE_BRANCH=main          # optional, defaults to main
+ *   PONEGLYPH_SITE_REMOTE=https://github.com/<user>/<repo>.git
+ *   PONEGLYPH_SITE_BRANCH=main-selfhost
  *
- * The repository has to exist first, and GitHub Pages has to be pointed at that
- * branch in its settings — neither is something this script can do.
+ * GitHub Pages has to be pointed at that branch in the repository's settings, which
+ * is not something this script can do.
  */
 
 import { spawnSync } from 'node:child_process';
@@ -65,9 +70,21 @@ async function main() {
 
   if (!remote) {
     console.error(
-      '[deploy] PONEGLYPH_SITE_REMOTE is not set.\n' +
-        '         Create the site repository on GitHub, then put its URL in .env.local:\n' +
-        '           PONEGLYPH_SITE_REMOTE=git@github.com:<user>/<site-repo>.git'
+      '[deploy] PONEGLYPH_SITE_REMOTE is not set. Put it in .env.local:\n' +
+        '           PONEGLYPH_SITE_REMOTE=https://github.com/<user>/<repo>.git\n' +
+        '           PONEGLYPH_SITE_BRANCH=main-selfhost'
+    );
+    process.exit(1);
+  }
+
+  /*
+   * Refuse to overwrite the source. The branch this pushes to is replaced wholesale
+   * by generated output, and aiming that at main-node would delete the project.
+   */
+  if (/^main-node$|^main$|^master$/.test(branch)) {
+    console.error(
+      `[deploy] PONEGLYPH_SITE_BRANCH is "${branch}", which is a source branch.\n` +
+        '         This force-pushes generated output and would erase it. Use main-selfhost.'
     );
     process.exit(1);
   }

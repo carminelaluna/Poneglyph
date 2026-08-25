@@ -13,7 +13,7 @@
  * So this is the only local way to find out whether the deploy will actually work.
  */
 
-import { createReadStream, existsSync, statSync } from 'node:fs';
+import { createReadStream, existsSync, readFileSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import path from 'node:path';
 
@@ -21,6 +21,28 @@ const args = process.argv.slice(2);
 const at = args.indexOf('--port');
 const PORT = Number(at === -1 ? process.env.PORT || 4322 : args[at + 1]);
 const ROOT = path.resolve('out');
+
+/*
+ * The subpath the site is built for, read the way the build reads it.
+ *
+ * With basePath set, the generated HTML asks for /Poneglyph/_next/… while the files
+ * sit at out/_next/…. Serving out/ at the root would answer every one of those with
+ * 404.html and show an unstyled page — which is not what Pages will do, so the test
+ * would be worse than no test. The prefix is stripped here instead, so this mounts
+ * out/ exactly where Pages mounts it.
+ */
+function basePath() {
+  if (process.env.NEXT_PUBLIC_BASE_PATH) return process.env.NEXT_PUBLIC_BASE_PATH;
+  for (const file of ['.env.local', '.env']) {
+    if (!existsSync(file)) continue;
+    const found = /^\s*NEXT_PUBLIC_BASE_PATH\s*=\s*(.*)$/m.exec(readFileSync(file, 'utf8'));
+    if (found) return found[1].trim().replace(/^["']|["']$/g, '');
+  }
+  return '';
+}
+
+const RAW_BASE = basePath();
+const BASE = RAW_BASE ? `/${RAW_BASE.replace(/^\/+|\/+$/g, '')}` : '';
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -40,7 +62,13 @@ const isFile = (p) => existsSync(p) && statSync(p).isFile();
 
 /** Where GitHub Pages would look, in order. */
 function resolve(urlPath) {
-  const clean = decodeURIComponent(urlPath.split('?')[0]);
+  let clean = decodeURIComponent(urlPath.split('?')[0]);
+  /* Anything outside the subpath is not ours — Pages would not serve it either. */
+  if (BASE) {
+    if (clean === BASE) clean = '/';
+    else if (clean.startsWith(`${BASE}/`)) clean = clean.slice(BASE.length);
+    else return { file: path.join(ROOT, '404.html'), status: 404 };
+  }
   const target = path.join(ROOT, path.normalize(clean).replace(/^(\.\.[/\\])+/, ''));
   if (isFile(target)) return { file: target, status: 200 };
   if (isFile(path.join(target, 'index.html'))) return { file: path.join(target, 'index.html'), status: 200 };
@@ -62,5 +90,7 @@ createServer((req, res) => {
   res.writeHead(status, { 'content-type': TYPES[path.extname(file)] ?? 'application/octet-stream' });
   createReadStream(file).pipe(res);
 }).listen(PORT, () => {
-  console.log(`[serve] out/ on http://localhost:${PORT} — unmatched paths get 404.html, as on Pages`);
+  console.log(
+    `[serve] out/ on http://localhost:${PORT}${BASE || ''} — unmatched paths get 404.html, as on Pages`
+  );
 });
