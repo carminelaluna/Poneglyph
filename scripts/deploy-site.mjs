@@ -51,12 +51,14 @@ loadEnvFiles();
 
 const log = (...m) => console.log('[deploy]', ...m);
 
+/*
+ * No shell. With `shell: true` Node concatenates the arguments and hands the string
+ * to cmd.exe unescaped — which is why a commit message with spaces in it arrived as
+ * three separate pathspecs. Node resolves git.exe from PATH on its own, and this way
+ * an argument containing a space is simply an argument containing a space.
+ */
 function git(args, allowFail = false) {
-  const result = spawnSync('git', args, {
-    cwd: OUT,
-    stdio: 'inherit',
-    shell: process.platform === 'win32',
-  });
+  const result = spawnSync('git', args, { cwd: OUT, stdio: 'inherit' });
   if (result.status !== 0 && !allowFail) {
     console.error(`[deploy] git ${args[0]} failed`);
     process.exit(result.status ?? 1);
@@ -109,6 +111,15 @@ async function main() {
   const stamp = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
 
   git(['init', '--quiet', '--initial-branch', branch]);
+
+  /*
+   * Never rewrite line endings. On checkout git would turn LF into CRLF, and Pages
+   * serves what it checks out — that is the RSC payloads and the JSON the pages
+   * read, altered byte for byte on their way to the browser.
+   */
+  git(['config', 'core.autocrlf', 'false']);
+  git(['config', 'core.safecrlf', 'false']);
+
   git(['add', '--all']);
   git(['-c', 'user.name=poneglyph', '-c', 'user.email=deploy@poneglyph.local',
        'commit', '--quiet', '--message', `Site build ${stamp}`]);

@@ -185,19 +185,25 @@ npm run serve:static     # check it on :4322 before pushing
 npm run deploy:site      # -> the site repository
 ```
 
-That splits the project in two. This repository holds the code and the data and is
-where changes are made; a second one holds `out/` and is what Pages serves. The
-second is rebuilt from scratch each deploy and keeps no history — it is 28,000
-generated files that change twice a day, and the history that matters is here.
+One repository, two branches. **`main-node`** holds the code and the data and is
+where changes are made; **`main-selfhost`** holds `out/` and is what Pages serves.
+The second is an orphan branch, rebuilt from scratch each deploy and keeping no
+history — it is 24,000 generated files that change twice a day, and the history that
+matters is on the first.
 
 Configure it in `.env.local`:
 
 ```
 NEXT_PUBLIC_CDN_URL=https://<project>.pages.dev
-NEXT_PUBLIC_SITE_URL=https://<user>.github.io/<site-repo>
-NEXT_PUBLIC_BASE_PATH=/<site-repo>     # only for a project page
-PONEGLYPH_SITE_REMOTE=git@github.com:<user>/<site-repo>.git
+NEXT_PUBLIC_SITE_URL=https://<user>.github.io/<repo>
+NEXT_PUBLIC_BASE_PATH=/<repo>          # only for a project page
+PONEGLYPH_SITE_REMOTE=https://github.com/<user>/<repo>.git
+PONEGLYPH_SITE_BRANCH=main-selfhost
 ```
+
+Then point Pages at `main-selfhost` in the repository's settings. **A private
+repository needs a paid plan for that**; on the free plan the repository has to be
+public.
 
 The static build needs a CDN — there is no image proxy in an export — and refuses
 to start without one. `serve:static` answers unmatched paths with `404.html` exactly

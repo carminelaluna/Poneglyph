@@ -152,23 +152,39 @@ The deploy passes `--branch poneglyph-art` because that is the project's product
 branch: this folder is not a git repo, so without it wrangler cannot infer a branch
 and the upload lands as a *preview* on a different hostname.
 
-## Two repositories
+## One repository, two branches
 
-**This one** holds the code, the ingests and the data. It runs with `npm`, it is
-where every change is made, and it is the only history that matters.
+[carminelaluna/Poneglyph](https://github.com/carminelaluna/Poneglyph).
 
-**The site repo** holds `out/` and nothing else. `deploy:site` rebuilds it from
-scratch each time — fresh `git init`, one commit, force push — because it is 28,000
-generated files that change twice a day and a history of that is unreadable. Roll
-back by checking out an older commit *here* and building again.
+**`main-node`** holds the code, the ingests and the data. It runs with `npm`, it is
+where every change is made, and it is the only history that matters. It is the
+default branch.
 
-Set the destination in `.env.local`:
+**`main-selfhost`** holds `out/` and nothing else — an orphan branch sharing no
+history with `main-node`. `deploy:site` rebuilds it from scratch each time: fresh
+`git init`, one commit, force push. That is safe precisely because nothing on it was
+ever authored; it all came out of a build. Roll back by checking out an older commit
+on `main-node` and building again.
+
+The force push is aimed at a branch name, so `deploy-site.mjs` refuses `main-node`,
+`main` and `master` outright — pointing it at the source would delete the project.
 
 ```
-PONEGLYPH_SITE_REMOTE=git@github.com:<user>/<site-repo>.git
-PONEGLYPH_SITE_BRANCH=main
-NEXT_PUBLIC_BASE_PATH=/<site-repo>     # only for a project page, not a user page
+PONEGLYPH_SITE_REMOTE=https://github.com/carminelaluna/Poneglyph.git
+PONEGLYPH_SITE_BRANCH=main-selfhost
+NEXT_PUBLIC_BASE_PATH=/Poneglyph       # project page; empty for a user page or domain
 ```
+
+**Pages is not on yet, and cannot be.** The repository is private and the account is
+on the free plan; `POST /repos/…/pages` answers *"Your current plan does not support
+GitHub Pages for this repository."* Making it public is the free route, and that is
+the owner's call, not a build step.
+
+**Never `shell: true` when spawning git.** Node concatenates the arguments and hands
+the string to cmd.exe unescaped, so `--message "Site build 2026-08-25T…"` arrived as
+three pathspecs. `deploy-site.mjs` also sets `core.autocrlf=false` on the generated
+repo: Pages serves what it checks out, and CRLF conversion would alter the RSC
+payloads and JSON byte for byte on the way to the browser.
 
 ## The static build
 
