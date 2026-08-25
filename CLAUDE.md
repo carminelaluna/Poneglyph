@@ -378,6 +378,12 @@ the site would sit at the last manual deploy.
 a 300-request budget waits out six rate-limit windows, roughly 30 minutes per run,
 twice a day, and waiting is billed like working.
 
+**Let CI do the deploying.** The build is deterministic for a given Node version but
+not across them: CI pins 22, and building the same commit on 26 produced five
+different app chunks out of twelve — and with them every page that references one.
+CI against CI is byte-identical, which is what keeps the pushes small; a manual
+`deploy:site` from a different Node is a one-off large push, not a broken site.
+
 ---
 
 ## Current shape

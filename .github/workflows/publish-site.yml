@@ -59,7 +59,7 @@ jobs:
       # Always the source branch. A workflow_run event carries the SHA of the run
       # that triggered it, and checking that out would build whatever the ingest
       # started from rather than what it just committed.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: main-node
           # Deep enough to read the published branch's marker file below.
@@ -82,7 +82,7 @@ jobs:
             echo 'skip=true' >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         if: steps.moved.outputs.skip != 'true'
         with:
           node-version: 22
