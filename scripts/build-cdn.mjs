@@ -22,7 +22,7 @@
  * rebuilt, never committed.
  */
 
-import { readdir, mkdir, stat, writeFile } from 'node:fs/promises';
+import { readdir, mkdir, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
 
@@ -135,6 +135,14 @@ export async function onRequest(context) {
   log('NOTE: every request is now a Functions request, capped at 100,000/day on free');
 }
 
+/** Remove the check, so a build without --lock really is a build without it. */
+async function unwriteGuard() {
+  const dir = path.join(OUT, 'functions');
+  if (!(await exists(dir))) return;
+  await rm(dir, { recursive: true, force: true });
+  log('removed the referrer check — requests are static and unmetered again');
+}
+
 const exists = (file) => stat(file).then(() => true).catch(() => false);
 
 async function convert(name) {
@@ -216,7 +224,16 @@ async function main() {
    * by card number and width and never changes, so it can be cached forever.
    */
   await writeFile(path.join(OUT, '_headers'), headers());
+
+  /*
+   * With --lock, write the referrer check; without it, take any previous one away.
+   *
+   * Not just "skip writing it". cdn/ is a directory that survives between builds, so
+   * a plain rebuild after a --lock one left the middleware sitting there and every
+   * request kept costing a Functions invocation — an off switch that only turns on.
+   */
   if (LOCK) await writeGuard();
+  else await unwriteGuard();
 
   const totalFiles = all.length * SIZES.length;
   log(`done in ${((Date.now() - started) / 1000).toFixed(0)}s`);
