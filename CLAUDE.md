@@ -160,6 +160,21 @@ on the way to the one with a destination. `navigator.clipboard` needs a secure
 context and a user gesture, so there is an `execCommand` fallback; a programmatic
 click fails both and that is a test artefact, not a bug.
 
+**The banlist covers the Leader too, and did not.** Two of the five banned cards are
+Leaders, and the banned *pairs* include Leader `OP11-040`, which may not be played
+alongside Charlotte Katakuri or Charlotte Linlin. `validate()` compared the banlist
+only against the fifty, so choosing a banned Leader reported "Legal in Standard". The
+`held` set now starts with the Leader's id.
+
+**Imported counts are not clamped.** A pasted list with six copies keeps six and the
+validator says so — trimming it to four on the way in would hide precisely what the
+reader needs to see. Cards the archive does not have are dropped *and named*.
+
+**The import is a textarea, not a clipboard read.** `navigator.clipboard.readText()`
+needs a secure context and a permission Firefox does not grant to pages, so a button
+that only did that would be dead for a share of readers with no way to tell. The
+clipboard prefills the box where it is allowed.
+
 **The colour rule is a warning, not an error.** Every colour on a card has to be a
 colour on its Leader — checked against 63,155 card-and-leader pairs from recorded
 decks, with not one exception. (Four rows appear to break it and all come from a
