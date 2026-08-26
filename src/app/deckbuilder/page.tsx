@@ -26,14 +26,14 @@ export default function DeckBuilderPage() {
       </p>
 
       {/*
-        No accounts, so no saved decks — and saying so is better than a Save button
-        that turns out to mean "until you clear your browser".
+        Said plainly, because the alternative is someone losing an hour's work to a
+        stray refresh. There is no server here and nothing to save to.
       */}
       <div className="notice">
         <p style={{ margin: 0 }}>
-          <strong>Your deck lives in the address bar.</strong> Copy the URL and you have shared
-          it; the last one you touched is also kept in this browser so a closed tab does not
-          lose it. There are no accounts here and nothing is uploaded.
+          <strong>Nothing is saved — reloading starts over.</strong> Copy the deck for the
+          simulator when you want to keep it. There are no accounts here and nothing is
+          uploaded.
         </p>
       </div>
 

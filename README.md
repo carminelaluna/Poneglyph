@@ -47,11 +47,10 @@ against the previous window, recomputed in the browser.
 tournament standings → back to a card. Every name is a link.
 
 **Build a deck** on `/deckbuilder`: pick a Leader, fill fifty cards from its
-colours, and see copy limits, rotation and the banned list checked as you go. The
-deck lives in the URL, so sharing it is copying the address.
+colours, and see copy limits, rotation and the banned list checked as you go.
+Nothing is saved — one button copies the list for OPTCGSim.
 
-**Export any decklist** in the format OPTCGSim reads, plus one-line, annotated and
-CSV variants.
+**Export any decklist** in the format OPTCGSim reads, straight to the clipboard.
 
 **Find a tournament** on `/events`: every official event Bandai has announced,
 filterable by region and type, with venues, registration links and when

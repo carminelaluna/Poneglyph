@@ -112,11 +112,6 @@ export default function DeckView({ id }: { id: string }) {
    */
   const unnamed = cards.filter((c) => !c.category);
 
-  const names = Object.fromEntries([
-    [deck.l, leaderName],
-    ...cards.map((c) => [c.id, c.name] as const),
-  ]);
-
   return (
     <div className="shell" style={{ paddingBottom: '3rem' }}>
       <div className="arch-head">
@@ -254,12 +249,7 @@ export default function DeckView({ id }: { id: string }) {
           ))}
       </div>
 
-      <DeckExport
-        leaderId={deck.l}
-        cards={cards.map((c) => ({ id: c.id, count: c.count }))}
-        names={names}
-        filename={`${deck.l}-${deck.a}`}
-      />
+      <DeckExport leaderId={deck.l} cards={cards.map((c) => ({ id: c.id, count: c.count }))} />
     </div>
   );
 }

@@ -137,11 +137,19 @@ through `dataUrl()` in `lib/paths.ts`.
 file card search already downloads, the rules are in `lib/deck-rules.ts`, and there
 is no server to save to.
 
-**A deck lives in the address bar and in localStorage**, encoded from the card
-*numbers* — never by looking each one up in the loaded index. Doing that made saving
-depend on a fetch: on the first render after a reload the index was still in flight,
-the encoder returned the empty string, and the effect wrote that over the deck it had
-just restored. The deck was gone before anyone saw it.
+**Nothing persists. Reloading starts an empty deck**, and that is the intended
+behaviour, not an oversight. An earlier version kept the deck in the address bar and
+in localStorage; restoring made "start over" the awkward operation and greeted people
+with a deck they had abandoned. The way to keep a deck is `Copy for simulator`. The
+builder clears the old `poneglyph:deck` key on mount, so that version does not leave
+data behind on machines that opened it.
+
+**Export is one button and one format.** It copies `{count}x{cardId}`, one per line,
+Leader first — what OPTCGSim's *Import from clipboard* reads. The dialog that used to
+be there offered four formats and a download; three of them were choices to read past
+on the way to the one with a destination. `navigator.clipboard` needs a secure
+context and a user gesture, so there is an `execCommand` fallback; a programmatic
+click fails both and that is a test artefact, not a bug.
 
 **The colour rule is a warning, not an error.** Every colour on a card has to be a
 colour on its Leader — checked against 63,155 card-and-leader pairs from recorded

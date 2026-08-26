@@ -13,8 +13,6 @@ import {
   type DeckCard,
   type Leader,
   colorsMatch,
-  decodeDeck,
-  encodeDeck,
   totalCards,
   validate,
 } from '@/lib/deck-rules';
@@ -27,9 +25,8 @@ import { dataUrl } from '@/lib/paths';
  * already downloads, the rules are in lib/deck-rules.ts, and there is nowhere to
  * save to — this site has no server and no accounts.
  *
- * So a deck lives in two places. The address bar holds it, which makes every deck a
- * link you can paste to someone; and localStorage holds the last one, so closing the
- * tab does not throw the work away. Neither is an account, and the page says so.
+ * And nothing is kept between visits. Reloading gives an empty deck; the way to keep
+ * one is to copy it out for the simulator. See the note by the state below.
  */
 
 type Row = {
@@ -37,8 +34,6 @@ type Row = {
   p: number | null; u: number | null; t: string[]; r: string; s: string;
   q: string; f: 0 | 1;
 };
-
-const STORAGE_KEY = 'poneglyph:deck';
 
 const toCard = (row: Row): DeckCard => ({
   id: row.i,
@@ -60,7 +55,6 @@ export default function DeckBuilder() {
   const [counts, setCounts] = useState<Map<string, number>>(new Map());
   const [format, setFormat] = useState<'Standard' | 'Extra'>('Standard');
   const [query, setQuery] = useState('');
-  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -87,39 +81,25 @@ export default function DeckBuilder() {
     };
   }, []);
 
-  /* Restore from the URL first, then from the last session. */
-  useEffect(() => {
-    const fromUrl = new URLSearchParams(globalThis.location.search).get('d');
-    const saved = fromUrl || globalThis.localStorage?.getItem(STORAGE_KEY) || '';
-    const { leaderId: id, counts: held } = decodeDeck(saved);
-    if (id) setLeaderId(id);
-    if (held.size) setCounts(held);
-    setReady(true);
-  }, []);
-
   /*
-   * Encoded from the ids alone, deliberately not from the loaded cards.
+   * Nothing is kept. Reloading the page starts an empty deck, on purpose.
    *
-   * Looking each id up in the card index made this depend on a fetch: on the first
-   * render after a reload the index was still in flight, so this produced the empty
-   * string, the effect below wrote that to the URL and to localStorage, and the deck
-   * that had just been restored was erased before anyone saw it.
+   * An earlier version wrote the deck into the address bar and into localStorage, so
+   * a refresh brought it back. That is the wrong default for a scratchpad: it makes
+   * "start over" the awkward operation, and it means a deck you abandoned weeks ago
+   * is what greets you. The way to keep a deck is to copy it out.
+   *
+   * That version left a key behind in the browsers of everyone who opened it, and
+   * nothing reads it now. Clearing it here is tidying up after ourselves rather than
+   * leaving dead data on someone's machine indefinitely.
    */
-  const encoded = useMemo(() => encodeDeck(leaderId, counts), [leaderId, counts]);
-
   useEffect(() => {
-    if (!ready) return;
-    const params = new URLSearchParams(globalThis.location.search);
-    if (encoded) params.set('d', encoded);
-    else params.delete('d');
-    const qs = params.toString();
-    globalThis.history.replaceState(null, '', qs ? `?${qs}` : globalThis.location.pathname);
     try {
-      globalThis.localStorage?.setItem(STORAGE_KEY, encoded);
+      globalThis.localStorage?.removeItem('poneglyph:deck');
     } catch {
-      /* Private browsing refuses to store. Not a reason to break the builder. */
+      /* Private browsing refuses even to remove. Nothing to do about it. */
     }
-  }, [ready, encoded]);
+  }, []);
 
   const byId = useMemo(() => {
     const map = new Map<string, Row>();
@@ -145,8 +125,8 @@ export default function DeckBuilder() {
 
   const total = totalCards(deck);
   const problems = useMemo(
-    () => (ready && rows ? validate(leader, deck, banlist, format) : []),
-    [ready, rows, leader, deck, banlist, format]
+    () => (rows ? validate(leader, deck, banlist, format) : []),
+    [rows, leader, deck, banlist, format]
   );
 
   const add = useCallback((id: string, by: number) => {
@@ -391,11 +371,6 @@ export default function DeckBuilder() {
           <DeckExport
             leaderId={leader.id}
             cards={deck.map((entry) => ({ id: entry.card.id, count: entry.count }))}
-            names={Object.fromEntries([
-              [leader.id, leader.name],
-              ...deck.map((entry) => [entry.card.id, entry.card.name] as const),
-            ])}
-            filename={`${leader.id}-${leader.name}`}
           />
         ) : null}
       </aside>

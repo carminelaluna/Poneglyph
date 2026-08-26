@@ -155,35 +155,3 @@ export function validate(
 
   return problems;
 }
-
-/* ------------------------------------------------------------- sharing */
-
-/**
- * A deck as a string, for the address bar.
- *
- * `OP16-060|OP16-061x4,OP12-108x2` — the leader, then counts. Long, and readable,
- * which is the point: a link someone pastes into a chat should be inspectable, and
- * compressing it would save a few hundred bytes to make it opaque.
- */
-export function encodeDeck(leaderId: string | null, counts: Iterable<[string, number]>) {
-  if (!leaderId) return '';
-  const cards = [...counts]
-    .filter(([, count]) => count > 0)
-    .map(([id, count]) => `${id}${count > 1 ? `x${count}` : ''}`)
-    .join(',');
-  return cards ? `${leaderId}|${cards}` : leaderId;
-}
-
-export function decodeDeck(text: string): { leaderId: string | null; counts: Map<string, number> } {
-  const counts = new Map<string, number>();
-  if (!text) return { leaderId: null, counts };
-
-  const [leaderId, list = ''] = text.split('|');
-  for (const part of list.split(',').filter(Boolean)) {
-    const [id, times] = part.split('x');
-    const count = Number(times ?? 1);
-    /* Anything unreadable is skipped rather than throwing — this comes from a URL. */
-    if (id && Number.isFinite(count) && count > 0) counts.set(id, Math.min(count, 99));
-  }
-  return { leaderId: leaderId || null, counts };
-}

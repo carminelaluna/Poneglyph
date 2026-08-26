@@ -539,71 +539,12 @@
 
 /* ---------------------------------------------------------------- export */
 
-.export-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-  flex-wrap: wrap;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--edge);
-}
 
-.export-open {
-  padding: 0.6rem 1.15rem;
-  border: 1px solid var(--edge-strong);
-  border-radius: var(--radius);
-  background: var(--slab-lift);
-  color: var(--glyph);
-  font-size: 0.76rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: border-color 0.16s var(--ease), background 0.16s var(--ease);
-}
 
-.export-open:hover {
-  border-color: var(--rune);
-  background: var(--slab-hi);
-}
 
-.export-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: clamp(0.75rem, 4vw, 2.5rem);
-  background: rgba(5, 7, 11, 0.9);
-  backdrop-filter: blur(10px);
-  animation: fade 0.16s var(--ease);
-}
 
-.export-dialog {
-  width: min(100%, 620px);
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: clamp(1rem, 3vw, 1.6rem);
-  border: 1px solid var(--edge-strong);
-  border-radius: 6px;
-  background: linear-gradient(180deg, var(--slab-hi), var(--slab));
-  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.9);
-}
 
-.export-dialog-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
 
-.export-dialog-head h2 {
-  margin: 0;
-  font-size: 1.2rem;
-}
 
 /* One row per format, so the choice explains itself rather than needing a legend. */
 .export-formats {
@@ -646,25 +587,25 @@
   color: var(--glyph-dim);
 }
 
-.export-dialog textarea {
-  width: 100%;
-  min-height: 160px;
-  flex: 1;
-  padding: 0.8rem;
-  border: 1px solid var(--edge);
-  border-radius: var(--radius);
-  background: var(--groove);
-  box-shadow: var(--carve);
-  color: var(--glyph-mid);
-  font-family: var(--font-mono), monospace;
-  font-size: 0.76rem;
-  line-height: 1.6;
-  resize: vertical;
-}
 
-.export-dialog-foot {
+
+/*
+ * Copy for the simulator. One button and a line saying what it gives you — the
+ * dialog that used to sit here offered four formats and a download, which was
+ * three choices to read past on the way to the one with a destination.
+ */
+.deck-export {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.7rem;
   flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.deck-export .muted {
+  font-size: 0.76rem;
+}
+
+.deck-export-button {
+  padding: 0.55rem 1rem;
 }
