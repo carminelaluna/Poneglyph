@@ -65,12 +65,59 @@ function heroCards() {
   return picked;
 }
 
+/** One shelf of sets. The two on the home page differ only by what is in them. */
+function SetShelf({
+  title,
+  sets: shelf,
+  total,
+}: {
+  title: string;
+  sets: typeof sets;
+  total: number;
+}) {
+  if (shelf.length === 0) return null;
+  return (
+    <section className="shell section" style={{ paddingTop: 0 }}>
+      <div className="section-head">
+        <h2 className="display">{title}</h2>
+        <Link href="/sets" className="muted" style={{ fontSize: '0.8rem' }}>
+          All {total} →
+        </Link>
+      </div>
+      <div className="set-shelf">
+        {shelf.map((s) => (
+          <Link key={s.id} href={`/sets/${s.slug}`} className="slab slab-pad">
+            <p className="mono" style={{ margin: 0, fontSize: '0.7rem', color: 'var(--glyph-faint)' }}>
+              {s.code}
+            </p>
+            <p style={{ margin: '0.25rem 0 0.6rem', fontWeight: 500 }}>{s.name}</p>
+            <p className="mono muted" style={{ margin: 0, fontSize: '0.72rem' }}>
+              {s.cardCount} cards · {s.printingCount} printings
+            </p>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function HomePage() {
   const spectrum = colorSpectrum();
   const heroes = heroCards();
   const newest = sets.find((s) => s.group === 'Booster Set');
   const newestCards = newest ? getSetCards(newest.code).slice(0, 12) : [];
-  const boosters = sets.filter((s) => s.group === 'Booster Set').slice(0, 8);
+  /*
+   * Two shelves, because they are two things you buy.
+   *
+   * There used to be one, "Booster sets", showing 17 of the 60 — which left the 36
+   * starter decks, the larger half of the catalogue, off the front page entirely.
+   * Extra and Premium boosters sit with the boosters: they are packs, and nobody
+   * thinks of them as a third category.
+   */
+  const boosters = sets.filter((s) => /Booster/.test(s.group)).slice(0, 8);
+  const starters = sets.filter((s) => s.group === 'Starter Deck').slice(0, 8);
+  const boosterCount = sets.filter((s) => /Booster/.test(s.group)).length;
+  const starterCount = sets.filter((s) => s.group === 'Starter Deck').length;
 
   return (
     <>
@@ -197,33 +244,8 @@ export default function HomePage() {
         </section>
       ) : null}
 
-      <section className="shell section" style={{ paddingTop: 0 }}>
-        <div className="section-head">
-          <h2 className="display">Booster sets</h2>
-          <Link href="/sets" className="muted" style={{ fontSize: '0.8rem' }}>
-            All {meta.counts.sets} sets →
-          </Link>
-        </div>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))',
-            gap: '0.75rem',
-          }}
-        >
-          {boosters.map((s) => (
-            <Link key={s.id} href={`/sets/${s.slug}`} className="slab slab-pad">
-              <p className="mono" style={{ margin: 0, fontSize: '0.7rem', color: 'var(--glyph-faint)' }}>
-                {s.code}
-              </p>
-              <p style={{ margin: '0.25rem 0 0.6rem', fontWeight: 500 }}>{s.name}</p>
-              <p className="mono muted" style={{ margin: 0, fontSize: '0.72rem' }}>
-                {s.cardCount} cards · {s.printingCount} printings
-              </p>
-            </Link>
-          ))}
-        </div>
-      </section>
+      <SetShelf title="Booster sets" sets={boosters} total={boosterCount} />
+      <SetShelf title="Starter decks" sets={starters} total={starterCount} />
     </>
   );
 }

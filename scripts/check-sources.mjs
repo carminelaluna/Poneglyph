@@ -20,7 +20,12 @@ import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const SKIP = new Set(['node_modules', '.next', '.git', 'public']);
-const EXTENSIONS = ['.mjs', '.js', '.ts', '.tsx', '.css', '.yml'];
+/*
+ * .md is in here because CLAUDE.md is the file most likely to catch one: it
+ * *documents* control characters, so writing that paragraph is itself a chance to
+ * paste a real 0x00 into the repo. It did, and this check did not see it.
+ */
+const EXTENSIONS = ['.mjs', '.js', '.ts', '.tsx', '.css', '.yml', '.md'];
 /* Anything in C0 except tab, newline and carriage return. */
 const CONTROL = /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/;
 
