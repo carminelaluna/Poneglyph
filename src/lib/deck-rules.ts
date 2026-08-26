@@ -127,7 +127,23 @@ export function validate(
     });
   }
 
-  const held = new Set(deck.map((entry) => entry.card.id));
+  /*
+   * The Leader is in here too, and that was a real omission.
+   *
+   * Two of the five banned cards *are* Leaders — Nami OP03-040 and Trafalgar Law
+   * ST10-001 — and the banned **pairs** include Leader OP11-040, which may not be
+   * played alongside Charlotte Katakuri or Charlotte Linlin. Checking the banlist
+   * only against the fifty let a banned Leader through reading "Legal in Standard".
+   */
+  const held = new Set([leader.id, ...deck.map((entry) => entry.card.id)]);
+
+  if (banlist.banned.includes(leader.id)) {
+    problems.push({
+      kind: 'error',
+      cardId: leader.id,
+      message: `${leader.name} is banned as a Leader.`,
+    });
+  }
 
   for (const { card, count } of deck) {
     if (count > MAX_COPIES) {

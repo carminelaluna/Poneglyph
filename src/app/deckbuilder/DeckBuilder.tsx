@@ -13,6 +13,7 @@ import {
   type DeckCard,
   type Leader,
   colorsMatch,
+  parseDeckList,
   totalCards,
   validate,
 } from '@/lib/deck-rules';
@@ -64,6 +65,11 @@ export default function DeckBuilder() {
   const [deckName, setDeckName] = useState('');
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  /* Importing a pasted list. */
+  const [importOpen, setImportOpen] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [importNote, setImportNote] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -167,6 +173,65 @@ export default function DeckBuilder() {
     () => (rows ? validate(leader, deck, banlist, format) : []),
     [rows, leader, deck, banlist, format]
   );
+
+  /**
+   * Open the import box, with the clipboard already in it where that is allowed.
+   *
+   * A textarea rather than reading the clipboard straight into the deck.
+   * `navigator.clipboard.readText()` needs a secure context and a permission that
+   * Firefox does not grant to pages at all, so a button that only did that would be
+   * dead for a share of readers with no way to tell. Ctrl+V into a box always works,
+   * and the prefill makes it one click for everyone else.
+   */
+  const openImport = useCallback(async () => {
+    setImportOpen(true);
+    setImportNote(null);
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text.trim()) setImportText(text);
+    } catch {
+      /* Not permitted here. The box is open; paste into it. */
+    }
+  }, []);
+
+  /**
+   * Read a pasted list into the builder.
+   *
+   * Counts are taken as written, **not clamped to four**. Importing a list with six
+   * copies and quietly trimming it to four would hide the very thing the reader
+   * needs to see; the validator says so instead, which is what it is for.
+   */
+  const applyImport = useCallback(() => {
+    const parsed = parseDeckList(importText);
+    if (parsed.length === 0) {
+      setImportNote('Nothing readable in that. Lines look like `4xOP01-025`.');
+      return;
+    }
+
+    const withRows = parsed.map((c) => ({ ...c, row: byId.get(c.id) }));
+    const leaderEntry = withRows.find((c) => c.row?.y === 'Leader');
+    if (!leaderEntry) {
+      setImportNote('No Leader in that list — add the Leader line and try again.');
+      return;
+    }
+
+    setLeaderId(leaderEntry.id);
+    setCounts(
+      new Map(withRows.filter((c) => c !== leaderEntry).map((c) => [c.id, c.count]))
+    );
+    /* An imported list is a new deck until it is saved deliberately. */
+    setSavedId(null);
+    setQuery('');
+    setImportOpen(false);
+    setImportText('');
+
+    const unknown = withRows.filter((c) => !c.row);
+    setImportNote(
+      unknown.length
+        ? `Imported. ${unknown.length} card${unknown.length === 1 ? '' : 's'} not in the archive and left out: ${unknown.map((c) => c.id).join(', ')}.`
+        : null
+    );
+  }, [importText, byId]);
 
   const save = useCallback(async () => {
     if (!userId || !leaderId) return;
@@ -287,7 +352,48 @@ export default function DeckBuilder() {
               </button>
             ))}
           </div>
+
+          <button type="button" className="chip chip-link build-import-open" onClick={openImport}>
+            Import a list
+          </button>
         </div>
+
+        {importOpen ? (
+          <div className="build-import slab slab-pad">
+            <label className="eyebrow" htmlFor="build-import">
+              Paste a decklist — the format the simulator reads, Leader included
+            </label>
+            <textarea
+              id="build-import"
+              className="control build-import-text"
+              rows={7}
+              placeholder={'1xOP01-001\n4xOP01-025\n…'}
+              value={importText}
+              onChange={(e) => setImportText(e.target.value)}
+            />
+            <div className="build-import-actions">
+              <button type="button" className="chip chip-link" onClick={applyImport}>
+                Load it
+              </button>
+              <button
+                type="button"
+                className="build-change"
+                onClick={() => {
+                  setImportOpen(false);
+                  setImportText('');
+                  setImportNote(null);
+                }}
+              >
+                Cancel
+              </button>
+              <span className="muted" style={{ fontSize: '0.72rem' }}>
+                Replaces what is in the builder now.
+              </span>
+            </div>
+          </div>
+        ) : null}
+
+        {importNote ? <p className="build-warning">{importNote}</p> : null}
 
         {!leader ? (
           <>
