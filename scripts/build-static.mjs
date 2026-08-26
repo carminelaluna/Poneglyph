@@ -235,6 +235,20 @@ async function main() {
   await writeFile(path.join(OUT, '.nojekyll'), '');
 
   /*
+   * The custom domain, if there is one.
+   *
+   * GitHub Pages reads it from a CNAME file in the published branch — and adding one
+   * through their settings page writes it into that branch, which deploy-site.mjs
+   * replaces wholesale on the next deploy. The domain would then silently revert.
+   * Written here so it survives, which is the only way it can.
+   */
+  if (process.env.PONEGLYPH_CNAME) {
+    const domain = process.env.PONEGLYPH_CNAME.trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+    await writeFile(path.join(OUT, 'CNAME'), `${domain}\n`);
+    log(`CNAME written for ${domain}`);
+  }
+
+  /*
    * Which source commit this was built from.
    *
    * The publish workflow reads it back off the deployed branch and skips the build

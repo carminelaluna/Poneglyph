@@ -275,6 +275,11 @@ and the upload lands as a *preview* on a different hostname.
 
 ## One repository, two branches
 
+Moving to a custom domain, a different CDN, or a real machine is written up in
+[MIGRATIONS.md](MIGRATIONS.md) — including the trap that a CNAME added through the
+Pages settings screen is erased by the next deploy.
+
+
 [carminelaluna/Poneglyph](https://github.com/carminelaluna/Poneglyph).
 
 **`main-node`** holds the code, the ingests and the data. It runs with `npm`, it is

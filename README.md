@@ -93,6 +93,8 @@ A few decisions are worth knowing, because they change what the numbers mean:
 - **Absent values say "Not recorded"** rather than showing a blank or a zero.
 
 The full reasoning, the invariants and the traps live in [CLAUDE.md](CLAUDE.md).
+Moving the site to a domain of its own, changing CDN, or hosting it on a real
+machine: [MIGRATIONS.md](MIGRATIONS.md).
 
 ---
 
