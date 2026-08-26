@@ -67,7 +67,12 @@ export type PriceMove = {
   percent: number | null;
   low: number;
   high: number;
-  days: number;
+  /** Recorded points — days something moved, not days elapsed. */
+  points: number;
+  firstDay: string;
+  lastDay: string;
+  /** Calendar days the line actually spans, which is the honest x-axis. */
+  span: number;
 };
 
 export function priceMove(series: PricePoint[]): PriceMove | null {
@@ -75,6 +80,9 @@ export function priceMove(series: PricePoint[]): PriceMove | null {
   const from = series[0].price;
   const to = series[series.length - 1].price;
   const values = series.map((p) => p.price);
+  const firstDay = series[0].day;
+  const lastDay = series[series.length - 1].day;
+
   return {
     from,
     to,
@@ -82,7 +90,13 @@ export function priceMove(series: PricePoint[]): PriceMove | null {
     percent: from > 0 ? Math.round(((to - from) / from) * 1000) / 10 : null,
     low: Math.min(...values),
     high: Math.max(...values),
-    days: series.length,
+    points: series.length,
+    firstDay,
+    lastDay,
+    span:
+      Math.round(
+        (Date.parse(`${lastDay}T00:00:00Z`) - Date.parse(`${firstDay}T00:00:00Z`)) / 86_400_000
+      ) + 1,
   };
 }
 
@@ -99,11 +113,45 @@ export function sparkline(series: PricePoint[], width = 120, height = 32): strin
   const high = Math.max(...values);
   const span = high - low;
 
+  /*
+   * Placed by date, not by position. The store records a day because a price moved
+   * on it, so the gaps between them are uneven — spacing the points evenly would
+   * draw a fortnight of stillness and an overnight jump as the same width, which is
+   * the one thing a price chart is read to tell apart.
+   */
+  const first = Date.parse(`${series[0].day}T00:00:00Z`);
+  const last = Date.parse(`${series[series.length - 1].day}T00:00:00Z`);
+  const days = last - first || 1;
+
   return series
     .map((point, i) => {
-      const x = (i / (series.length - 1)) * width;
+      const x = ((Date.parse(`${point.day}T00:00:00Z`) - first) / days) * width;
       const y = span === 0 ? height / 2 : height - ((point.price - low) / span) * height;
       return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
     })
     .join(' ');
+}
+
+/**
+ * What a list would cost to put together, at the lowest listed price.
+ *
+ * Returns the count it could not price as well as the total, because those two
+ * numbers have to be read together: a total that quietly skipped a third of the
+ * deck would look like a bargain rather than like missing data.
+ *
+ * Here rather than in `lib/shards.ts`, where it used to live, for the reason this
+ * whole file exists — that one imports, so nothing in it can be run by a test.
+ */
+export function listPrice(
+  cards: { count: number; price: number | null }[],
+  leader?: { $?: number | null } | null
+) {
+  let total = leader?.$ ?? 0;
+  let unpriced = leader && (leader.$ ?? null) === null ? 1 : 0;
+  for (const card of cards) {
+    if (card.price === null) unpriced += card.count;
+    else total += card.price * card.count;
+  }
+  /* Rounded once, at the end: adding cents and rounding per card drifts. */
+  return { total: Math.round(total * 100) / 100, unpriced };
 }

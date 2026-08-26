@@ -41,23 +41,66 @@ describe('appendPrices', () => {
     assert.equal(out.moved, 1);
   });
 
-  /* The whole point of the sparse store: a stable price costs one point, once. */
-  it('adds no point on a day nothing moved', () => {
+  /*
+   * The whole point of the sparse store: a stable price costs one point, once —
+   * and a day on which nothing moved is not recorded at all.
+   *
+   * That second half is not tidiness. The ingest runs three times a day and this
+   * file is committed by a scheduled job, so appending a date every run would
+   * rewrite it every run: a commit, a rebuild and a deploy of twenty-four thousand
+   * files to publish one longer flat line.
+   */
+  it('records nothing at all on a day nothing moved', () => {
     const day1 = appendPrices(empty(), [card('OP01-025', 1.5)], '2026-08-20');
     const day2 = appendPrices(day1, [card('OP01-025', 1.5)], '2026-08-21');
-    assert.deepEqual(day2.days, ['2026-08-20', '2026-08-21']);
+    assert.deepEqual(day2.days, ['2026-08-20'], 'a quiet day should not extend the list');
     assert.deepEqual(day2.prices['OP01-025'], [[0, 1.5]]);
     assert.equal(day2.moved, 0);
+  });
+
+  it('leaves the file byte-identical when nothing moved', () => {
+    const day1 = appendPrices(empty(), [card('OP01-025', 1.5)], '2026-08-20');
+    const day2 = appendPrices(day1, [card('OP01-025', 1.5)], '2026-08-21');
+    assert.equal(JSON.stringify(day2.days), JSON.stringify(day1.days));
+    assert.equal(JSON.stringify(day2.prices), JSON.stringify(day1.prices));
+  });
+
+  /* Otherwise a fresh archive would have no starting point to fill forward from. */
+  it('records the first day even if there is nothing to compare it against', () => {
+    const out = appendPrices(empty(), [card('OP01-025', null)], '2026-08-20');
+    assert.deepEqual(out.days, ['2026-08-20']);
+    assert.deepEqual(out.prices, {});
   });
 
   it('adds a point on the day a price changed', () => {
     let store: Store = appendPrices(empty(), [card('OP01-025', 1.5)], '2026-08-20');
     store = appendPrices(store, [card('OP01-025', 1.5)], '2026-08-21');
     store = appendPrices(store, [card('OP01-025', 2.25)], '2026-08-22');
+    /* The quiet middle day is absent, so the second point is index 1. */
+    assert.deepEqual(store.days, ['2026-08-20', '2026-08-22']);
     assert.deepEqual(store.prices['OP01-025'], [
       [0, 1.5],
-      [2, 2.25],
+      [1, 2.25],
     ]);
+  });
+
+  /*
+   * The reason the days may be uneven and it still reads correctly: a point is
+   * pinned to the day it was recorded on, whichever days those turn out to be.
+   */
+  it('keeps a card that moves while another does not from drifting', () => {
+    let store: Store = appendPrices(
+      empty(),
+      [card('MOVER', 1), card('STILL', 5)],
+      '2026-08-20'
+    );
+    store = appendPrices(store, [card('MOVER', 2), card('STILL', 5)], '2026-08-25');
+    assert.deepEqual(store.days, ['2026-08-20', '2026-08-25']);
+    assert.deepEqual(store.prices['MOVER'], [
+      [0, 1],
+      [1, 2],
+    ]);
+    assert.deepEqual(store.prices['STILL'], [[0, 5]]);
   });
 
   /*
@@ -90,17 +133,16 @@ describe('appendPrices', () => {
 });
 
 describe('trim', () => {
+  /*
+   * A hundred consecutive recorded days. MOVER changes every day, which is what
+   * puts every date into the list; STILL is set once at the start and never again,
+   * which is the case the trim has to carry forward.
+   */
   const hundredDays = () => {
     let store: Store = empty();
     for (let i = 0; i < 100; i++) {
       const day = new Date(Date.UTC(2026, 4, 1) + i * 86_400_000).toISOString().slice(0, 10);
-      /* One card moves every tenth day, one moved once at the very start. */
-      store = appendPrices(
-        store,
-        [card('MOVER', 1 + Math.floor(i / 10)), card('STILL', 5)],
-        day,
-        1000
-      );
+      store = appendPrices(store, [card('MOVER', 1 + i), card('STILL', 5)], day, 1000);
     }
     return store;
   };

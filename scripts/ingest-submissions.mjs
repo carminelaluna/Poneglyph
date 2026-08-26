@@ -27,6 +27,7 @@
 
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { toDecks } from './submissions.mjs';
 
 const DATA = path.resolve('data');
 
@@ -57,105 +58,6 @@ const URL_BASE = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_U
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const log = (...m) => console.log('[submissions]', ...m);
-
-/** `2026-08-26` from whatever shape the column comes back in. */
-const day = (value) => String(value ?? '').slice(0, 10);
-
-/** Missing values are named, not blanked — the same rule the other ingests follow. */
-const UNKNOWN_PLAYER = 'Not recorded';
-const UNKNOWN_EVENT = 'Event not recorded';
-const named = (value, fallback) => {
-  const text = String(value ?? '').trim();
-  return text && !/^(na|n\/a|unknown|none|null)$/i.test(text) ? text : fallback;
-};
-
-/**
- * Nothing configured at all — a checkout with no Supabase project behind it.
- *
- * That is a real answer rather than a failure, and it is the same answer the site
- * gives: `accountsEnabled` is false, the account page says so, and everything else
- * works. Half-configured is a different thing and is treated as one below.
- */
-const CONFIGURED = Boolean(URL_BASE || KEY);
-
-async function fromSupabase() {
-  if (!URL_BASE || !KEY) {
-    console.error(
-      '[submissions] half configured — ' +
-        `${URL_BASE ? 'the project URL is set but' : 'no project URL, and'} ` +
-        `the service role key is ${KEY ? 'set' : 'missing'}.\n` +
-        '              The key belongs in the workflow secrets — never in .env.local\n' +
-        '              and never under a NEXT_PUBLIC_ name, since anything with that\n' +
-        '              prefix is compiled into the browser bundle. The URL may be read\n' +
-        '              from either SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL.\n' +
-        '              To try the mapping without a database: --fixture <file>'
-    );
-    process.exit(1);
-  }
-
-  /* One request, with the decks embedded, rather than one per submission. */
-  const query =
-    'submissions?status=eq.approved&select=' +
-    encodeURIComponent(
-      'id,event_name,event_date,venue,tier,region,sampling,players,' +
-        'submission_decks(id,player,place,wins,losses,ties,leader_id,cards)'
-    );
-
-  const res = await fetch(`${URL_BASE}/rest/v1/${query}`, {
-    headers: { apikey: KEY, authorization: `Bearer ${KEY}`, accept: 'application/json' },
-  });
-
-  if (!res.ok) {
-    throw new Error(`Supabase answered ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  }
-  return res.json();
-}
-
-/**
- * One submission becomes one event's worth of decks, in the shape the corpus uses.
- *
- * Card names and colours are deliberately absent: build-indexes.mjs resolves those
- * from the card archive, and a name copied in here would be a second copy to go
- * stale when a card is errata'd.
- */
-function toDecks(submission, cardsById) {
-  const rows = submission.submission_decks ?? [];
-  const date = day(submission.event_date);
-  const eventName = named(submission.event_name, UNKNOWN_EVENT);
-
-  return rows.map((row, index) => {
-    const leader = cardsById.get(row.leader_id);
-    return {
-      /* Stable across runs: the same submission re-ingested keeps its deck ids. */
-      id: `c-${submission.id}-${row.id ?? index}`,
-      tournamentId: `c-${submission.id}`,
-      date,
-      leaderId: row.leader_id,
-      leaderName: leader?.name ?? row.leader_id,
-      colors: leader?.colors ?? [],
-      /*
-       * The column is `place`, the corpus field is `placing`. PLACING is a reserved
-       * word in PostgreSQL, so it cannot be a bare column name — see schema.sql.
-       */
-      placing: Number.isFinite(row.place) ? row.place : null,
-      record: {
-        wins: row.wins ?? 0,
-        losses: row.losses ?? 0,
-        ties: row.ties ?? 0,
-      },
-      players: submission.players ?? 0,
-      eventName,
-      player: named(row.player, UNKNOWN_PLAYER),
-      venue: submission.venue || 'unknown',
-      tier: submission.tier || 'local',
-      cards: (row.cards ?? []).map((c) => ({ id: c.id, count: c.count })),
-      /* The organizer's answer, carried per deck like every other source. */
-      sampling: submission.sampling === 'field' ? 'field' : 'winners',
-      region: submission.region === 'JP' ? 'JP' : 'EN',
-      source: 'community',
-    };
-  });
-}
 
 async function main() {
   const started = Date.now();

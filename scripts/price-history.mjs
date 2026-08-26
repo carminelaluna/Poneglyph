@@ -7,10 +7,14 @@
  * dates, which is precisely the failure this repository is most careful about. Here
  * it can be run against a fabricated hundred-day store in a millisecond.
  *
- * The store is **sparse**: `prices[cardId]` is `[[dayIndex, price], …]` with one
- * entry per *change*, so reading a day means the last point at or before it. Dense
- * would be 2,651 numbers a day whether or not anything moved, committed twice a day
- * for ever. `src/lib/prices.ts` is the reader.
+ * The store is **sparse in both directions**. `prices[cardId]` is `[[dayIndex,
+ * price], …]` with one entry per *change*, so reading a day means the last point at
+ * or before it; and `days` holds the days something changed *on*, not the days the
+ * ingest happened to run. Dense would be 2,651 numbers three times a day whether or
+ * not anything moved, committed to a repository that redeploys on every commit.
+ *
+ * The consequence for the reader is that the gaps between days are uneven, which is
+ * why `sparkline` in src/lib/prices.ts places points by date rather than by index.
  */
 
 /** How much history is kept. Ninety days is what the card page draws. */
@@ -30,8 +34,7 @@ export function appendPrices(held, cards, today, keep = PRICE_DAYS) {
 
   /* Two runs in one day update that day rather than adding a second column. */
   const rerun = days.at(-1) === today;
-  if (!rerun) days.push(today);
-  const at = days.length - 1;
+  const at = rerun ? days.length - 1 : days.length;
 
   let moved = 0;
   for (const card of cards) {
@@ -46,6 +49,20 @@ export function appendPrices(held, cards, today, keep = PRICE_DAYS) {
     series.push([at, price]);
     moved++;
   }
+
+  /*
+   * A day is recorded because something moved on it, not because the ingest ran.
+   *
+   * The ingest runs three times a day and this file is committed by a scheduled
+   * job, so appending a date on a day when no price changed would rewrite it — and
+   * a rewritten file is a commit, a rebuild and a deploy of twenty-four thousand
+   * files to publish one longer flat line. That is the exact failure this
+   * repository already removed once; see scripts/substantive-change.mjs.
+   *
+   * The first day is kept whatever happens, so a fresh archive has a starting
+   * point rather than an empty list.
+   */
+  if (!rerun && (moved > 0 || days.length === 0)) days.push(today);
 
   return { ...trim({ days, prices }, keep), moved };
 }

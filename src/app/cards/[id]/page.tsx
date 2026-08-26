@@ -291,9 +291,17 @@ export default async function CardPage({ params }: Params) {
                     )}
                   </span>
                 </div>
+                {/*
+                  The span in days and the number of points are different numbers and
+                  both are printed, because the archive records a day when a price
+                  moved rather than every day it looked: three points across sixty
+                  days is a price that sat still, and saying "3 days" would read as a
+                  chart of last week.
+                */}
                 <p className="muted" style={{ fontSize: '0.74rem', margin: '0.5rem 0 0' }}>
-                  {formatPrice(move.low)}–{formatPrice(move.high)} across {move.days} recorded
-                  {move.days === 1 ? ' day' : ' days'}, lowest listing. From {series[0].day}.
+                  {formatPrice(move.low)}–{formatPrice(move.high)}, lowest listing.{' '}
+                  {move.points} change{move.points === 1 ? '' : 's'} recorded over{' '}
+                  {move.span} day{move.span === 1 ? '' : 's'}, {move.firstDay} to {move.lastDay}.
                 </p>
               </>
             ) : (

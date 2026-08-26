@@ -6,10 +6,10 @@ import DeckExport from '@/components/DeckExport';
 import Pips from '@/components/Pips';
 import { art } from '@/lib/art';
 import { formatRecord, isNamedPlayer, ordinal, playerSlug } from '@/lib/meta';
+import { listPrice } from '@/lib/prices';
 import {
   getDeckCards,
   getDeckRow,
-  listPrice,
   loadLeaders,
   type Leaders,
   type ShardRow,

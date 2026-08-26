@@ -20,7 +20,7 @@ Moving to a domain, another CDN, or a real machine: **[MIGRATIONS.md](MIGRATIONS
 | `npm run dev` | Dev server, port 4321 — **under `NEXT_PUBLIC_BASE_PATH`** |
 | `npm run build` | Server build, ~4,700 pages |
 | `npm run verify` | `check` + `typecheck` + `test` — what CI runs on every push |
-| `npm run check` | Control characters, and reserved SQL column names |
+| `npm run check` | Control characters, reserved SQL column names, recursive policies |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm test` | `node --test` over `tests/*.test.ts` |
 | `npm run ingest` | Cards, and a price point (runs `check` first) |
@@ -41,8 +41,13 @@ Moving to a domain, another CDN, or a real machine: **[MIGRATIONS.md](MIGRATIONS
 | `npm run deploy:site` | Push `out/` to `main-selfhost` |
 
 `build:indexes` is not optional plumbing: it merges the corpora, deduplicates,
-derives release eras, and writes both the browser payloads and
-`data/decks-merged.json`. A deck ingest without it leaves the site on stale data.
+derives release eras, shards the matchups, and writes both the browser payloads and
+`data/decks-merged.json`. A deck or matchup ingest without it leaves the site on
+stale data.
+
+The four modules above the ingests are pure and imported rather than inlined, and
+both properties are load-bearing: shared so two copies cannot drift, pure so a test
+can run them. Every one of them is a place where a number is decided.
 
 ---
 
@@ -51,6 +56,9 @@ derives release eras, and writes both the browser payloads and
 ```
 sources.mjs          every upstream, with its role and limits
 limitless.mjs        the rate limiter and request helper, shared by two ingests
+matchups.mjs         a bracket -> results, and the flip that stores both sides
+price-history.mjs    the append and the ninety-day trim, both pure
+submissions.mjs      an organizer's answer -> corpus rows
 ingest.mjs           cards     -> data/cards|sets|filters|meta.json + cards-index
                                  + data/price-history.json (one point per change)
 ingest-decks.mjs     Limitless -> data/decks|tournaments|decks-state.json
@@ -104,14 +112,36 @@ nothing at all under the Japanese view, because Limitless is an English-corpus
 source and an English table under a Japanese heading would be real matches about a
 different metagame. Mirrors
 are dropped (a deck beats itself half the time) and rows under five games are held
-behind a click — 67% from three games is noise wearing a percentage.
+behind a click — 67% from three games is noise wearing a percentage. A bye has no
+opponent and is dropped with the matches whose other side never submitted a list:
+the missing archetype is genuinely unknown, and inventing one would put matches on a
+deck that never sat at that table.
 
-**Prices are a series now, and it starts the day it started.** `data/price-history.json`
-keeps ninety days, **sparse**: a point exists only for a day a card's price moved,
-so reading a day means the last point at or before it. That is what keeps a file
-committed twice a day from growing without bound. Nothing is back-filled — the
-source publishes a price and a scrape date, not a history — so a card the ingest has
-seen once says so instead of drawing a flat line that would read as a steady price.
+**Each match is stored twice, once from each side**, which is 12 bytes against every
+reader flipping it themselves and one of them getting it backwards. `flip()` lives in
+`scripts/matchups.mjs` and is used by the writer; `tests/matchups.test.ts` reads the
+built payloads back and asserts that every pair agrees — 3,770 ordered pairs, and if
+two ever disagreed the site would report a matchup and its opposite as both winning.
+
+**Prices are a series now, and it is sparse in both directions.**
+`data/price-history.json` keeps ninety days. `prices[cardId]` holds one entry per
+*change*, so reading a day means the last point at or before it — and `days` holds
+the days something moved **on**, not the days the ingest ran. The second half is not
+symmetry for its own sake: the ingest runs three times a day and the file is
+committed by a scheduled job, so appending a date on a quiet day would rewrite it,
+and a rewritten file is a commit, a rebuild and a deploy of 24,000 files to publish
+one longer flat line. That is the failure `substantive-change.mjs` already exists to
+prevent, and the first version of this shipped with it.
+
+The consequence for the reader is that the gaps are uneven, so `sparkline()` places
+points **by date rather than by index**: a fortnight of stillness and an overnight
+jump drawn the same width is the one thing a price chart is read to tell apart. The
+card page prints the number of recorded changes and the days they span as two
+separate figures, because three points across sixty days is a price that sat still.
+
+Nothing is back-filled — the source publishes a price and a scrape date, not a
+history — so a card the ingest has seen once says so instead of drawing a flat line
+that would read as a steady price.
 
 **Regions are separate corpora, not a filter.** English and Japanese have different
 card pools and event structures. Switching region swaps the dataset.
@@ -526,6 +556,15 @@ card ingest. When editing a regex through a script, verify with `grep … | cat 
 a file through a tool can turn `\u0000` escapes into real control characters; the check
 caught itself doing exactly that.
 
+**A policy may not read the table it is on.** Postgres has to evaluate the policy to
+decide whether the policy applies, and refuses — `infinite recursion detected in
+policy for relation "profiles"`. SELECT policies are OR'd, so one of these breaks
+*every* read of that table and every policy elsewhere that asks it a question; the
+symptom surfaces a long way from the cause, and here it was a rename failing. Roles
+go through `public.has_role()` and `public.my_role()`, `security definer` functions
+that run as the owner and so do not re-enter policies. `npm run check` reads every
+`create policy` and refuses the shape.
+
 **PLACING is reserved in PostgreSQL.** A bare `placing integer` column will not parse, and
 the error points at the column name without saying the word is the problem — it belongs to
 `overlay(… placing … from …)`. The column is called `place`, and `ingest-submissions.mjs`
@@ -604,6 +643,17 @@ payload 404ed locally and the card browser, the deck builder and the metagame pa
 all said the archive had failed to load. The proxy fallback in `lib/art.ts` goes
 through `asset()` for the same reason. Dev now serves from the path production
 serves from, which is the same argument `serve:static` already made.
+
+**What a test can reach decides where code lives.** Node resolves neither
+extensionless relative imports nor the `@/…` aliases, so anything a test needs has
+to be free of imports — which is why `deck-rules.ts`, `meta.ts`, `prices.ts`,
+`deck-stats.ts` and `directory.ts` are, and why the fetches for the directories sit
+in `shards.ts` instead. The same rule pushed four things out of scripts that run on
+import: `limitless.mjs` (the rate limiter, shared by two ingests), `price-history.mjs`
+(the append and the trim), `matchups.mjs` (a bracket becoming results, and the flip
+that writes it from both sides) and `submissions.mjs` (an organizer's answer becoming
+corpus rows). Each of those is where a number gets decided, and each was unreachable
+by a test until it moved.
 
 **Tests are TypeScript run straight through `node --test`.** No runner, no
 transform: Node strips the types itself from 22.18, which is what CI pins. Two
@@ -705,4 +755,4 @@ site.
 Standard-legal, 20 via the block exception · 2,651 priced · 21,027 decklists —
 English 15,168 from 2022-10, Japanese 5,859 from 2022-07 · 7,163 tournaments · 8,686
 named players, 2,874 with more than one result · 19,419 recorded matches from 277 brackets · 43/46 release windows ·
-53 dated set releases · 67 announced official events across 6 types · 53 tests.
+53 dated set releases · 67 announced official events across 6 types · 105 tests.

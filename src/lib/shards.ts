@@ -245,24 +245,4 @@ export async function getDeckCards(row: ShardRow) {
   }));
 }
 
-/**
- * What a list would cost to put together, at the lowest listed price.
- *
- * Returns the count it could not price as well as the total, because those two
- * numbers have to be read together: a total that quietly skipped a third of the
- * deck would look like a bargain rather than like missing data.
- */
-export function listPrice(
-  cards: { count: number; price: number | null }[],
-  leader?: { $?: number | null } | null
-) {
-  let total = leader?.$ ?? 0;
-  let unpriced = leader && (leader.$ ?? null) === null ? 1 : 0;
-  for (const card of cards) {
-    if (card.price === null) unpriced += card.count;
-    else total += card.price * card.count;
-  }
-  return { total, unpriced };
-}
-
 export { isNamedPlayer, playerSlug };

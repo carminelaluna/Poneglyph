@@ -31,6 +31,7 @@ import { writeFile, readFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { DECK_SOURCES } from './sources.mjs';
 import { Budget, apiGet } from './limitless.mjs';
+import { toRows } from './matchups.mjs';
 
 const args = process.argv.slice(2);
 const flag = (name, fallback = null) => {
@@ -46,11 +47,6 @@ const OUT = path.join(DATA, 'matchups.json');
 const BUDGET = Number(flag('max', 200));
 const log = (...m) => console.log('[matchups]', ...m);
 
-/** 1 = the first Leader won, 0 = the second did, 2 = a draw or no result. */
-const A_WON = 1;
-const B_WON = 0;
-const DRAW = 2;
-
 const read = async (file, fallback) => {
   try {
     return JSON.parse(await readFile(path.join(DATA, file), 'utf8'));
@@ -58,44 +54,6 @@ const read = async (file, fallback) => {
     return fallback;
   }
 };
-
-/**
- * One tournament's pairings, as Leader-against-Leader rows.
- *
- * A match is kept only when **both** usernames have a decklist on record for that
- * tournament. Limitless publishes pairings for everyone who turned up and decklists
- * only for those who submitted one, so a partial field is normal and the missing
- * side of a match is genuinely unknown — counting it against "unknown" would invent
- * an archetype that never existed.
- */
-function toRows(pairings, leaderByPlayer) {
-  const rows = [];
-  let unknown = 0;
-
-  for (const pairing of pairings) {
-    const a = leaderByPlayer.get(String(pairing.player1 ?? '').toLowerCase());
-    const b = leaderByPlayer.get(String(pairing.player2 ?? '').toLowerCase());
-    if (!a || !b) {
-      unknown++;
-      continue;
-    }
-
-    /* A mirror tells you nothing about either side — 50% by construction. */
-    if (a === b) continue;
-
-    const winner = String(pairing.winner ?? '').toLowerCase();
-    const result =
-      winner === String(pairing.player1 ?? '').toLowerCase()
-        ? A_WON
-        : winner === String(pairing.player2 ?? '').toLowerCase()
-          ? B_WON
-          : DRAW;
-
-    rows.push([a, b, result]);
-  }
-
-  return { rows, unknown };
-}
 
 async function main() {
   const started = Date.now();

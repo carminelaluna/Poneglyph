@@ -28,6 +28,7 @@
 
 import { writeFile, readFile, mkdir, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
+import { flip } from './matchups.mjs';
 
 const DATA = path.resolve('data');
 const PUBLIC = path.resolve('public', 'data');
@@ -545,9 +546,11 @@ async function writeMatchups() {
   };
 
   for (const [day, a, b, result] of held.rows) {
-    /* 1 won, 0 lost, 2 drew — flipped for the second Leader's own file. */
+    /* 1 won, 0 lost, 2 drew — flipped for the second Leader's own file. The flip
+       is imported rather than written again here: two copies of it is how one of
+       them ends up backwards, and a backwards matchup reads as a real result. */
     push(a, [day, b, result]);
-    push(b, [day, a, result === 1 ? 0 : result === 0 ? 1 : 2]);
+    push(b, [day, a, flip(result)]);
   }
 
   await mkdir(dir, { recursive: true });
