@@ -1,31 +1,29 @@
+import { asset } from '@/lib/paths';
+
 /**
- * The mark: a poneglyph — a standing stone with three carved rows of glyphs.
- * The topmost groove is lit with `--rune`, the red poneglyph that carries the
- * information worth keeping.
+ * The mark: a poneglyph — a stone slab carved with blocks in the game's six colours.
+ *
+ * A raster rather than the inline SVG that used to be here. The drawing is full
+ * colour by design, so the `currentColor` the SVG relied on had nothing left to do,
+ * and the artwork is the same file the favicon and the app icons come from — one
+ * drawing, not two that drift.
+ *
+ * Served at 128 for a 26 px slot: nearly five times the pixels, which covers a 2x
+ * and costs 1.7 KB.
+ *
+ * `asset()` because Next rewrites `<Link>` hrefs under a basePath but not the `src`
+ * of an image written by hand — see lib/paths.ts.
  */
-export default function Mark({ size = 22 }: { size?: number }) {
+export default function Mark({ size = 26 }: { size?: number }) {
   return (
-    <svg
+    <img
       className="mark-glyph"
+      src={asset('brand/mark-128.png')}
       width={size}
       height={size}
-      viewBox="0 0 24 24"
-      fill="none"
+      alt=""
       aria-hidden="true"
-      focusable="false"
-    >
-      <path
-        d="M5 21V6.2C5 5.6 5.4 5 6.1 4.8L11.4 3.1a2 2 0 0 1 1.2 0l5.3 1.7c.7.2 1.1.8 1.1 1.4V21"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity="0.85"
-      />
-      <path d="M3.4 21h17.2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-      <path d="M8.3 9.4h7.4" stroke="var(--rune-lit)" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M8.3 13h7.4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.45" />
-      <path d="M8.3 16.6h4.6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.45" />
-    </svg>
+      decoding="async"
+    />
   );
 }

@@ -189,10 +189,16 @@ select {
   flex-shrink: 0;
 }
 
+/*
+ * A touch larger than the line-art mark it replaced. That one was drawn for 22px;
+ * this one is a slab with a 3x3 grid and carved glyph lines, and at 22 it reads as
+ * a coloured smudge. 26 is where the blocks separate.
+ */
 .mark-glyph {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   flex-shrink: 0;
+  border-radius: 3px;
 }
 
 .mark-word {

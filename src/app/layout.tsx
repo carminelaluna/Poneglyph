@@ -36,8 +36,17 @@ const mono = JetBrains_Mono({
   display: 'swap',
 });
 
+/*
+ * Where the site actually is, for the absolute URLs metadata needs.
+ *
+ * This was pinned to poneglyph.gg, a domain that is not in use, so the share image
+ * below would have resolved against a host that does not serve it. It reads the same
+ * variable the sitemap and robots.txt do.
+ */
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://poneglyph.gg';
+
 export const metadata: Metadata = {
-  metadataBase: new URL('https://poneglyph.gg'),
+  metadataBase: new URL(SITE),
   title: {
     default: 'Poneglyph — ONE PIECE CARD GAME archive',
     template: '%s · Poneglyph',
@@ -48,6 +57,12 @@ export const metadata: Metadata = {
     title: 'Poneglyph — ONE PIECE CARD GAME archive',
     description: 'Every card, every printing, every stat. An unofficial fan archive.',
     type: 'website',
+    /*
+     * The mark, not card art. Card images are Bandai's and this is the picture that
+     * gets copied into every link preview, chat unfurl and search result — the one
+     * place where using theirs would look like a claim to be them.
+     */
+    images: [{ url: '/brand/share-1024.png', width: 1024, height: 1024, alt: 'Poneglyph' }],
   },
   robots: { index: true, follow: true },
 };

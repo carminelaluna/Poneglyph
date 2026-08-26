@@ -389,6 +389,17 @@ empty — twenty legal cards silently reported as rotated out. `npm run check` n
 fails on this and runs before the card ingest. When editing a regex through a
 script, verify with `grep … | cat -A`.
 
+**The mark lives in two places, from one drawing.** `src/app/` holds
+`favicon.ico`, `icon.png` and `apple-icon.png` — Next picks those up by filename and
+emits the tags. `public/brand/` holds `mark-128.png` for the header and
+`share-1024.png` for link previews. Source artwork is outside the repo, in
+`Poneglyph Logo Design/icons`; replacing the mark means replacing all five.
+
+The header image goes through `asset()`, not a bare path: Next rewrites `<Link>` hrefs
+under a basePath but not an `<img src>` written by hand. And `metadataBase` reads
+`NEXT_PUBLIC_SITE_URL` — it was pinned to a domain that is not in use, which would
+have pointed every link preview at a host that does not serve the image.
+
 **Rate limit.** Limitless advertises `RateLimit: "50-in-5min"` in its headers. The
 deck ingest reads that header and pauses *before* being refused. Do not raise
 `--max` expecting it to go faster; it will just wait.
