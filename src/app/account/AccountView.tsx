@@ -1,22 +1,21 @@
 'use client';
 
-import type { Session } from '@supabase/supabase-js';
+import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
+import Pips from '@/components/Pips';
+import { art } from '@/lib/art';
+import { loadLeaders, type Leaders } from '@/lib/shards';
 import { accountsEnabled, authRedirectTo, emailAuthEnabled, supabase } from '@/lib/supabase';
+import { deleteDeck, listDecks, useAccount, type SavedDeck } from '@/lib/useAccount';
 
 /**
- * Signing in, and what you see once you are.
+ * Signing in, and what you have once you are.
  *
  * Three ways in, and they are not equivalent. Discord and Google send no mail at
- * all — the provider vouches for the person and nothing has to reach an inbox. Email
- * and password does, for confirmation and for reset, and is hidden until SMTP is
- * configured because an account whose password cannot be reset is a trap.
- *
- * All of it runs in the browser against Supabase. There is no server here to hold a
- * session, which is why the token arrives in the URL fragment.
+ * all — the provider vouches for the person. Email and password does, for
+ * confirmation and for reset, and is hidden until SMTP is configured because an
+ * account whose password cannot be reset is a trap.
  */
-
-type Profile = { display_name: string | null; role: 'user' | 'organizer' };
 
 const PROVIDERS = [
   { id: 'discord', label: 'Continue with Discord' },
@@ -24,50 +23,13 @@ const PROVIDERS = [
 ] as const;
 
 export default function AccountView() {
-  const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [checked, setChecked] = useState(false);
+  const { session, profile, checked, signedIn, signOut } = useAccount();
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mode, setMode] = useState<'in' | 'up'>('in');
-
-  useEffect(() => {
-    const client = supabase();
-    if (!client) {
-      setChecked(true);
-      return;
-    }
-
-    client.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setChecked(true);
-    });
-
-    /* Also fires when the token in the fragment is picked up after a redirect. */
-    const { data: sub } = client.auth.onAuthStateChange((_event, next) => {
-      setSession(next);
-      setChecked(true);
-    });
-    return () => sub.subscription.unsubscribe();
-  }, []);
-
-  /* The profile row is created by a trigger on sign-up, so it is read, never written. */
-  useEffect(() => {
-    const client = supabase();
-    if (!client || !session) {
-      setProfile(null);
-      return;
-    }
-    client
-      .from('profiles')
-      .select('display_name, role')
-      .eq('id', session.user.id)
-      .single()
-      .then(({ data }) => setProfile((data as Profile) ?? null));
-  }, [session]);
 
   const withProvider = useCallback(async (provider: 'discord' | 'google') => {
     const client = supabase();
@@ -122,12 +84,6 @@ export default function AccountView() {
     setBusy(false);
   }, [email]);
 
-  const signOut = useCallback(async () => {
-    await supabase()?.auth.signOut();
-    setSession(null);
-    setProfile(null);
-  }, []);
-
   if (!accountsEnabled) {
     return (
       <p className="empty">
@@ -141,7 +97,7 @@ export default function AccountView() {
 
   /* ------------------------------------------------------------- signed in */
 
-  if (session) {
+  if (signedIn && session) {
     const name =
       profile?.display_name ||
       (session.user.user_metadata?.full_name as string) ||
@@ -149,25 +105,29 @@ export default function AccountView() {
       'Signed in';
 
     return (
-      <div className="account slab slab-pad">
-        <p className="eyebrow">Signed in</p>
-        <h2 className="display" style={{ margin: '0.3rem 0 0', fontSize: '1.3rem' }}>
-          {name}
-        </h2>
-        <p className="muted" style={{ fontSize: '0.8rem', marginTop: '0.4rem' }}>
-          {profile?.role === 'organizer'
-            ? 'Organizer — you can submit tournament results for review.'
-            : 'Player account. Saving decks is coming; submitting tournaments needs the organizer role, which is granted by hand.'}
-        </p>
-        <button
-          type="button"
-          className="chip chip-link"
-          style={{ marginTop: '1.2rem', padding: '0.5rem 0.9rem' }}
-          onClick={signOut}
-        >
-          Sign out
-        </button>
-      </div>
+      <>
+        <div className="account slab slab-pad" style={{ maxWidth: 'none' }}>
+          <p className="eyebrow">Signed in</p>
+          <h2 className="display" style={{ margin: '0.3rem 0 0', fontSize: '1.3rem' }}>
+            {name}
+          </h2>
+          <p className="muted" style={{ fontSize: '0.8rem', marginTop: '0.4rem' }}>
+            {profile?.role === 'organizer'
+              ? 'Organizer — you can submit tournament results for review.'
+              : 'Player account. Submitting tournaments needs the organizer role, which is granted by hand.'}
+          </p>
+          <button
+            type="button"
+            className="chip chip-link"
+            style={{ marginTop: '1.2rem', padding: '0.5rem 0.9rem' }}
+            onClick={signOut}
+          >
+            Sign out
+          </button>
+        </div>
+
+        <SavedDecks />
+      </>
     );
   }
 
@@ -236,5 +196,104 @@ export default function AccountView() {
 
       {notice ? <p className="account-notice">{notice}</p> : null}
     </div>
+  );
+}
+
+/* --------------------------------------------------------------- decks */
+
+/**
+ * The decks on this account.
+ *
+ * Opening one is a link to the builder with its id, rather than a copy of the deck
+ * in the address bar. The builder reads it back from the account, so the link is
+ * short, and it stays correct after the deck is edited.
+ */
+function SavedDecks() {
+  const [decks, setDecks] = useState<SavedDeck[] | null>(null);
+  const [leaders, setLeaders] = useState<Leaders>({});
+  const [error, setError] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<string | null>(null);
+
+  const load = useCallback(() => {
+    Promise.all([listDecks(), loadLeaders()])
+      .then(([rows, table]) => {
+        setDecks(rows);
+        setLeaders(table);
+      })
+      .catch((err: Error) => setError(err.message));
+  }, []);
+
+  useEffect(load, [load]);
+
+  const remove = useCallback(
+    async (id: string, name: string) => {
+      /* Deleting is the one action here that cannot be undone, so it asks. */
+      if (!globalThis.confirm(`Delete “${name}”? This cannot be undone.`)) return;
+      setRemoving(id);
+      try {
+        await deleteDeck(id);
+        setDecks((prev) => prev?.filter((d) => d.id !== id) ?? null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Could not delete.');
+      } finally {
+        setRemoving(null);
+      }
+    },
+    []
+  );
+
+  if (error) return <p className="account-notice">{error}</p>;
+  if (!decks) return <p className="muted" style={{ marginTop: '1.5rem' }}>Loading your decks…</p>;
+
+  return (
+    <section className="section" style={{ paddingBottom: 0 }}>
+      <div className="section-head">
+        <h2 className="display">Your decks</h2>
+        <span className="muted" style={{ fontSize: '0.78rem' }}>
+          {decks.length === 0 ? 'None yet' : `${decks.length} saved`}
+        </span>
+      </div>
+
+      {decks.length === 0 ? (
+        <p className="empty">
+          Nothing saved yet. Build one in the <Link href="/deckbuilder">deck builder</Link> and
+          press Save.
+        </p>
+      ) : (
+        <ul className="saved-decks">
+          {decks.map((deck) => {
+            const leader = leaders[deck.leader_id];
+            const cards = deck.cards.reduce((n, c) => n + c.count, 0);
+            return (
+              <li key={deck.id} className="saved-deck">
+                <Link href={`/deckbuilder?deck=${deck.id}`} className="saved-deck-open">
+                  <img src={art(deck.leader_id, 96)} alt="" loading="lazy" />
+                  <span style={{ minWidth: 0 }}>
+                    <b>{deck.name}</b>
+                    <span className="saved-deck-meta">
+                      <Pips colors={leader?.c ?? []} />
+                      {leader?.n ?? deck.leader_id}
+                      <span className="dot">·</span>
+                      {/* 50 plus the Leader, so an incomplete deck reads as incomplete. */}
+                      <span className={cards === 50 ? undefined : 'muted'}>{cards}/50</span>
+                      <span className="dot">·</span>
+                      {deck.format}
+                    </span>
+                  </span>
+                </Link>
+                <button
+                  type="button"
+                  className="account-link"
+                  disabled={removing === deck.id}
+                  onClick={() => remove(deck.id, deck.name)}
+                >
+                  {removing === deck.id ? 'Deleting…' : 'Delete'}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
   );
 }

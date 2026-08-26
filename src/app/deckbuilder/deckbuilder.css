@@ -258,3 +258,18 @@
     order: -1;
   }
 }
+
+/* Save, above the export. Both are ways of keeping a deck; one needs an account. */
+.build-save {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.8rem;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--slab-hi), var(--slab));
+}
+
+.build-save .chip {
+  justify-content: center;
+  padding: 0.5rem 0.9rem;
+}

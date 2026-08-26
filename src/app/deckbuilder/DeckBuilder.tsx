@@ -17,6 +17,7 @@ import {
   validate,
 } from '@/lib/deck-rules';
 import { dataUrl } from '@/lib/paths';
+import { getDeck, saveDeck, useAccount } from '@/lib/useAccount';
 
 /**
  * Build a deck.
@@ -56,6 +57,14 @@ export default function DeckBuilder() {
   const [format, setFormat] = useState<'Standard' | 'Extra'>('Standard');
   const [query, setQuery] = useState('');
 
+  /* Saving. `savedId` is set when this deck came from — or has been written to —
+     an account, so Save updates that row instead of leaving a trail of copies. */
+  const { signedIn, userId } = useAccount();
+  const [savedId, setSavedId] = useState<string | null>(null);
+  const [deckName, setDeckName] = useState('');
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
+
   useEffect(() => {
     let cancelled = false;
     Promise.all([
@@ -82,7 +91,37 @@ export default function DeckBuilder() {
   }, []);
 
   /*
-   * Nothing is kept. Reloading the page starts an empty deck, on purpose.
+   * `?deck=<id>` opens a saved deck. Not a contradiction of the paragraph below:
+   * that is about not restoring work you did not ask to keep. Reloading this URL
+   * reopens the *saved* version and throws away unsaved edits, which is what
+   * "reload starts over" should mean once a deck has somewhere to live.
+   */
+  useEffect(() => {
+    if (!signedIn) return;
+    const id = new URLSearchParams(globalThis.location.search).get('deck');
+    if (!id) return;
+    let cancelled = false;
+    getDeck(id)
+      .then((deck) => {
+        if (cancelled || !deck) return;
+        setSavedId(deck.id);
+        setDeckName(deck.name);
+        setFormat(deck.format);
+        setLeaderId(deck.leader_id);
+        setCounts(new Map(deck.cards.map((c) => [c.id, c.count])));
+      })
+      .catch(() => {
+        /* Someone else's deck, or a deleted one. An empty builder is the honest
+           result — the row-level policy is what returned nothing. */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [signedIn]);
+
+  /*
+   * Nothing else is kept. Reloading without `?deck=` starts an empty deck, on
+   * purpose.
    *
    * An earlier version wrote the deck into the address bar and into localStorage, so
    * a refresh brought it back. That is the wrong default for a scratchpad: it makes
@@ -128,6 +167,39 @@ export default function DeckBuilder() {
     () => (rows ? validate(leader, deck, banlist, format) : []),
     [rows, leader, deck, banlist, format]
   );
+
+  const save = useCallback(async () => {
+    if (!userId || !leaderId) return;
+    setSaveState('saving');
+    setSaveError(null);
+    try {
+      const id = await saveDeck({
+        id: savedId,
+        userId,
+        /* A deck with no name is still worth keeping; it gets the Leader's. */
+        name: deckName.trim() || leaderRow?.n || 'Untitled deck',
+        leaderId,
+        cards: [...counts.entries()].map(([cardId, count]) => ({ id: cardId, count })),
+        format,
+      });
+      setSavedId(id);
+      setSaveState('saved');
+      /* Put the id in the address bar so a reload reopens what was just saved. */
+      const params = new URLSearchParams(globalThis.location.search);
+      params.set('deck', id);
+      globalThis.history.replaceState(null, '', `?${params.toString()}`);
+    } catch (err) {
+      setSaveState('failed');
+      setSaveError(err instanceof Error ? err.message : 'Could not save.');
+    }
+  }, [userId, leaderId, savedId, deckName, counts, format, leaderRow]);
+
+  /* Say "saved" for a moment, then go back to offering. */
+  useEffect(() => {
+    if (saveState !== 'saved') return;
+    const timer = setTimeout(() => setSaveState('idle'), 2200);
+    return () => clearTimeout(timer);
+  }, [saveState]);
 
   const add = useCallback((id: string, by: number) => {
     setCounts((prev) => {
@@ -368,10 +440,51 @@ export default function DeckBuilder() {
         ))}
 
         {leader && total > 0 ? (
-          <DeckExport
-            leaderId={leader.id}
-            cards={deck.map((entry) => ({ id: entry.card.id, count: entry.count }))}
-          />
+          <>
+            {/*
+              Saving appears only when there is an account to save to. Showing a
+              disabled Save to a signed-out reader would be advertising a feature by
+              greying it out, which is the least useful way to mention it.
+            */}
+            {signedIn ? (
+              <div className="build-save">
+                <input
+                  className="control"
+                  type="text"
+                  placeholder={leaderRow?.n ?? 'Deck name'}
+                  value={deckName}
+                  onChange={(e) => setDeckName(e.target.value)}
+                  aria-label="Deck name"
+                  maxLength={80}
+                />
+                <button
+                  type="button"
+                  className="chip chip-link"
+                  onClick={save}
+                  disabled={saveState === 'saving'}
+                >
+                  {saveState === 'saving'
+                    ? 'Saving…'
+                    : saveState === 'saved'
+                      ? 'Saved'
+                      : savedId
+                        ? 'Update'
+                        : 'Save to account'}
+                </button>
+                {saveError ? <p className="build-error">{saveError}</p> : null}
+                {savedId ? (
+                  <p className="muted" style={{ fontSize: '0.72rem', margin: 0 }}>
+                    <Link href="/account">All your decks</Link>
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
+            <DeckExport
+              leaderId={leader.id}
+              cards={deck.map((entry) => ({ id: entry.card.id, count: entry.count }))}
+            />
+          </>
         ) : null}
       </aside>
     </div>
