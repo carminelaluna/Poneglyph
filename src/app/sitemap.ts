@@ -17,6 +17,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/decks`, lastModified: updated, changeFrequency: 'daily', priority: 0.9 },
     { url: `${BASE}/data`, lastModified: updated, changeFrequency: 'daily', priority: 0.3 },
     { url: `${BASE}/legal`, lastModified: updated, changeFrequency: 'yearly', priority: 0.3 },
+    /* Linked from the footer only, but they are the URLs given to OAuth providers,
+       and a provider checking one should not find it absent from the sitemap. */
+    { url: `${BASE}/privacy`, lastModified: updated, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${BASE}/terms`, lastModified: updated, changeFrequency: 'yearly', priority: 0.3 },
     ...sets.map((s) => ({
       url: `${BASE}/sets/${s.slug}`,
       lastModified: updated,

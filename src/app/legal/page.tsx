@@ -85,35 +85,19 @@ export default function LegalPage() {
       </Section>
 
       {/*
-        Written as what actually happens, not as a template. The site collects
-        nothing from a reader who never signs in — no analytics, no advertising, no
-        cookies — and that is worth stating plainly rather than burying under
-        boilerplate that implies otherwise.
+        The detail moved to /privacy, which is its own page because Discord and
+        Google ask for a privacy URL and want it to be about privacy. A pointer
+        stays here so this page is not the one place it is missing from.
       */}
       <Section title="Your data">
         <p>
-          <strong>Browsing this site collects nothing.</strong> There is no analytics, no
-          advertising, no tracking and no cookie banner, because there is nothing to consent
-          to. Pages are static files and the card and tournament data is fetched from this
-          same site.
+          <strong>Browsing this site collects nothing</strong> — no analytics, no advertising,
+          no tracking and no cookie banner, because there is nothing to consent to. An account
+          is optional and only stores what running it needs.
         </p>
         <p>
-          An account is optional and is only needed to keep decks of your own or, for
-          tournament organizers, to submit results. If you make one, what is stored is an
-          account identifier, the name you signed in with, and whatever you save. Signing in
-          through Discord or Google means no password exists here at all.
-        </p>
-        <p>
-          None of it is sold, shared or used to profile you, and no email is sent beyond what
-          signing in requires. Accounts are held by Supabase, which processes them on our
-          behalf. Ask at the contact address below to see what is stored about you or to have
-          the account and everything in it deleted.
-        </p>
-        <p>
-          Card art shown here is served from our own CDN, so viewing a card tells nobody else
-          that you did. The exception is unreleased-set images on{' '}
-          <a href="/spoilers">Spoilers</a>, which are displayed from One Piece Top Decks&rsquo;
-          servers with attribution rather than copied — loading those reaches their server.
+          The full account of it is on the <a href="/privacy">privacy page</a>, and what is
+          expected of anyone using the site is on the <a href="/terms">terms page</a>.
         </p>
       </Section>
 

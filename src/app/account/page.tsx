@@ -35,7 +35,8 @@ export default function AccountPage() {
           <strong>What is stored:</strong> an account id, the name you sign in with, and the
           decks you choose to save. Nothing is shared with anyone, there is no analytics on
           this site and no advertising. Signing in through Discord or Google means no password
-          exists here to lose. Full terms at <Link href="/legal">legal</Link>.
+          exists here to lose. The detail is on <Link href="/privacy">privacy</Link>, and what
+          is expected of you on <Link href="/terms">terms</Link>.
         </p>
       </div>
 

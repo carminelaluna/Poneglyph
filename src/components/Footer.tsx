@@ -68,7 +68,15 @@ export default function Footer() {
           <div>
             <h3>Legal</h3>
             <ul>
+              {/*
+                Three separate pages, and not in the top nav on purpose. Discord and
+                Google each ask for a privacy URL and a terms URL when you register an
+                OAuth application, and they want two addresses, not one page that also
+                carries the trademark notice.
+              */}
               <li><Link href="/legal">Disclaimer</Link></li>
+              <li><Link href="/privacy">Privacy</Link></li>
+              <li><Link href="/terms">Terms of use</Link></li>
               <li>
                 <a
                   href="https://en.onepiece-cardgame.com/"
