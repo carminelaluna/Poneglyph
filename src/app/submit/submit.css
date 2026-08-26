@@ -1,0 +1,148 @@
+/* Submitting a tournament — see page.tsx and SubmitForm.tsx. */
+
+.submit {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.submit-block h2 {
+  margin: 0 0 0.9rem;
+  font-size: 1.15rem;
+}
+
+.submit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.8rem;
+}
+
+.submit-grid label {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+/*
+ * The sampling question, given a box of its own.
+ *
+ * It is the only field here that changes what the published numbers mean, and it
+ * looks like a formality — so it is asked in sentences with the consequence attached
+ * rather than as a select someone clicks past.
+ */
+.submit-sampling {
+  margin: 1.2rem 0 0;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 0.6rem;
+}
+
+.submit-sampling legend {
+  padding: 0 0.4rem;
+}
+
+.submit-sampling label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+
+.submit-sampling input {
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
+.submit-note {
+  margin: 0.2rem 0 0;
+  font-size: 0.76rem;
+  max-width: 62ch;
+}
+
+.submit-deck {
+  display: grid;
+  gap: 0.7rem;
+  margin-bottom: 0.7rem;
+}
+
+.submit-deck-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.submit-deck-head > .control:first-child {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.submit-narrow {
+  width: 4.5rem;
+  flex: 0 0 auto;
+}
+
+.submit-record {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.submit-list {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+/* What we read back out of the paste, so a mistake is visible before sending. */
+.submit-reading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.76rem;
+}
+
+.submit-leader {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.submit-leader img {
+  width: 1.6rem;
+  border-radius: 0.2rem;
+  border: 1px solid var(--edge);
+}
+
+.submit-ok {
+  color: var(--rune-lit);
+}
+
+/* Amber rather than red: these are things to look at, not refusals. */
+.submit-problem {
+  padding: 0.15rem 0.4rem;
+  color: var(--c-yellow);
+  border: 1px solid color-mix(in srgb, var(--c-yellow) 35%, var(--edge));
+  border-radius: 0.3rem;
+}
+
+.submit-send {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 0.78rem;
+}
+
+.submit-button {
+  padding: 0.6rem 1.1rem;
+}
+
+.submit-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

@@ -228,7 +228,20 @@ out of 16.
 and the nav entry check it — the site was useful before accounts existed and has to
 stay that way rather than advertising a page that says "not set up".
 
-**Still to do:** saving a deck from the builder, and the submission form.
+**Decklists are pasted, not built.** The submission form takes the format OPTCGSim
+reads, which is what this site exports — `parseDeckList` in `lib/deck-rules.ts` is
+the inverse of `DeckExport`. Nobody with a 32-player event is going to click fifty
+cards thirty-two times. The parser is tolerant of the four shapes that turn up in the
+wild, and strips the `_pN` printing suffix: two entries for one playset would each
+look under the copy limit.
+
+**The form checks and refuses nothing.** A 49-card deck, or one naming a card the
+archive has not ingested, is still submittable. Review is the gate, and a form that
+rejected a real result because our data was behind would be strict in the wrong
+direction.
+
+**Still to do:** reviewing submissions is done by hand in the Supabase table editor,
+flipping `status`. Workable at this volume, awkward past it.
 
 ---
 

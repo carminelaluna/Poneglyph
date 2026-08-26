@@ -112,9 +112,14 @@ export default function AccountView() {
             {name}
           </h2>
           <p className="muted" style={{ fontSize: '0.8rem', marginTop: '0.4rem' }}>
-            {profile?.role === 'organizer'
-              ? 'Organizer — you can submit tournament results for review.'
-              : 'Player account. Submitting tournaments needs the organizer role, which is granted by hand.'}
+            {profile?.role === 'organizer' ? (
+              <>
+                Organizer — you can <Link href="/submit">submit tournament results</Link> for
+                review.
+              </>
+            ) : (
+              'Player account. Submitting tournaments needs the organizer role, which is granted by hand.'
+            )}
           </p>
           <button
             type="button"

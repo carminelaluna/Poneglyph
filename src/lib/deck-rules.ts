@@ -62,6 +62,47 @@ export const totalCards = (deck: Counted[]) => deck.reduce((n, entry) => n + ent
 export const colorsMatch = (leader: Leader, card: DeckCard) =>
   card.colors.every((color) => leader.colors.includes(color));
 
+/**
+ * A pasted decklist, back into card numbers and counts.
+ *
+ * The inverse of what `DeckExport` writes, and that is the point: an organizer
+ * collecting lists already has them in the format OPTCGSim reads, and typing fifty
+ * cards into a form thirty-two times is not something anyone will do twice.
+ *
+ * Tolerant on purpose. `4xOP01-025`, `4x OP01-025`, `4 OP01-025` and `OP01-025 x4`
+ * all appear in the wild depending on who exported them, and a leading `1x` for the
+ * Leader may or may not be there. Blank lines, stray commas and comment lines are
+ * skipped rather than rejected — a list that is 49/50 because one line had a typo is
+ * more useful to see than an error saying the whole paste was wrong.
+ */
+export function parseDeckList(text: string): { id: string; count: number }[] {
+  const found = new Map<string, number>();
+
+  for (const raw of String(text ?? '').split(/[\n\r]+/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith('#') || line.startsWith('//')) continue;
+
+    /* `4x OP01-025` and `4 OP01-025`, then `OP01-025 x4`. */
+    const lead = /^(\d{1,2})\s*[x*]?\s+?([A-Za-z]{1,4}\d{2}-\d{3}[A-Za-z0-9_]*)\b/.exec(line)
+      ?? /^(\d{1,2})\s*[x*]\s*([A-Za-z]{1,4}\d{2}-\d{3}[A-Za-z0-9_]*)\b/.exec(line);
+    const trail = lead ? null : /^([A-Za-z]{1,4}\d{2}-\d{3}[A-Za-z0-9_]*)\s*[x*]\s*(\d{1,2})\b/.exec(line);
+
+    /*
+     * Uppercased, and the printing suffix dropped: `OP01-025_p2` is the same card as
+     * `OP01-025` to a deck, and the corpus stores the base number. Keeping the suffix
+     * would split one playset into two entries that each look under the limit.
+     */
+    const id = (lead ? lead[2] : trail?.[1])?.toUpperCase().replace(/_[A-Z]\d*$/, '');
+    const count = Number(lead ? lead[1] : trail?.[2]);
+    if (!id || !Number.isFinite(count) || count < 1) continue;
+
+    /* The same number twice adds up, which is what a split list means. */
+    found.set(id, (found.get(id) ?? 0) + Math.min(count, 99));
+  }
+
+  return [...found.entries()].map(([id, count]) => ({ id, count }));
+}
+
 export function validate(
   leader: Leader | null,
   deck: Counted[],
