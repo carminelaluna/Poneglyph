@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import CardTile from '@/components/CardTile';
+import regionsJson from '@data/regions.json';
 import { pigment } from '@/lib/colors';
 import {
   art,
   artSrcSet,
-  CARD_COLORS,
   cards,
   colorSpectrum,
   getSetCards,
@@ -12,17 +12,57 @@ import {
   sets,
 } from '@/lib/cards';
 
-/** One showcase card per colour: a recent Leader, in its best art. */
+/** When each set arrived, newest first — see the note in build-indexes.mjs. */
+const releases = (regionsJson as { releases?: { code: string; from: string }[] }).releases ?? [];
+
+/**
+ * The six most recently released Leaders, in their best art.
+ *
+ * This used to be one Leader per colour, taken as the last match in `cards` — but
+ * that array is ordered by card number, not by release, so "last" meant the highest
+ * starter-deck number and the fan showed three different Monkey.D.Luffy.
+ *
+ * `data/regions.json` carries a dated, newest-first list of set releases, derived
+ * from when each set first appeared in recorded results. Those are **play dates
+ * rather than print dates** — near enough for "what is new", and the honest thing to
+ * call it, which is why nothing on the page claims a release date.
+ */
 function heroCards() {
-  return CARD_COLORS.map((color) => {
-    const pool = cards.filter(
-      (c) => c.category === 'Leader' && c.colors.length === 1 && c.colors[0] === color
-    );
-    const pick = pool[pool.length - 1] ?? pool[0];
-    if (!pick) return null;
-    const printing = pick.printings.find((p) => p.variant !== 'Regular') ?? pick.printings[0];
-    return { card: pick, artId: printing?.id ?? pick.id };
-  }).filter(Boolean) as { card: (typeof cards)[number]; artId: string }[];
+  const picked: { card: (typeof cards)[number]; artId: string }[] = [];
+  const seen = new Set<string>();
+
+  for (const release of releases) {
+    /* Within one set, low card numbers first — Leaders are numbered from 001. */
+    const leaders = cards
+      .filter((c) => c.category === 'Leader' && c.setCode === release.code)
+      .sort((a, b) => a.id.localeCompare(b.id));
+
+    for (const leader of leaders) {
+      /* The same Leader can be reprinted; show each name once. */
+      if (seen.has(leader.name)) continue;
+      seen.add(leader.name);
+
+      const printing =
+        leader.printings.find((p) => p.variant !== 'Regular') ?? leader.printings[0];
+      picked.push({ card: leader, artId: printing?.id ?? leader.id });
+      if (picked.length === 6) return picked;
+    }
+  }
+
+  /*
+   * A set with no recorded results yet has no date, so it is not in `releases` and
+   * its Leaders are missed. Fill from the card archive rather than showing a short
+   * fan — this only bites on a checkout with no deck data at all.
+   */
+  for (const card of cards) {
+    if (picked.length === 6) break;
+    if (card.category !== 'Leader' || seen.has(card.name)) continue;
+    seen.add(card.name);
+    const printing = card.printings.find((p) => p.variant !== 'Regular') ?? card.printings[0];
+    picked.push({ card, artId: printing?.id ?? card.id });
+  }
+
+  return picked;
 }
 
 export default function HomePage() {

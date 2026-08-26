@@ -91,6 +91,13 @@ player can bring one archetype to two events in a day. Limitless wins the tie.
 arrive in batches; anchoring on the clock would silently empty "last 7 days"
 whenever ingestion paused.
 
+** carries a dated list of releases**, flattened from the eras of
+both regions, newest first. The home page reads it to show the six most recent
+Leaders — the previous version took the last match per colour out of , which
+is ordered by card number rather than by release, so it showed three different
+Monkey.D.Luffy from starter decks. Those are play dates, so nothing on the page
+claims a release date.
+
 **Release eras are derived, never hardcoded.** A date is claimed only when the set
 first appears after the corpus starts, reaches ≥10% of decks in a 7-day stretch,
 *and* brings ≥3 distinct cards. All three matter: ST-01 shipped in 2022, but one of

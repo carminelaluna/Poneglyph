@@ -1,5 +1,272 @@
 {
-  "generatedAt": "2026-08-26T12:27:45.472Z",
+  "generatedAt": "2026-08-26T14:42:33.695Z",
+  "releases": [
+    {
+      "code": "OP-17",
+      "from": "2026-08-17",
+      "kind": "Expansion"
+    },
+    {
+      "code": "ST-32",
+      "from": "2026-07-11",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "ST-31",
+      "from": "2026-07-11",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "ST-34",
+      "from": "2026-07-11",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "ST-33",
+      "from": "2026-07-11",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "OP-16",
+      "from": "2026-05-30",
+      "kind": "Expansion"
+    },
+    {
+      "code": "ST-30",
+      "from": "2026-04-11",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "OP-15",
+      "from": "2026-02-28",
+      "kind": "Expansion"
+    },
+    {
+      "code": "EB-04",
+      "from": "2026-01-05",
+      "kind": "Expansion"
+    },
+    {
+      "code": "ST-29",
+      "from": "2025-12-20",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "OP-14",
+      "from": "2025-11-22",
+      "kind": "Expansion"
+    },
+    {
+      "code": "EB-03",
+      "from": "2025-10-25",
+      "kind": "Expansion"
+    },
+    {
+      "code": "OP-13",
+      "from": "2025-08-23",
+      "kind": "Expansion"
+    },
+    {
+      "code": "PRB-02",
+      "from": "2025-07-26",
+      "kind": "Expansion"
+    },
+    {
+      "code": "ST-23",
+      "from": "2025-07-01",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "ST-27",
+      "from": "2025-06-28",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "ST-25",
+      "from": "2025-06-06",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "ST-26",
+      "from": "2025-06-06",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "ST-24",
+      "from": "2025-06-06",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "OP-12",
+      "from": "2025-05-31",
+      "kind": "Expansion"
+    },
+    {
+      "code": "ST-22",
+      "from": "2025-04-26",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "OP-11",
+      "from": "2025-03-01",
+      "kind": "Expansion"
+    },
+    {
+      "code": "EB-02",
+      "from": "2025-01-25",
+      "kind": "Expansion"
+    },
+    {
+      "code": "ST-21",
+      "from": "2024-12-23",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "OP-10",
+      "from": "2024-11-30",
+      "kind": "Expansion"
+    },
+    {
+      "code": "OP-09",
+      "from": "2024-08-31",
+      "kind": "Expansion"
+    },
+    {
+      "code": "ST-19",
+      "from": "2024-07-30",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "ST-16",
+      "from": "2024-07-24",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "ST-15",
+      "from": "2024-07-14",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "ST-18",
+      "from": "2024-07-13",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "ST-17",
+      "from": "2024-07-13",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "OP-08",
+      "from": "2024-05-22",
+      "kind": "Expansion"
+    },
+    {
+      "code": "ST-14",
+      "from": "2024-05-02",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "OP-07",
+      "from": "2024-02-24",
+      "kind": "Expansion"
+    },
+    {
+      "code": "EB-01",
+      "from": "2024-01-27",
+      "kind": "Expansion"
+    },
+    {
+      "code": "ST-13",
+      "from": "2023-12-24",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "OP-06",
+      "from": "2023-11-23",
+      "kind": "Expansion"
+    },
+    {
+      "code": "ST-12",
+      "from": "2023-10-29",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "ST-11",
+      "from": "2023-10-07",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "OP-05",
+      "from": "2023-08-26",
+      "kind": "Expansion"
+    },
+    {
+      "code": "ST-10",
+      "from": "2023-07-29",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "OP-04",
+      "from": "2023-05-27",
+      "kind": "Expansion"
+    },
+    {
+      "code": "ST-08",
+      "from": "2023-04-09",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "ST-09",
+      "from": "2023-03-25",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "ST-07",
+      "from": "2023-02-11",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "OP-03",
+      "from": "2023-02-11",
+      "kind": "Expansion"
+    },
+    {
+      "code": "OP-02",
+      "from": "2022-11-05",
+      "kind": "Expansion"
+    },
+    {
+      "code": "ST-06",
+      "from": "2022-11-05",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "ST-05",
+      "from": "2022-08-06",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "ST-01",
+      "from": "2022-07-24",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "ST-02",
+      "from": "2022-07-22",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "OP-01",
+      "from": "2022-07-22",
+      "kind": "Expansion"
+    },
+    {
+      "code": "ST-04",
+      "from": "2022-07-22",
+      "kind": "Starter deck"
+    }
+  ],
   "regions": [
     {
       "id": "EN",

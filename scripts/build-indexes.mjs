@@ -645,11 +645,42 @@ async function main() {
   await rm(path.join(PUBLIC, 'decks-index.json')).catch(() => {});
   await rm(path.join(PUBLIC, 'decks'), { recursive: true, force: true }).catch(() => {});
 
+  /*
+   * When each set arrived, newest first — one flat list across both regions.
+   *
+   * The eras are already derived per region and already date-ordered; this only
+   * flattens the ones that share a day (`codes` holds three starter decks released
+   * together) and keeps the earliest date a set appears under, since Japanese
+   * results usually see a set first.
+   *
+   * It is a build-time file so the home page can read it. That page is a server
+   * component and must not import from public/data — see the note at the top of
+   * this script.
+   *
+   * These are **play dates, not print dates**: a set is here from when it showed up
+   * in recorded results. Anything reading it should say "newest" rather than claim a
+   * release date.
+   */
+  const releaseByCode = new Map();
+  for (const region of Object.values(built)) {
+    for (const era of region.eras ?? []) {
+      for (const code of era.codes?.length ? era.codes : [era.code]) {
+        const held = releaseByCode.get(code);
+        if (!held || era.from < held.from) {
+          releaseByCode.set(code, { code, from: era.from, kind: era.kind });
+        }
+      }
+    }
+  }
+  const releases = [...releaseByCode.values()].sort((a, b) => b.from.localeCompare(a.from));
+  log(`${releases.length} set releases dated, newest ${releases[0]?.code} on ${releases[0]?.from}`);
+
   await writeFile(
     path.join(DATA, 'regions.json'),
     JSON.stringify(
       {
         generatedAt: new Date().toISOString(),
+        releases,
         regions: Object.values(built).map((i) => ({
           id: i.region,
           label: i.regionLabel,
