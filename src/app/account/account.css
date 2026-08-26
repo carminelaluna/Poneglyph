@@ -1,0 +1,67 @@
+/* Account — see page.tsx and AccountView.tsx. */
+
+.account {
+  margin-top: 1.5rem;
+  display: grid;
+  gap: 1.2rem;
+  max-width: 26rem;
+}
+
+.account-providers {
+  display: grid;
+  gap: 0.5rem;
+}
+
+/* Full width and plainly labelled: this is the decision the page exists for. */
+.account-provider {
+  justify-content: center;
+  padding: 0.7rem 1rem;
+  font-size: 0.86rem;
+}
+
+.account-email {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.account-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  margin-top: 0.2rem;
+}
+
+.account-actions .chip {
+  padding: 0.5rem 0.9rem;
+}
+
+.account-link {
+  padding: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  font-size: 0.76rem;
+  color: var(--glyph-dim);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.account-link:hover {
+  color: var(--glyph);
+}
+
+/*
+ * Errors from the auth provider land here as well as our own messages, so it is
+ * deliberately neutral rather than red — "check your email to confirm" is not a
+ * failure, and colouring it as one would read as though something went wrong.
+ */
+.account-notice {
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.78rem;
+  color: var(--glyph-mid);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+  background: var(--slab);
+}

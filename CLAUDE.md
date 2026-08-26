@@ -205,11 +205,30 @@ safe to because the policies stand behind it.
 `--fixture <file>` reads a local JSON instead of Supabase, which is how the mapping
 and the merge were tested before any database existed.
 
-**Still to do:** the auth flow, the account pages and the submission form are not
-written. Neither is the privacy notice — the site currently collects *nothing*, no
-analytics and no cookies, and `/legal` says nothing about personal data because there
-is none. Accounts change that, and the notice has to land with them rather than
-after.
+**Sign-in is OAuth first, and that is a constraint rather than a preference.**
+Supabase's built-in mail sends **two messages an hour**, to pre-authorized addresses
+only, and is documented as non-production. Discord and Google send no mail at all —
+the provider vouches for the person — so they work the moment credentials are pasted
+in. Email and password needs confirmation and reset mail, so the form is hidden
+behind `NEXT_PUBLIC_AUTH_EMAIL=1` until a custom SMTP provider exists: an account
+whose password cannot be reset is a trap, not a feature. (Resend's free tier is 3,000
+a month and 100 a day, far more than this needs.)
+
+The token comes back in the URL **fragment**, which browsers never send to a server.
+That is what makes this work on GitHub Pages with nothing running behind it. Every
+value `authRedirectTo()` can produce has to be in Supabase's redirect allowlist, and
+it is built from `location.origin` so localhost and the live site both work.
+
+`lib/supabase.ts` is imported **only** by the pages under `/account`. The library is
+around 100 KB against a site measured in tens, and importing it from a shared
+component or the layout would put it on every page; measured, it reaches 2 chunks
+out of 16.
+
+`accountsEnabled` is false on a checkout with no project, and both the account page
+and the nav entry check it — the site was useful before accounts existed and has to
+stay that way rather than advertising a page that says "not set up".
+
+**Still to do:** saving a deck from the builder, and the submission form.
 
 ---
 

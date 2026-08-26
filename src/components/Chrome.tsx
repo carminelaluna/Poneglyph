@@ -4,6 +4,16 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Mark from './Mark';
 
+/*
+ * Account is here only when there is a Supabase project behind it. The variable is
+ * inlined at build time, so a deployment without accounts does not advertise a page
+ * whose only content would be "not set up" — and the rest of the site never needed
+ * one anyway.
+ */
+const ACCOUNTS = Boolean(
+  process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+
 const NAV = [
   { href: '/cards', label: 'Cards' },
   { href: '/deckbuilder', label: 'Build' },
@@ -11,6 +21,7 @@ const NAV = [
   { href: '/events', label: 'Events' },
   { href: '/spoilers', label: 'Spoilers' },
   { href: '/banlist', label: 'Banlist' },
+  ...(ACCOUNTS ? [{ href: '/account', label: 'Account' }] : []),
 ];
 
 /*
