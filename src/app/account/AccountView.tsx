@@ -187,12 +187,19 @@ export default function AccountView() {
           <p className="muted" style={{ fontSize: '0.8rem', marginTop: '0.4rem' }}>
             {profile?.role === 'organizer' ? (
               <>
-                Organizer — you can <Link href="/submit">submit tournament results</Link> for
-                review.
+                Organizer — you can{' '}
+                <Link href="/submit" className="inline-link">
+                  submit tournament results
+                </Link>{' '}
+                for review.
               </>
             ) : profile?.role === 'admin' ? (
               <>
-                Reviewer — <Link href="/review">submissions waiting for review</Link>.
+                Reviewer —{' '}
+                <Link href="/review" className="inline-link">
+                  submissions waiting for review
+                </Link>
+                .
               </>
             ) : (
               'Player account. Submitting tournaments needs the organizer role, which is granted by hand.'

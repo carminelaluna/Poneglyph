@@ -77,6 +77,25 @@ a {
   text-decoration: none;
 }
 
+/*
+ * A link inside a sentence, where inheriting the colour of the prose would make it
+ * unfindable. Most links here sit in a nav, a card or a table row and are obvious
+ * from where they are; these are the ones that are not — and /review in particular
+ * is reachable from exactly one sentence, since it is not in the nav, not in the
+ * footer, and noindex.
+ *
+ * Matches .link-btn, so a link and a button that do the same thing look the same.
+ */
+.inline-link {
+  color: var(--glyph);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.inline-link:hover {
+  color: var(--rune-lit);
+}
+
 img {
   max-width: 100%;
   display: block;
