@@ -29,9 +29,12 @@ jobs:
         run: |
           git config user.name 'poneglyph-bot'
           git config user.email 'poneglyph-bot@users.noreply.github.com'
-          git add data/spoilers.json public/data/spoilers.json
+          git add data public/data
           # generatedAt changes every run, so compare the payload without it.
-          if git diff --cached --quiet -- data/spoilers.json; then
+          # spoilers.json carries generatedAt, so it differs on every run whether or
+          # not a reveal moved. Comparing it directly meant committing four times a
+          # day and rebuilding the whole site to publish a new timestamp.
+          if ! node scripts/substantive-change.mjs; then
             git reset
             echo 'No new reveals.'
             exit 0

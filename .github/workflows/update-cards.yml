@@ -59,7 +59,10 @@ jobs:
           git config user.name 'poneglyph-bot'
           git config user.email 'poneglyph-bot@users.noreply.github.com'
           git add data public/data
-          if git diff --cached --quiet; then
+          # meta.json is stamped on every run, so this asks whether anything other
+          # than a timestamp moved.
+          if ! node scripts/substantive-change.mjs; then
+            git reset
             echo 'Upstream moved but nothing changed in the merged output.'
             exit 0
           fi

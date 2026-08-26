@@ -357,9 +357,15 @@ Pre-release art is not ours to re-host.
 
 `update-cards` (daily, gated on `ingest.mjs --check` which exits 3 when current),
 `refresh-prices` (2×/day), `update-decks` (2×/day), `update-rules` (8h),
-`update-spoilers` (6h). Each commits only when the substantive files changed —
-`meta.json` carries a fresh timestamp every run and must be excluded from that
-comparison.
+`update-spoilers` (6h). Each commits only when something substantive changed, which
+is **`node scripts/substantive-change.mjs`** — stage everything, then ask.
+
+Naming the files that lack a timestamp does not work, and had already failed twice.
+`spoilers.json`, `banlist.json`, `regions.json` and `meta.json` all carry
+`generatedAt` and `durationMs`, so three workflows committed on *every* run and each
+commit rebuilt and redeployed the whole site to publish a new timestamp: spoilers
+four times a day, rules three, prices twice. The two that did name files instead
+went stale the moment the per-entity shards appeared and were not on the list.
 
 **Always `git add data public/data`.** Two workflows did not: `update-decks` staged
 only `data/`, and `update-rules` named individual files, an list that went stale the

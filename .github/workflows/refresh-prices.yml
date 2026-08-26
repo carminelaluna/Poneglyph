@@ -34,9 +34,10 @@ jobs:
           git config user.name 'poneglyph-bot'
           git config user.email 'poneglyph-bot@users.noreply.github.com'
           git add data public/data
-          # meta.json carries a fresh timestamp on every run, so it is excluded
-          # from the comparison — otherwise every run would look like a change.
-          if git diff --cached --quiet -- data/cards.json data/filters.json data/sets.json public/data; then
+          # meta.json carries a fresh timestamp on every run, so this compares the
+          # content with those fields stripped rather than naming files to skip —
+          # the naming approach missed the browser payloads, which are stamped too.
+          if ! node scripts/substantive-change.mjs; then
             git reset
             echo 'No price movement.'
             exit 0

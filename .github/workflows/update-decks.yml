@@ -68,7 +68,10 @@ jobs:
           # the site serving the previous ingest.
           git add data public/data
           # decks-meta.json changes on every run; only commit if real data moved.
-          if git diff --cached --quiet -- data/decks.json data/archetypes.json data/tournaments.json data/card-play.json; then
+          # This named the four files without timestamps, which was right until the
+          # per-entity shards arrived and were not in the list — the same way the
+          # `git add` above went stale. Asking the question directly survives that.
+          if ! node scripts/substantive-change.mjs; then
             git reset
             echo 'No new decklists.'
             exit 0

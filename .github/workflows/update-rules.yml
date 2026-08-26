@@ -39,7 +39,10 @@ jobs:
           # moment build-indexes.mjs started writing the per-entity shards, and a
           # missing payload does not fail anything — the page just says "not found".
           git add data public/data
-          if git diff --cached --quiet; then
+          # banlist.json and regions.json are both stamped with generatedAt, so a
+          # plain diff reported a change on every run.
+          if ! node scripts/substantive-change.mjs; then
+            git reset
             echo 'Nothing changed.'
             exit 0
           fi
