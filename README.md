@@ -46,6 +46,10 @@ against the previous window, recomputed in the browser.
 **Follow the thread.** Archetype → decklist → player → their other events →
 tournament standings → back to a card. Every name is a link.
 
+**Build a deck** on `/deckbuilder`: pick a Leader, fill fifty cards from its
+colours, and see copy limits, rotation and the banned list checked as you go. The
+deck lives in the URL, so sharing it is copying the address.
+
 **Export any decklist** in the format OPTCGSim reads, plus one-line, annotated and
 CSV variants.
 

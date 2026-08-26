@@ -1,0 +1,260 @@
+/* Deck builder — see page.tsx and DeckBuilder.tsx. */
+
+/*
+ * Pool on the left, deck on the right, and the deck column stays put while the pool
+ * scrolls. Building is a loop of "look at a card, look at the count" and a running
+ * total that scrolls out of sight is the one thing that has to not happen.
+ */
+.build {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 21rem;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  align-items: start;
+}
+
+.build-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+}
+
+.build-search {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.build-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.4rem, 1fr));
+  gap: 0.55rem;
+}
+
+.build-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.build-tile img {
+  width: 100%;
+  aspect-ratio: 600 / 838;
+  object-fit: cover;
+  border-radius: 0.4rem;
+  border: 1px solid var(--edge);
+  transition: border-color 0.15s var(--ease), transform 0.15s var(--ease);
+}
+
+.build-tile:hover img,
+.build-tile:focus-visible img {
+  border-color: var(--rune);
+  transform: translateY(-2px);
+}
+
+.build-tile-held img {
+  border-color: var(--rune-lit);
+}
+
+.build-tile-name {
+  font-size: 0.68rem;
+  line-height: 1.25;
+  color: var(--glyph-mid);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* How many are in the deck, over the art, so the pool shows the deck's state. */
+.build-count {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  min-width: 1.35rem;
+  padding: 0.1rem 0.3rem;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.72rem;
+  text-align: center;
+  color: var(--void);
+  background: var(--rune-lit);
+  border-radius: 0.3rem;
+}
+
+.build-deck {
+  position: sticky;
+  top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+}
+
+.build-leader {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+}
+
+.build-leader img {
+  width: 4.2rem;
+  border-radius: 0.35rem;
+  border: 1px solid var(--edge);
+}
+
+.build-leader-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.2rem;
+  font-size: 0.76rem;
+  color: var(--glyph-mid);
+}
+
+.build-change {
+  margin-top: 0.5rem;
+  padding: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  font-size: 0.72rem;
+  color: var(--glyph-dim);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.build-change:hover {
+  color: var(--glyph);
+}
+
+.build-total {
+  margin: 0.9rem 0 0;
+  font-size: 1.5rem;
+  color: var(--glyph-dim);
+}
+
+.build-total-ok {
+  color: var(--rune-lit);
+}
+
+.build-problems {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.74rem;
+}
+
+/*
+ * An error is a rule broken; a warning is something every recorded deck obeys but
+ * that a card's own text could permit. They are coloured apart because acting on
+ * them is different: one you must fix, the other you check.
+ */
+.build-error,
+.build-warning {
+  padding: 0.4rem 0.55rem;
+  border-radius: 0.35rem;
+  border: 1px solid var(--edge);
+}
+
+.build-error {
+  color: var(--c-red);
+  border-color: color-mix(in srgb, var(--c-red) 40%, var(--edge));
+}
+
+.build-warning {
+  color: var(--c-yellow);
+  border-color: color-mix(in srgb, var(--c-yellow) 35%, var(--edge));
+}
+
+.build-legal {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--rune-lit);
+}
+
+.build-group h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--glyph-faint);
+}
+
+.build-group ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.build-group li {
+  display: grid;
+  grid-template-columns: auto 1.5rem minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+}
+
+.build-copies {
+  text-align: center;
+  color: var(--glyph-mid);
+}
+
+.build-card-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.build-cost {
+  font-size: 0.72rem;
+}
+
+.build-step {
+  width: 1.3rem;
+  height: 1.3rem;
+  padding: 0;
+  font: inherit;
+  font-size: 0.85rem;
+  line-height: 1;
+  color: var(--glyph-mid);
+  background: var(--slab-hi);
+  border: 1px solid var(--edge);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.build-step:hover:not(:disabled) {
+  color: var(--glyph);
+  border-color: var(--rune);
+}
+
+.build-step:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+@media (max-width: 60rem) {
+  .build {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Stuck to the bottom of the viewport instead, so the total stays in sight. */
+  .build-deck {
+    position: static;
+    max-height: none;
+    order: -1;
+  }
+}

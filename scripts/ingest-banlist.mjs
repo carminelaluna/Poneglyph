@@ -167,6 +167,25 @@ async function main() {
   await mkdir(DATA, { recursive: true });
   await writeFile(path.join(DATA, 'banlist.json'), JSON.stringify(payload, null, 2));
 
+  /*
+   * And a copy the browser can read. The deck builder validates against it while you
+   * are choosing cards, which is the moment it is worth knowing — the /banlist page
+   * imports the build-time file and does not need this one.
+   *
+   * Only the card numbers travel. The full entries carry names, colours and set data
+   * the builder already has from the card index.
+   */
+  const ids = {
+    generatedAt: payload.generatedAt,
+    effectiveFrom: payload.effectiveFrom ?? null,
+    banned: (payload.banned ?? []).map((c) => c.id),
+    restricted: (payload.restricted ?? []).map((c) => c.id),
+    /* Cards that may not be played together, as pairs of card numbers. */
+    pairs: (payload.pairs ?? []).map((pair) => pair.map((c) => c.id)),
+  };
+  await mkdir(path.resolve('public', 'data'), { recursive: true });
+  await writeFile(path.resolve('public', 'data', 'banlist.json'), JSON.stringify(ids));
+
   log(`done in ${((Date.now() - started) / 1000).toFixed(1)}s`);
   log(`effective from ${payload.effectiveFrom ?? 'unknown'}`);
   console.table(payload.counts);

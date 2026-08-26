@@ -131,6 +131,37 @@ through `dataUrl()` in `lib/paths.ts`.
 
 ---
 
+## Deck builder
+
+`/deckbuilder` builds a deck in the page: the card index it reads is the same 176 KB
+file card search already downloads, the rules are in `lib/deck-rules.ts`, and there
+is no server to save to.
+
+**A deck lives in the address bar and in localStorage**, encoded from the card
+*numbers* — never by looking each one up in the loaded index. Doing that made saving
+depend on a fetch: on the first render after a reload the index was still in flight,
+the encoder returned the empty string, and the effect wrote that over the deck it had
+just restored. The deck was gone before anyone saw it.
+
+**The colour rule is a warning, not an error.** Every colour on a card has to be a
+colour on its Leader — checked against 63,155 card-and-leader pairs from recorded
+decks, with not one exception. (Four rows appear to break it and all come from a
+single decklist whose data is wrong: that Leader is mono-Purple in its other 63
+decks.) It stays a warning because `P-117 Nami` carries a deckbuilding clause in its
+own text and a future Leader can too. Refusing the card would be confidently wrong;
+flagging it is only noisy.
+
+Errors are what the rules state and this data can check — fifty cards, four copies of
+a card number, the banned list, rotation. `ingest-banlist.mjs` writes a
+numbers-only copy to `public/data/banlist.json` for this; the `/banlist` page imports
+the build-time file and does not need it.
+
+**Sets is not in the nav.** Browsing by set is a filter on the card archive and
+`/cards` already has that facet — two menu entries answering one question. The set
+pages stay, linked from every card and from the footer.
+
+---
+
 ## Card art
 
 | | |

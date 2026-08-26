@@ -6,12 +6,18 @@ import Mark from './Mark';
 
 const NAV = [
   { href: '/cards', label: 'Cards' },
+  { href: '/deckbuilder', label: 'Build' },
   { href: '/decks', label: 'Metagame' },
-  { href: '/sets', label: 'Sets' },
   { href: '/events', label: 'Events' },
   { href: '/spoilers', label: 'Spoilers' },
   { href: '/banlist', label: 'Banlist' },
 ];
+
+/*
+ * Sets is not here either. Browsing by set is a filter on the card archive, and
+ * /cards already has that facet — two entries for one question. The set pages stay,
+ * linked from every card and from the footer, since a set has a page worth reading.
+ */
 
 /*
  * Data and Legal are not here. They are reference pages you visit once, and putting
