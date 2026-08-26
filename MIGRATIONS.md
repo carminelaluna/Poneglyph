@@ -250,8 +250,9 @@ Worth knowing so you do not go looking:
 - **The anon key**, unless you rotate it deliberately.
 - **`supabase/schema.sql`** and the row-level policies. `schema.sql` is the whole
   thing for a *new* project; `supabase/migrations/` holds the same changes for one
-  that already exists, and `2026-08-26-review.sql` is the one that adds the `admin`
-  role behind `/review`. Both are safe to run twice.
+  that already exists, **numbered in the order they must run**. All are safe to run
+  twice. (They were dated at first, until two landed on one day and the order they
+  sorted in stopped being the order they had to run in.)
 - **The OAuth callback URLs** in Discord and Google, as above.
 - **The CDN file names** — `OP01-025_320.webp` and its 14,528 siblings.
 

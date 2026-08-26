@@ -373,7 +373,7 @@ export async function decideOrganizerRequest(
     if (!data || data.length === 0) {
       throw new Error(
         'The role was not granted — the database refused the change. Check that ' +
-          'supabase/migrations/2026-08-26-organizer-requests.sql has been run.'
+          'supabase/migrations/0002-organizer-requests.sql has been run.'
       );
     }
   }
@@ -454,7 +454,7 @@ export async function reviewSubmission(
   if (!data || data.length === 0) {
     throw new Error(
       'Nothing was updated — the database refused the change. Check that ' +
-        'supabase/migrations/2026-08-26-review.sql has been run.'
+        'supabase/migrations/0001-review.sql has been run.'
     );
   }
 }

@@ -53,6 +53,44 @@ async function* walk(dir) {
   }
 }
 
+/**
+ * A row-level policy on a table that reads the same table.
+ *
+ * Postgres has to evaluate the policy to decide whether the policy applies, and
+ * refuses: `infinite recursion detected in policy for relation "x"`. Because SELECT
+ * policies are OR'd together, one of these breaks *every* read of that table, and
+ * with it every policy on another table that asks it a question — so the symptom
+ * turns up a long way from the cause. This repository shipped exactly that: an
+ * admin check on `profiles` written as a subquery over `profiles`, which took
+ * renaming yourself down with it.
+ *
+ * The fix is always the same shape: ask through a `security definer` function,
+ * which runs as the table's owner and therefore does not re-enter its policies.
+ * Only `create policy` statements are examined, so those function bodies — which
+ * must read the table — are not flagged.
+ */
+function* selfReferencingPolicies(text) {
+  const statements = text.split(/;\s*\n/);
+  let consumed = 0;
+
+  for (const statement of statements) {
+    const at = consumed;
+    consumed += statement.length + 1;
+
+    const head = /create\s+policy\s+"([^"]+)"\s+on\s+(public\.[a-z_]+)/i.exec(statement);
+    if (!head) continue;
+
+    const [, name, table] = head;
+    if (!new RegExp(`from\\s+${table.replace('.', '\\.')}\\b`, 'i').test(statement)) continue;
+
+    yield {
+      name: `create policy "${name}"`,
+      table,
+      line: text.slice(0, at).split('\n').length,
+    };
+  }
+}
+
 const findings = [];
 
 for await (const file of walk(process.cwd())) {
@@ -85,11 +123,22 @@ for await (const file of walk(process.cwd())) {
         });
       }
     });
+
+    for (const policy of selfReferencingPolicies(text)) {
+      findings.push({
+        file: relative,
+        line: policy.line,
+        why:
+          `policy on ${policy.table} reads ${policy.table} — infinite recursion; ` +
+          'ask through a security definer function',
+        text: policy.name,
+      });
+    }
   }
 }
 
 if (findings.length === 0) {
-  console.log('[check] no stray control characters, no reserved column names');
+  console.log('[check] no stray control characters, no reserved column names, no recursive policies');
   process.exit(0);
 }
 

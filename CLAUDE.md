@@ -281,9 +281,19 @@ policies check, it is still granted by hand, and it is still checked against the
 reader's **own** profile row. Rejecting requires a note, and the organizer sees it.
 
 `supabase/` holds `schema.sql`, the whole thing for a new project, and `migrations/`,
-the same changes for one that already exists. **They run in the order they are
-dated** — the requests file leans on the `admin` role the review file creates. Both
-are safe to run twice.
+the same changes for one that already exists, **numbered in the order they must
+run**. All are safe to run twice. They were dated at first, until two landed on one
+day and the order they sorted in stopped being the order they had to run in.
+
+**No policy may read the table it is on.** Postgres has to evaluate the policy to
+decide whether the policy applies, and refuses — `infinite recursion detected in
+policy for relation "profiles"` — and since SELECT policies are OR'd, one of these
+breaks *every* read of that table, and with it every policy elsewhere that asks it a
+question. The symptom therefore surfaces a long way from the cause: this shipped
+once, and what it took down was renaming yourself. Roles are asked through
+`public.has_role()` and `public.my_role()`, `security definer` functions that run as
+the table's owner and so do not re-enter its policies; neither takes a user id, so
+neither can be used to probe another account. `npm run check` refuses the shape now.
 
 **Asking for the organizer role is a row, not an email.** The site used to answer
 "how do I submit results" with the contact address on `/legal` — off the record, easy

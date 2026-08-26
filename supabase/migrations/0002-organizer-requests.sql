@@ -1,6 +1,6 @@
 -- Poneglyph — asking for the organizer role from inside the site.
 --
--- Run **after** 2026-08-26-review.sql, which is what creates the `admin` role this
+-- Run **after** 0001-review.sql, which is what creates the `admin` role this
 -- one leans on. `schema.sql` already contains both for a new project. Safe to run
 -- twice.
 --
@@ -16,38 +16,83 @@
 -- another admin. Minting that role stays something you do in the Supabase
 -- dashboard, by hand, which is what the rest of this structure rests on.
 --
+-- If you ran an earlier copy of this file — the one whose admin checks were
+-- subqueries over `profiles` — run 0003 as well, or instead: it repairs exactly
+-- that. Running both in either order is safe.
+--
 --   Supabase dashboard -> SQL editor -> paste -> run.
 
 begin;
 
 -- ---------------------------------------------------------------- profiles
 
+-- Asking about a role, without reading the table from inside its own policies.
+--
+-- The first version of this file wrote both checks below as `exists (select 1 from
+-- public.profiles …)`. On another table that is fine; on `profiles` itself it means
+-- a policy that has to evaluate itself, and Postgres answers `infinite recursion
+-- detected in policy for relation "profiles"` — for every read of the table, not
+-- just for the policy at fault, since SELECT policies are OR'd. `npm run check`
+-- now refuses that shape.
+--
+-- `security definer` runs the body as the function's owner, who owns the table and
+-- is exempt from its row-level security, so the lookup does not re-enter a policy.
+-- Neither function takes a user id: they answer about the caller and nobody else.
+create or replace function public.has_role(wanted text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.profiles
+    where id = (select auth.uid()) and role = wanted
+  );
+$$;
+
+create or replace function public.my_role()
+returns text
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select role from public.profiles where id = (select auth.uid());
+$$;
+
+revoke execute on function public.has_role(text) from public, anon;
+revoke execute on function public.my_role() from public, anon;
+grant execute on function public.has_role(text) to authenticated;
+grant execute on function public.my_role() to authenticated;
+
+drop policy if exists "rename self only" on public.profiles;
+create policy "rename self only"
+  on public.profiles for update
+  using (auth.uid() = id)
+  with check (auth.uid() = id and role = public.my_role());
+
+-- Reading the accounts it can act on, and only those.
+--
+-- Needed because an update that RLS filters out is not an error in PostgREST: it
+-- affects zero rows and comes back looking like a success. Without a way to read
+-- the row back, "Grant the role" would report that it had done something whenever
+-- this policy was missing.
+--
+-- Restricted the same way the update is: an admin's row is not readable here
+-- either, so this cannot be used to enumerate the people who hold that role.
 drop policy if exists "admins read the accounts they can act on" on public.profiles;
 create policy "admins read the accounts they can act on"
   on public.profiles for select
-  using (
-    role in ('user', 'organizer')
-    and exists (
-      select 1 from public.profiles me
-      where me.id = auth.uid() and me.role = 'admin'
-    )
-  );
+  using (role in ('user', 'organizer') and public.has_role('admin'));
 
 drop policy if exists "admins move accounts between user and organizer" on public.profiles;
 create policy "admins move accounts between user and organizer"
   on public.profiles for update
-  using (
-    -- The row being changed: an admin's row is not reachable through this.
-    role in ('user', 'organizer')
-    and exists (
-      select 1 from public.profiles me
-      where me.id = auth.uid() and me.role = 'admin'
-    )
-  )
-  with check (
-    -- The row as it would become: so this can never produce an admin.
-    role in ('user', 'organizer')
-  );
+  -- The row being changed: an admin's row is not reachable through this.
+  using (role in ('user', 'organizer') and public.has_role('admin'))
+  -- The row as it would become: so this can never produce an admin.
+  with check (role in ('user', 'organizer'));
 
 -- ------------------------------------------------------- the requests
 
@@ -94,18 +139,12 @@ create policy "withdraw while pending"
 drop policy if exists "admins read every request" on public.organizer_requests;
 create policy "admins read every request"
   on public.organizer_requests for select
-  using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
-  );
+  using (public.has_role('admin'));
 
 drop policy if exists "admins answer requests" on public.organizer_requests;
 create policy "admins answer requests"
   on public.organizer_requests for update
-  using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
-  )
-  with check (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
-  );
+  using (public.has_role('admin'))
+  with check (public.has_role('admin'));
 
 commit;

@@ -32,6 +32,48 @@ create table public.profiles (
 
 alter table public.profiles enable row level security;
 
+-- ------------------------------------------------- asking about a role
+--
+-- Every policy below that depends on who you are asks through one of these, and
+-- none of them reads `profiles` directly. That is not tidiness: a policy *on*
+-- profiles that runs a select *from* profiles has to evaluate itself to decide
+-- whether it applies, and Postgres answers `infinite recursion detected in policy
+-- for relation "profiles"`. Because SELECT policies are OR'd, one such policy
+-- breaks every read of the table — including the rename check below, and every
+-- policy on another table that asks profiles a question.
+--
+-- `security definer` runs the body as the function's owner, who owns the table and
+-- is therefore exempt from its row-level security, so the lookup does not re-enter
+-- any policy. Neither function takes a user id: they answer about the caller and
+-- nobody else, so neither can be used to probe another account.
+create function public.has_role(wanted text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.profiles
+    where id = (select auth.uid()) and role = wanted
+  );
+$$;
+
+create function public.my_role()
+returns text
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select role from public.profiles where id = (select auth.uid());
+$$;
+
+revoke execute on function public.has_role(text) from public, anon;
+revoke execute on function public.my_role() from public, anon;
+grant execute on function public.has_role(text) to authenticated;
+grant execute on function public.my_role() to authenticated;
+
 -- A profile appears the moment someone signs up, rather than on first write.
 create function public.handle_new_user()
 returns trigger
@@ -61,7 +103,7 @@ create policy "read own profile"
 create policy "rename self only"
   on public.profiles for update
   using (auth.uid() = id)
-  with check (auth.uid() = id and role = (select role from public.profiles where id = auth.uid()));
+  with check (auth.uid() = id and role = public.my_role());
 
 -- The one way a role changes without opening the dashboard, and it is deliberately
 -- the narrowest rule that does the job.
@@ -87,23 +129,11 @@ create policy "rename self only"
 -- either, so this cannot be used to enumerate the people who hold that role.
 create policy "admins read the accounts they can act on"
   on public.profiles for select
-  using (
-    role in ('user', 'organizer')
-    and exists (
-      select 1 from public.profiles me
-      where me.id = auth.uid() and me.role = 'admin'
-    )
-  );
+  using (role in ('user', 'organizer') and public.has_role('admin'));
 
 create policy "admins move accounts between user and organizer"
   on public.profiles for update
-  using (
-    role in ('user', 'organizer')
-    and exists (
-      select 1 from public.profiles me
-      where me.id = auth.uid() and me.role = 'admin'
-    )
-  )
+  using (role in ('user', 'organizer') and public.has_role('admin'))
   with check (role in ('user', 'organizer'));
 
 -- ------------------------------------------------------------- saved decks
@@ -184,18 +214,12 @@ create policy "withdraw while pending"
 
 create policy "admins read every request"
   on public.organizer_requests for select
-  using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
-  );
+  using (public.has_role('admin'));
 
 create policy "admins answer requests"
   on public.organizer_requests for update
-  using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
-  )
-  with check (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
-  );
+  using (public.has_role('admin'))
+  with check (public.has_role('admin'));
 
 -- ------------------------------------------------------------- submissions
 
@@ -234,13 +258,7 @@ alter table public.submissions enable row level security;
 -- Only an organizer may submit, and only as themselves.
 create policy "organizers submit"
   on public.submissions for insert
-  with check (
-    auth.uid() = organizer_id
-    and exists (
-      select 1 from public.profiles
-      where id = auth.uid() and role = 'organizer'
-    )
-  );
+  with check (auth.uid() = organizer_id and public.has_role('organizer'));
 
 create policy "read own submissions"
   on public.submissions for select
@@ -274,18 +292,12 @@ create policy "withdraw while pending"
 -- data to another still holds.
 create policy "admins read every submission"
   on public.submissions for select
-  using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
-  );
+  using (public.has_role('admin'));
 
 create policy "admins review submissions"
   on public.submissions for update
-  using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
-  )
-  with check (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
-  );
+  using (public.has_role('admin'))
+  with check (public.has_role('admin'));
 
 -- -------------------------------------------------------- submitted decks
 
@@ -342,9 +354,7 @@ create policy "own submission decks"
 -- honest answer to a list that is wrong is to reject it with a note.
 create policy "admins read every submitted deck"
   on public.submission_decks for select
-  using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
-  );
+  using (public.has_role('admin'));
 
 -- ------------------------------------------------------------------ notes
 --
