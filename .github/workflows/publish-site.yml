@@ -56,6 +56,17 @@ jobs:
       NEXT_PUBLIC_SITE_URL: https://carminelaluna.github.io/Poneglyph
       PONEGLYPH_SITE_BRANCH: main-selfhost
 
+      # Accounts. Plain values rather than secrets, and deliberately: a NEXT_PUBLIC_
+      # variable is compiled into the browser bundle, so the anon key is readable by
+      # anyone who opens the site either way. Hiding it in a secret would suggest a
+      # confidentiality it does not have. What protects the data is the row-level
+      # policies in supabase/schema.sql.
+      #
+      # SUPABASE_SERVICE_ROLE_KEY bypasses those policies and is a real secret. It
+      # lives in the repository secrets and is used only by the submissions ingest.
+      NEXT_PUBLIC_SUPABASE_URL: https://wftkmhvxrlmyvaxdpegs.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndmdGttaHZ4cmxteXZheGRwZWdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3NDEzNTIsImV4cCI6MjEwMzMxNzM1Mn0.PWQmj63nw2zOi5t1E7WyzGbf7rddBVNCRndQnB79r6o
+
     steps:
       # Always the source branch. A workflow_run event carries the SHA of the run
       # that triggered it, and checking that out would build whatever the ingest
