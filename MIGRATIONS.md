@@ -79,8 +79,9 @@ in every list below loses its `/Poneglyph`.
 | Site URL | `https://poneglyph.gg/account/` |
 | Redirect URLs | `https://poneglyph.gg/account/` |
 
-Keep `http://localhost:4322/account/` as a second redirect entry for local work — note
-it also loses `/Poneglyph` once the base path is empty.
+Keep `http://localhost:4322/account/` **and** `http://localhost:4321/Poneglyph/account/`
+as redirect entries for local work — the dev server serves under the base path too, and
+both lose `/Poneglyph` once that is empty.
 
 **The trailing slash matters.** The site serves pages as directories, so the redirect
 is `/account/` and an allowlist entry without the slash is treated as a different URL
@@ -247,7 +248,10 @@ Worth knowing so you do not go looking:
   is a different exercise entirely — new ref, new anon key, re-run `schema.sql`,
   re-enter every OAuth credential, and existing accounts do not come with it.
 - **The anon key**, unless you rotate it deliberately.
-- **`supabase/schema.sql`** and the row-level policies.
+- **`supabase/schema.sql`** and the row-level policies. `schema.sql` is the whole
+  thing for a *new* project; `supabase/migrations/` holds the same changes for one
+  that already exists, and `2026-08-26-review.sql` is the one that adds the `admin`
+  role behind `/review`. Both are safe to run twice.
 - **The OAuth callback URLs** in Discord and Google, as above.
 - **The CDN file names** — `OP01-025_320.webp` and its 14,528 siblings.
 

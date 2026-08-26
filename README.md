@@ -26,10 +26,12 @@ npm run dev             # http://localhost:4321
 | Cards / printings / sets | 2,785 · 4,843 · 60 |
 | Standard-legal | 2,172 (613 Extra only) |
 | Traits / keywords | 171 · 45 |
-| Decklists | 20,941 |
-| — English | 15,092, back to Oct 2022 |
-| — Japanese | 5,849, back to Jul 2022 |
-| Events / players | 7,150 · 8,701 |
+| Priced | 2,651, with ninety days of history |
+| Decklists | 21,027 |
+| — English | 15,168, back to Oct 2022 |
+| — Japanese | 5,859, back to Jul 2022 |
+| Tournaments / players | 7,163 · 8,686 |
+| Recorded matches | 19,419, archetype against archetype |
 | Release windows | 43 English, 46 Japanese |
 | Official events announced | 67 across 6 types |
 
@@ -43,12 +45,25 @@ the page, every filter state a shareable URL.
 a set entered play), an event tier and a play setting. Share, win rate and movement
 against the previous window, recomputed in the browser.
 
+**See a real matchup.** Every other win rate on the site is a record against the
+field. The matchup table on an archetype page is its record against a *named*
+opponent, built from published Swiss and top-cut pairings — with the sample beside
+every percentage, because 67% from three games is noise wearing a number.
+
 **Follow the thread.** Archetype → decklist → player → their other events →
-tournament standings → back to a card. Every name is a link.
+tournament standings → back to a card. Every name is a link. `/tournaments` and
+`/players` list what those pages are pages of: every recorded event with its winner,
+and everyone with a result to their name.
+
+**Watch a price move.** Each card keeps ninety days of lowest-listed prices, and the
+card page draws them. Nothing is back-filled, so a card the ingest has seen once
+says so rather than drawing a flat line.
 
 **Build a deck** on `/deckbuilder`: pick a Leader, fill fifty cards from its
-colours, and see copy limits, rotation and the banned list checked as you go.
-Nothing is saved — one button copies the list for OPTCGSim.
+colours, and see copy limits, rotation and the banned list checked as you go — plus
+the cost curve, the counter total and what the deck would cost to put together.
+Nothing is saved unless you have an account and ask for it; one button copies the
+list for OPTCGSim.
 
 **Export any decklist** in the format OPTCGSim reads, straight to the clipboard.
 
@@ -71,6 +86,7 @@ the site is built from those files. `data/*.json` is imported at build time;
 scripts/sources.mjs         every upstream, with its role and its limits
 scripts/ingest.mjs          cards
 scripts/ingest-decks.mjs    Limitless tournaments
+scripts/ingest-matchups.mjs Limitless pairings, archetype against archetype
 scripts/ingest-topdecks.mjs Top Decks archives (JP + EN)
 scripts/ingest-spoilers.mjs unreleased sets
 scripts/ingest-banlist.mjs  banned & restricted
@@ -88,6 +104,8 @@ A few decisions are worth knowing, because they change what the numbers mean:
   whole-field results and shows its sample.
 - **Release windows are derived from results**, not from a hardcoded calendar, and
   measure when a set entered *play* rather than when it was printed.
+- **Matchups come from brackets, not from records.** They cover Limitless events,
+  which is where pairings are published, and the table says so.
 - **Standard legality follows Bandai's published exception list**, so the 20 Block 1
   cards that stay legal are marked as such instead of reading as rotated out.
 - **Absent values say "Not recorded"** rather than showing a blank or a zero.
@@ -182,9 +200,12 @@ the default here because a bad upstream day is then a visible diff and a
 | | |
 | --- | --- |
 | `npm run dev` / `build` | Dev server on 4321 / ~4,700 static pages |
+| `npm run verify` | Source check, types and tests — what CI runs |
+| `npm test` | `node --test` over `tests/*.test.ts`, no runner to install |
 | `npm run check` | Fail on stray control characters in sources |
 | `npm run ingest` | Cards. `-- --check` to test freshness, `-- --lang japanese` |
 | `npm run ingest:decks` | Tournaments. `-- --max N --since YYYY-MM-DD`, `-- --rebuild` |
+| `npm run ingest:matchups` | Pairings. `-- --max N`, resumable, one request per event |
 | `npm run ingest:topdecks` | JP/EN archives. `-- --region jp` |
 | `npm run ingest:spoilers` / `:banlist` | Reveals / banned list |
 | `npm run ingest:events` | Official events: Regionals, Finals, Cups |

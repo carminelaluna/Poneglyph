@@ -17,11 +17,15 @@ Moving to a domain, another CDN, or a real machine: **[MIGRATIONS.md](MIGRATIONS
 
 | | |
 | --- | --- |
-| `npm run dev` | Dev server, port 4321 |
+| `npm run dev` | Dev server, port 4321 — **under `NEXT_PUBLIC_BASE_PATH`** |
 | `npm run build` | Server build, ~4,700 pages |
+| `npm run verify` | `check` + `typecheck` + `test` — what CI runs on every push |
 | `npm run check` | Control characters, and reserved SQL column names |
-| `npm run ingest` | Cards (runs `check` first) |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm test` | `node --test` over `tests/*.test.ts` |
+| `npm run ingest` | Cards, and a price point (runs `check` first) |
 | `npm run ingest:decks` | Limitless tournaments, budgeted and resumable |
+| `npm run ingest:matchups` | Limitless pairings — one request per tournament |
 | `npm run ingest:topdecks` | Top Decks archives, both regions |
 | `npm run ingest:spoilers` | Unreleased sets |
 | `npm run ingest:banlist` | Banned & restricted list |
@@ -46,8 +50,11 @@ derives release eras, and writes both the browser payloads and
 
 ```
 sources.mjs          every upstream, with its role and limits
+limitless.mjs        the rate limiter and request helper, shared by two ingests
 ingest.mjs           cards     -> data/cards|sets|filters|meta.json + cards-index
+                                 + data/price-history.json (one point per change)
 ingest-decks.mjs     Limitless -> data/decks|tournaments|decks-state.json
+ingest-matchups.mjs  Limitless -> data/matchups.json (pairings, resumable)
 ingest-topdecks.mjs  Top Decks -> data/decks-{en,jp}.json
 ingest-spoilers.mjs  leaks     -> data/spoilers.json
 ingest-banlist.mjs   Bandai    -> data/banlist.json (+ numbers-only in public/data)
@@ -56,6 +63,8 @@ ingest-submissions   Supabase  -> data/decks-community.json (approved only)
 build-indexes.mjs    all       -> public/data/decks-{en,jp}-{index,archive}.json,
                                  public/data/decks-{en,jp}/*.json,
                                  public/data/{events,players,deck}/*.json (64 each),
+                                 public/data/{tournaments,players}-{index,archive}.json,
+                                 public/data/matchups/{leaderId}.json,
                                  public/data/{leaders,card-names}.json,
                                  data/decks-merged.json, data/regions.json
 build-static.mjs     the app   -> out/
@@ -82,6 +91,27 @@ Decks publishes only decks that placed; organizers say which they are uploading.
 row carries `f: 1|0`. *Share* counts every deck; *win rate* counts only `f === 1` and
 shows its sample (`52.8% /195`). A win rate over winners-only data reads near 100% and
 means nothing.
+
+**A matchup is not a win rate, and they are counted from different things.** The
+win rate on an archetype page is its record against *the field*. The matchup table
+is its record against a **named** opponent, and it exists only because Limitless
+publishes `/tournaments/{id}/pairings` — round, table, both usernames, the winner.
+`ingest-matchups.mjs` joins that against the Leader each username played *at that
+tournament*. Nothing is inferred from standings. It follows that matchups cover
+**Limitless events only**: Top Decks publishes finishing lists and organizers are
+not asked for brackets, so the table says whose events it is drawn from — and shows
+nothing at all under the Japanese view, because Limitless is an English-corpus
+source and an English table under a Japanese heading would be real matches about a
+different metagame. Mirrors
+are dropped (a deck beats itself half the time) and rows under five games are held
+behind a click — 67% from three games is noise wearing a percentage.
+
+**Prices are a series now, and it starts the day it started.** `data/price-history.json`
+keeps ninety days, **sparse**: a point exists only for a day a card's price moved,
+so reading a day means the last point at or before it. That is what keeps a file
+committed twice a day from growing without bound. Nothing is back-filled — the
+source publishes a price and a scrape date, not a history — so a card the ingest has
+seen once says so instead of drawing a flat line that would read as a steady price.
 
 **Regions are separate corpora, not a filter.** English and Japanese have different
 card pools and event structures. Switching region swaps the dataset.
@@ -155,6 +185,17 @@ the one its id falls in — 11–15 KB. `shardOf` is FNV-1a and exists **twice**
 page reads "not found". Same for `playerSlugOf` against `playerSlug` in `lib/meta.ts` —
 note it is *not* the script's `slugify`, which truncates at 48 rather than 64.
 
+**The two directories are whole files, split by interest rather than by hash.**
+`/tournaments` and `/players` list what those leaf pages are pages *of* — before
+them, 7,163 events and 8,686 players had pages and nothing linked to the set of
+them. Rows are positional arrays (`tournaments-index.json`, `players-index.json`),
+and the split is the same trick as the metagame index: the last ninety days of
+events (11 KB) and everyone with two or more results (45 KB) up front, the rest
+behind one deliberate click. The positions are written in `writeDirectories` and
+read in `lib/directory.ts`; `tests/parity.test.ts` checks a built payload back
+through the readers, because a column inserted on one side renders a venue where a
+tier should be and looks like a styling bug.
+
 The prerender lists stay: an event with a real field, a regular, a notable finish. What
 they buy is a 200 and a title written from the data. **Everything else is reached
 through `404.html`**, which reads `location.pathname` and renders the same view — a real
@@ -174,6 +215,15 @@ version kept the deck in the address bar and localStorage, which made "start ove
 awkward operation and greeted people with a deck they had abandoned. `?deck=<id>` opens
 a *saved* deck — reloading that reopens the saved version and discards unsaved edits,
 which is what starting over means once a deck has somewhere to live.
+
+**What the fifty cards add up to is arithmetic on what is already downloaded.** The
+cost curve, the average cost, the counter total and the deck's price all come out of
+the same 176 KB card index the search uses, so the panel costs no request. The price
+is the **lowest listed**, summed over every copy including the Leader, and it names
+how many copies it could not price — about one card in twenty has no figure, and a
+total that folded those in as zero would read as a cheaper deck rather than as an
+incomplete one. The decklist pages get the same total from `card-names.json`, which
+gained a third element for it (+4 KB gzipped, against 176 KB to reuse the index).
 
 **Export is one button and one format**: `{count}x{cardId}`, one per line, Leader first
 — what OPTCGSim's *Import from clipboard* reads. The dialog that used to be here offered
@@ -215,12 +265,29 @@ to `public/data/banlist.json` for that; the `/banlist` page imports the build-ti
 decks only they can see. An **organizer** can also submit a tournament, which after
 review joins the metagame corpus.
 
-**The organizer role is granted by hand, in the dashboard.** Nothing in the policies lets
-an account change its own `role` or a submission's `status` — the update policy on
-`profiles` re-reads the stored role in its `with check`, because `using (auth.uid() = id)`
-alone would let anyone promote themselves with one PATCH. That is the entire security
-model: every number here is derived from recorded results, so an account that could add a
+**Roles are granted by hand, in the dashboard.** There are three — `user`,
+`organizer`, `admin` — and nothing in the policies lets an account change its own
+`role` or a submission's `status`. The update policy on `profiles` re-reads the
+stored role in its `with check`, because `using (auth.uid() = id)` alone would let
+anyone promote themselves with one PATCH. That is the entire security model: every
+number here is derived from recorded results, so an account that could add a
 tournament unreviewed could put anything into them.
+
+**Reviewing happens on `/review`, and the gate did not move.** Approving used to mean
+opening the Supabase table editor and changing a cell — fine for the first few, and
+poor immediately after, since the decklists are JSON in a column and the fifty cards
+are the one thing a reviewer has to actually read. `admin` is what the two new
+policies check, it is still granted by hand, and it is still checked against the
+reader's **own** profile row — so nothing added for the review page reads anyone
+else's data. Rejecting requires a note, and the organizer sees it. An existing
+project needs `supabase/migrations/2026-08-26-review.sql`; `schema.sql` already has
+it for a new one.
+
+**An organizer can see what happened to what they sent.** `/submit` lists their own
+submissions with status and the reviewer's note, and lets them withdraw one that is
+still pending — all through the `read own submissions` policy, which had been in the
+schema from the first version with nothing ever calling it. The form was write-only
+until then: you sent a tournament and the site never mentioned it again.
 
 **Submissions do not reach the site directly.** `ingest-submissions.mjs` reads only rows
 marked `approved`; `build-indexes.mjs` folds them in as a **third corpus**,
@@ -260,8 +327,9 @@ look under the copy limit. **The form checks and refuses nothing**: review is th
 and rejecting a real result because our archive is behind would be strict in the wrong
 direction.
 
-**Still to do:** approving a submission means flipping `status` by hand in the Supabase
-table editor. Workable at this volume, awkward past it.
+**Still to do:** email and password sign-in stays hidden until a custom SMTP provider
+is configured — that is an account, not a code change, and everything else about it is
+already written.
 
 ---
 
@@ -390,8 +458,19 @@ The metagame page is the heaviest thing on the site. Keep it honest.
 | `events/{NN}.json` | 11 KB | one event page (64 buckets) |
 | `players/{NN}.json` | 13 KB | one player page (64 buckets) |
 | `deck/{NN}.json` | 15 KB | one decklist's row (64 buckets) |
-| `leaders.json` · `card-names.json` | 1.5 / 19 KB | archetype names · decklist names |
+| `leaders.json` · `card-names.json` | 1.5 / 23 KB | archetype names · names and prices |
+| `tournaments-index.json` | 11 KB | /tournaments, last 90 days |
+| `players-index.json` | 45 KB | /players, everyone with 2+ results |
+| `tournaments-archive.json` · `players-archive.json` | 106 / 88 KB | only on "include the rest" |
+| `matchups/{leaderId}.json` | 1–8 KB | one archetype's pairings |
 | `events-official.json` | 3.4 KB | the events page, whole |
+
+Card prices are the one figure that appears in three of these. It is in
+`cards-index.json` already (`$`), so the deck builder totals a deck for free; the
+decklist and archetype pages get it from `card-names.json` instead, because they
+were fetching that anyway and pulling the card index would have cost 176 KB. The
+card page reads the *history* at build time and ships it as inline SVG — a payload
+would have been the whole file to draw one card's line.
 
 Two things were tried and are worth not repeating: **interning** repeated event and player
 names made the file *larger* (gzip already collapses that), and shipping the whole English
@@ -444,8 +523,12 @@ provided only for reference"*. That caveat travels with the data and is printed 
 page. An event's own note — `*Registration begins 2nd August 9AM(CEST)` — is exact and
 wins over the table.
 
-**Rate limit.** Limitless advertises `RateLimit: "50-in-5min"`. The deck ingest reads that
-header and pauses *before* being refused. Raising `--max` does not make it faster.
+**Rate limit.** Limitless advertises `RateLimit: "50-in-5min"`. The ingests read that
+header and pause *before* being refused. Raising `--max` does not make a run faster,
+only longer. The limiter lives in `scripts/limitless.mjs` because two ingests now use
+it, and two copies would mean two limiters against one server, each unaware of the
+other's requests — which is the shape of an accidental ban rather than of a rate
+limit. `update-matchups` runs three hours after `update-decks` for the same reason.
 
 **`decks-state.json` holds `details`.** That map is the only copy of each event's venue. An
 earlier "slimming" of the loader dropped it and a rebuild reclassified all 275 tournaments
@@ -476,6 +559,30 @@ npm i -D --force @cloudflare/workerd-linux-64@<matching-workerd-version> @img/sh
 `workerd-linux-64` version must match the `workerd` wrangler pulled in. Uploads are also
 markedly faster from Windows than from WSL over `/mnt/c`.
 
+**`basePath` applies to every build, including `npm run dev`.** It used to apply only
+to the export, while `NEXT_PUBLIC_BASE_PATH` — the same variable, read by
+`lib/paths.ts` — was set in `.env.local` for everyone. So `dataUrl()` asked for
+`/Poneglyph/data/cards-index.json` while the dev server answered at the root: every
+payload 404ed locally and the card browser, the deck builder and the metagame page
+all said the archive had failed to load. The proxy fallback in `lib/art.ts` goes
+through `asset()` for the same reason. Dev now serves from the path production
+serves from, which is the same argument `serve:static` already made.
+
+**Tests are TypeScript run straight through `node --test`.** No runner, no
+transform: Node strips the types itself from 22.18, which is what CI pins. Two
+consequences. Node does **not** resolve extensionless relative imports or the
+`@/…` and `@data/…` aliases, so a module a test imports has to be free of imports —
+which `deck-rules.ts`, `meta.ts`, `prices.ts` and `directory.ts` all are, and it is
+why the fetches for the directories live in `shards.ts` instead. And the glob has to
+be quoted (`"tests/*.test.ts"`): a bare directory argument makes Node try to load
+`tests` as a module and the run fails with `MODULE_NOT_FOUND`. `tsconfig.json` needs
+`allowImportingTsExtensions` because those imports name the `.ts` file.
+
+**The parity tests do not import the build script.** `shardOf` and `playerSlugOf`
+exist twice on purpose, so the test lifts the *source text* of each copy and runs
+the two against nine thousand real keys. That is the drift the comments warn about,
+and it is invisible to a typechecker.
+
 **Dev server port.** 4321, static preview 4322. If `preview_start` reports a port in use,
 change it in `.claude/launch.json` *and* `package.json` together.
 
@@ -488,7 +595,7 @@ change it in `.claude/launch.json` *and* `package.json` together.
 | [Punk Records](https://github.com/buhbbl/punk-records) | Cards — every printing, typed | Static JSON |
 | [Vegapull Records](https://github.com/Coko7/vegapull-records) | Rules text in bulk | Static JSON |
 | [OPTCG API](https://optcgapi.com/) | Prices, set names | Public REST |
-| [Limitless](https://onepiece.limitlesstcg.com) | Tournaments + full decklists | Documented API, no key |
+| [Limitless](https://onepiece.limitlesstcg.com) | Tournaments, decklists, **pairings** | Documented API, no key |
 | [Top Decks](https://onepiecetopdecks.com) | JP/EN archives, leaks | WordPress API |
 | [Bandai rules](https://en.onepiece-cardgame.com/rules/) | Banlist, block updates | HTML, no API |
 | [Bandai events](https://en.onepiece-cardgame.com/events/) | Regionals, Finals, Cups | HTML, no API |
@@ -512,9 +619,21 @@ Pre-release art is not ours to re-host.
 ## Scheduled jobs
 
 `update-cards` (daily, gated on `ingest.mjs --check`, which exits 3 when current),
-`refresh-prices` (2×/day), `update-decks` (2×/day), `update-rules` (8h),
-`update-spoilers` (6h), `update-events` (daily at 10:00 UTC — noon in Italy on summer
-time, 11:00 in winter; cron has no timezone). Then `publish-site`.
+`refresh-prices` (2×/day), `update-decks` (2×/day), `update-matchups` (daily at 10:20
+UTC, three hours after the morning deck ingest so the tournaments it found already
+have decklists to join pairings against), `update-rules` (8h), `update-spoilers` (6h),
+`update-events` (daily at 10:00 UTC — noon in Italy on summer time, 11:00 in winter;
+cron has no timezone). Then `publish-site`.
+
+`check` is the other one, and it is not a schedule: `npm run verify` on every push to
+`main-node` and on every pull request. Before it existed, the first thing to notice a
+type error was the production build, and the first thing to notice a rule that had
+stopped being true was a reader.
+
+**`publish-site` also runs on `push` now.** `workflow_run` covers commits made by the
+ingests; a commit made by a *person* triggers nothing else, so a change to the site
+itself used to sit undeployed until a scheduled ingest happened to finish. Markdown
+is ignored, since none of it is built into the site.
 
 **Commit only when something substantive changed**, which is
 `node scripts/substantive-change.mjs` — stage everything, then ask. Naming the files that
@@ -546,6 +665,7 @@ site.
 ## Current shape
 
 2,785 cards · 4,843 printings · 60 sets (22 boosters, 36 starter decks) · 2,172
-Standard-legal, 20 via the block exception · 21,027 decklists — English 15,168 from
-2022-10, Japanese 5,859 from 2022-07 · 7,163 events · 9,005 players · 43/46 release
-windows · 53 dated set releases · 67 announced official events across 6 types.
+Standard-legal, 20 via the block exception · 2,651 priced · 21,027 decklists —
+English 15,168 from 2022-10, Japanese 5,859 from 2022-07 · 7,163 tournaments · 8,686
+named players, 2,874 with more than one result · 19,419 recorded matches from 277 brackets · 43/46 release windows ·
+53 dated set releases · 67 announced official events across 6 types · 53 tests.
