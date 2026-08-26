@@ -573,8 +573,34 @@ async function main() {
   const dropped = topDecksEn.length - deduped.length;
   if (dropped) log(`deduplicated ${dropped} English lists already recorded by Limitless`);
 
-  const english = [...west, ...deduped].sort((a, b) => b.date.localeCompare(a.date));
-  const japanese = fromTopDecks(jp).sort((a, b) => b.date.localeCompare(a.date));
+  /*
+   * Approved organizer submissions — the third source, written by
+   * ingest-submissions.mjs. Absent on a checkout that has never run it, and that is
+   * not an error: the file simply is not there yet.
+   *
+   * Deduplicated against both of the others, and last in the tie. A local organizer
+   * uploading an event Limitless already published should not double its decks, and
+   * where the two disagree the automated source is the one that can be re-checked.
+   */
+  const community = (await load('decks-community.json', { decks: [] })).decks ?? [];
+  const knownKeys = new Set([...west, ...deduped, ...fromTopDecks(jp)].map(listKey));
+  const submitted = community.filter((d) => !knownKeys.has(listKey(d)));
+  const alreadyHeld = community.length - submitted.length;
+  if (community.length) {
+    log(
+      `${submitted.length} submitted decks folded in` +
+        (alreadyHeld ? `, ${alreadyHeld} already recorded elsewhere` : '')
+    );
+  }
+
+  const byRegion = (region) => submitted.filter((d) => d.region === region);
+
+  const english = [...west, ...deduped, ...byRegion('EN')].sort((a, b) =>
+    b.date.localeCompare(a.date)
+  );
+  const japanese = [...fromTopDecks(jp), ...byRegion('JP')].sort((a, b) =>
+    b.date.localeCompare(a.date)
+  );
 
   await mkdir(PUBLIC, { recursive: true });
 

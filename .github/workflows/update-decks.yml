@@ -56,6 +56,18 @@ jobs:
           node scripts/ingest-decks.mjs $ARGS
 
       # Region indexes are derived from every corpus, so they rebuild after any ingest.
+      # Approved organizer submissions, before the indexes are derived so they are
+      # part of what gets derived. continue-on-error until Supabase is configured:
+      # a missing key is a "not set up yet", not a reason to lose a deck ingest that
+      # has already spent thirty minutes on Limitless's rate limit.
+      - name: Pull approved submissions
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          # Bypasses every row-level policy. Secrets only — never NEXT_PUBLIC_.
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/ingest-submissions.mjs
+
       - run: node scripts/build-indexes.mjs
 
       - name: Commit new decks

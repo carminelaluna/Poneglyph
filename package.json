@@ -24,7 +24,8 @@
     "serve:static": "node scripts/serve-static.mjs",
     "deploy:site": "node scripts/deploy-site.mjs",
     "ingest:events": "node scripts/ingest-events.mjs",
-    "build:cdn:lock": "node scripts/build-cdn.mjs --lock"
+    "build:cdn:lock": "node scripts/build-cdn.mjs --lock",
+    "ingest:submissions": "node scripts/ingest-submissions.mjs"
   },
   "dependencies": {
     "next": "16.3.2",

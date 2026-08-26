@@ -22,6 +22,7 @@ that implies official standing.** `/legal` is the full notice.
 | `npm run ingest:spoilers` | Unreleased sets |
 | `npm run ingest:banlist` | Banned & restricted list |
 | `npm run ingest:events` | Official events from Bandai — Regionals, Finals, Cups |
+| `npm run ingest:submissions` | Approved organizer tournaments — needs the service key |
 | `npm run build:indexes` | **Run after any deck ingest** — derives everything |
 | `npm run ingest:images` | Mirror card art from the official CDN into `public/cards` |
 | `npm run build:cdn` | Convert that mirror to WebP at 3 widths, into `cdn/` |
@@ -47,6 +48,7 @@ ingest-topdecks.mjs  Top Decks -> data/decks-{en,jp}.json
 ingest-spoilers.mjs  leaks    -> data/spoilers.json
 ingest-banlist.mjs   Bandai   -> data/banlist.json
 ingest-events.mjs    Bandai   -> data/events-official.json (+ public/data)
+ingest-submissions   Supabase -> data/decks-community.json (approved only)
 build-indexes.mjs    all      -> public/data/decks-{en,jp}-{index,archive}.json,
                                 public/data/decks-{en,jp}/*.json,
                                 public/data/{events,players,deck}/*.json (64 each),
@@ -167,6 +169,47 @@ the build-time file and does not need it.
 **Sets is not in the nav.** Browsing by set is a filter on the card archive and
 `/cards` already has that facet — two menu entries answering one question. The set
 pages stay, linked from every card and from the footer.
+
+---
+
+## Accounts and submissions
+
+Two roles. A **user** saves decks only they can see. An **organizer** can also submit
+a tournament, which after review joins the metagame corpus. `supabase/schema.sql` is
+the whole thing; run it once on a new project.
+
+**The organizer role is granted by hand, in the dashboard.** Nothing in the policies
+lets an account change its own `role` or a submission's `status` — the update policy
+on `profiles` re-reads the stored role in its `with check`, because `using
+(auth.uid() = id)` on its own would let anyone promote themselves with one PATCH.
+That is the entire security model: every number on the site is derived from recorded
+results, so an account that could add a tournament unreviewed could put anything into
+them.
+
+**Submissions do not reach the site directly.** `ingest-submissions.mjs` reads only
+rows marked `approved` and writes `data/decks-community.json`; `build-indexes.mjs`
+folds that in. The gate is a column, checked server-side, and the site keeps being
+built from a corpus someone looked at.
+
+**They are a third corpus, not extra rows.** `source: 'community'`, and the organizer
+is asked whether they are uploading a whole Swiss field or only decks that placed —
+recorded per deck, exactly as for the other two. A winners-only event counted as a
+field reads near 100% and means nothing. Community decks are deduplicated against
+both other sources and lose the tie: an automated source can be re-checked.
+
+**`SUPABASE_SERVICE_ROLE_KEY` bypasses every policy.** Workflow secrets only. Never
+in `.env.local`, never under a `NEXT_PUBLIC_` name — anything with that prefix is
+compiled into the browser bundle. The anon key is the one the site ships, and it is
+safe to because the policies stand behind it.
+
+`--fixture <file>` reads a local JSON instead of Supabase, which is how the mapping
+and the merge were tested before any database existed.
+
+**Still to do:** the auth flow, the account pages and the submission form are not
+written. Neither is the privacy notice — the site currently collects *nothing*, no
+analytics and no cookies, and `/legal` says nothing about personal data because there
+is none. Accounts change that, and the notice has to land with them rather than
+after.
 
 ---
 
