@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-08-25T20:13:05.864Z",
+  "generatedAt": "2026-08-26T08:04:50.157Z",
   "regions": [
     {
       "id": "EN",
       "label": "English",
-      "decks": 15092,
-      "recent": 4358,
-      "archived": 10734,
-      "fieldDecks": 9305,
+      "decks": 15168,
+      "recent": 4360,
+      "archived": 10808,
+      "fieldDecks": 9381,
       "sampling": "mixed",
       "window": {
         "from": "2022-10-29",
-        "to": "2026-08-24"
+        "to": "2026-08-25"
       },
       "eras": 43,
       "sources": [
