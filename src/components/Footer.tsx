@@ -47,6 +47,8 @@ export default function Footer() {
             <ul>
               <li><Link href="/cards">All cards</Link></li>
               <li><Link href="/decks">Metagame</Link></li>
+              <li><Link href="/tournaments">Tournaments</Link></li>
+              <li><Link href="/players">Players</Link></li>
               <li><Link href="/sets">Sets</Link></li>
               <li><Link href="/cards?category=Leader">Leaders</Link></li>
               <li><Link href="/cards?sort=price-desc">Most valuable</Link></li>

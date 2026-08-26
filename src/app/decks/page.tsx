@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import MetaBrowser from './MetaBrowser';
 import regionsJson from '@data/regions.json';
 import { decksMeta, hasDeckData, tournaments } from '@/lib/decks';
@@ -67,6 +68,16 @@ export default function DecksPage() {
           <dd>{decksMeta.counts.cardsPlayed.toLocaleString('en-US')}</dd>
         </div>
       </dl>
+
+      {/*
+        The two directories are not in the top bar — eight entries is already what a
+        phone will hold — so they are linked from the page someone is on when the
+        question occurs to them: which event was that, and who is this player.
+      */}
+      <p className="muted" style={{ fontSize: '0.78rem', marginTop: '1rem' }}>
+        Browse the sources of all this: <Link href="/tournaments">every recorded tournament</Link>{' '}
+        · <Link href="/players">everyone with a result</Link>
+      </p>
 
       <div className="section-head" style={{ marginTop: '2.25rem' }}>
         <h2 className="display">Archetype share</h2>

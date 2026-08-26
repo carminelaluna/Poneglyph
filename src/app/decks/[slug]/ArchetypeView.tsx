@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { art, artSrcSet } from '@/lib/art';
 import Link from 'next/link';
 import EventLink from '../EventLink';
+import Matchups from './Matchups';
 import PlayerLink from '../PlayerLink';
 import { pigment } from '@/lib/colors';
 import { dataUrl } from '@/lib/paths';
@@ -13,6 +14,7 @@ import {
   filterDecks,
   formatRecord,
   ordinal,
+  windowStart,
   type DeckCardLists,
   type MetaCard,
 } from '@/lib/meta';
@@ -159,6 +161,14 @@ export default function ArchetypeView({ leaderId, glow }: { leaderId: string; gl
           ) : (
             <p className="empty">Reading decklists…</p>
           )}
+
+          {/*
+            Against a named opponent, from published brackets — the question the
+            field-wide win rate above cannot answer. Given the same window as
+            everything else on the page so the two are talking about one set of
+            matches.
+          */}
+          <Matchups leaderId={leaderId} from={windowStart(window_, index)} region={region} />
 
           <div className="section-head" style={{ marginTop: '2.5rem' }}>
             <h2 className="display">Decklists</h2>

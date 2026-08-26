@@ -248,9 +248,29 @@ async function writeRegion(region, decks, cardsById) {
   const byLeader = new Map();
 
   for (const deck of decks) {
-    leaders[deck.leaderId] ??= { n: deck.leaderName, c: deck.colors };
+    /* `$` for the same reason as below: a deck's total includes its Leader. */
+    leaders[deck.leaderId] ??= {
+      n: deck.leaderName,
+      c: deck.colors,
+      $: cardsById.get(deck.leaderId)?.priceLow ?? null,
+    };
     for (const card of deck.cards) {
-      cardNames[card.id] ??= [cardsById.get(card.id)?.name ?? card.id, card.category];
+      /*
+       * Name, category, and the lowest listed price.
+       *
+       * The price is here rather than in a payload of its own because every page
+       * that wants to total a decklist already fetches this file, and the third
+       * element costs about 4 KB gzipped across the whole archive — against 176 KB
+       * for the card index, which is the only other place a price lives.
+       *
+       * `null` when the price source has none, and the pages that add these up say
+       * how many they could not price rather than treating a missing figure as 0.
+       */
+      cardNames[card.id] ??= [
+        cardsById.get(card.id)?.name ?? card.id,
+        card.category,
+        cardsById.get(card.id)?.priceLow ?? null,
+      ];
     }
     if (!byLeader.has(deck.leaderId)) byLeader.set(deck.leaderId, {});
     byLeader.get(deck.leaderId)[deck.id] = deck.cards.map((c) => [c.id, c.count]);
@@ -477,6 +497,9 @@ async function writeEntityShards(regions) {
   await write('players', [...players.entries()]);
   await write('deck', [...decksById.entries()].map(([id, row]) => [id, row]));
 
+  /* The same two groupings, listed rather than sharded — see below. */
+  await writeDirectories(events, players);
+
   /*
    * Shared lookups every shell needs: archetype names and colours, and card names
    * for a decklist. Both are small and change rarely, and pulling them from the
@@ -484,6 +507,178 @@ async function writeEntityShards(regions) {
    */
   await writeFile(path.join(PUBLIC, 'leaders.json'), JSON.stringify(leaders));
   await writeFile(path.join(PUBLIC, 'card-names.json'), JSON.stringify(cardNames));
+}
+
+/**
+ * Leader against Leader, one file per archetype.
+ *
+ * `ingest-matchups.mjs` records every match in a Limitless event as a pair of
+ * Leaders and a result. Split per archetype, because that is how the question gets
+ * asked — "how does this deck do against that one" is read on one archetype's page,
+ * and shipping thirty thousand matches so a page can find its own four hundred
+ * would cost hundreds of kilobytes to draw one table.
+ *
+ * Each file is written from **that Leader's side**: `r` is 1 when this Leader won.
+ * A match therefore appears in two files, once from each end. That is a copy of
+ * about twelve bytes; the alternative is every reader doing the flip themselves and
+ * one of them eventually getting it backwards.
+ *
+ * Mirrors are dropped by the ingest: a deck beats itself half the time by
+ * construction, and a row saying so would be arithmetic dressed as a result.
+ */
+async function writeMatchups() {
+  const held = await load('matchups.json', null);
+  const dir = path.join(PUBLIC, 'matchups');
+
+  if (!held?.rows?.length) {
+    /* Not an error: a checkout that has never run the matchup ingest has none. */
+    await rm(dir, { recursive: true, force: true }).catch(() => {});
+    await rm(path.join(PUBLIC, 'matchups.json')).catch(() => {});
+    return null;
+  }
+
+  const byLeader = new Map();
+  const push = (leader, row) => {
+    const list = byLeader.get(leader);
+    if (list) list.push(row);
+    else byLeader.set(leader, [row]);
+  };
+
+  for (const [day, a, b, result] of held.rows) {
+    /* 1 won, 0 lost, 2 drew — flipped for the second Leader's own file. */
+    push(a, [day, b, result]);
+    push(b, [day, a, result === 1 ? 0 : result === 0 ? 1 : 2]);
+  }
+
+  await mkdir(dir, { recursive: true });
+  const wanted = new Set([...byLeader.keys()].map((id) => `${id}.json`));
+  const existing = await readdir(dir).catch(() => []);
+  await Promise.all(
+    existing.filter((f) => f.endsWith('.json') && !wanted.has(f)).map((f) => rm(path.join(dir, f)))
+  );
+
+  let bytes = 0;
+  await Promise.all(
+    [...byLeader.entries()].map(([leader, rows]) => {
+      const json = JSON.stringify({ days: held.days, rows });
+      bytes += Buffer.byteLength(json);
+      return writeFile(path.join(dir, `${leader}.json`), json);
+    })
+  );
+
+  const summary = {
+    generatedAt: held.generatedAt,
+    matches: held.rows.length,
+    archetypes: byLeader.size,
+    tournaments: held.counts?.tournaments ?? 0,
+    pending: held.counts?.pending ?? 0,
+    from: [...(held.days ?? [])].sort()[0] ?? null,
+    to: [...(held.days ?? [])].sort().at(-1) ?? null,
+  };
+  await writeFile(path.join(PUBLIC, 'matchups.json'), JSON.stringify(summary));
+
+  log(
+    `  matchups  ${summary.matches.toLocaleString('en-US')} matches · ` +
+      `${byLeader.size} archetypes · ${(bytes / 1024).toFixed(0)} KB · ` +
+      `${(bytes / byLeader.size / 1024).toFixed(1)} KB each`
+  );
+  return summary;
+}
+
+/**
+ * Two lists: every recorded tournament, and every recorded player.
+ *
+ * Both existed only as leaf pages before this. There are 7,163 events and 8,709
+ * players in the corpus and the only way to reach one was to already be looking at
+ * a deck that linked to it — /events is Bandai's announced calendar, which is a
+ * different thing entirely, and there was no /players at all.
+ *
+ * Written as arrays rather than objects, and split by recency the same way the
+ * metagame index is. Whole, either list is around 170 KB gzipped for a page most
+ * people open to look at the last month or at the regulars; the split puts the tail
+ * behind one deliberate click. Positions are documented here and read back in
+ * `lib/directory.ts` — the two must agree, and a test compares them.
+ *
+ *   event  [id, name, date, region, tier, venue, recorded, entrants, winnerLeader]
+ *   player [slug, name, results, events, top8, firsts, last, mainLeader, regions]
+ */
+const DIRECTORY_MIN_RESULTS = 2;
+
+async function writeDirectories(events, players) {
+  const eventRows = [];
+  for (const [id, rows] of events) {
+    const head = rows[0];
+    const winner = rows.find((r) => r.p === 1);
+    eventRows.push([
+      id,
+      head.e,
+      head.d,
+      head.g,
+      head.k ?? 'local',
+      head.v ?? 'unknown',
+      rows.length,
+      /* Entrants as reported; 0 means no source recorded one, not an empty room. */
+      Math.max(0, ...rows.map((r) => r.n ?? 0)),
+      winner?.l ?? '',
+    ]);
+  }
+  eventRows.sort((a, b) => b[2].localeCompare(a[2]) || b[6] - a[6]);
+
+  const playerRows = [];
+  for (const [slug, rows] of players) {
+    const spellings = new Map();
+    const archetypes = new Map();
+    const regions = new Set();
+    for (const row of rows) {
+      spellings.set(row.a, (spellings.get(row.a) ?? 0) + 1);
+      archetypes.set(row.l, (archetypes.get(row.l) ?? 0) + 1);
+      regions.add(row.g);
+    }
+    const name = [...spellings.entries()].sort((a, b) => b[1] - a[1])[0][0];
+    const main = [...archetypes.entries()].sort((a, b) => b[1] - a[1])[0][0];
+    const dates = rows.map((r) => r.d).sort();
+    playerRows.push([
+      slug,
+      name,
+      rows.length,
+      /* Distinct day-plus-event: one event can yield several recorded lists. */
+      new Set(rows.map((r) => `${r.d}|${r.e}`)).size,
+      rows.filter((r) => r.p !== null && r.p <= 8).length,
+      rows.filter((r) => r.p === 1).length,
+      dates.at(-1),
+      main,
+      regions.size > 1 ? 'both' : [...regions][0],
+    ]);
+  }
+  /* Most recorded results first: the leaderboard reading of "who plays here". */
+  playerRows.sort((a, b) => b[2] - a[2] || b[4] - a[4] || a[1].localeCompare(b[1]));
+
+  const newest = eventRows[0]?.[2] ?? null;
+  const recentFrom = newest ? shiftDays(newest, -RECENT_DAYS) : null;
+  const recentEvents = recentFrom ? eventRows.filter((r) => r[2] >= recentFrom) : eventRows;
+  const olderEvents = recentFrom ? eventRows.filter((r) => r[2] < recentFrom) : [];
+
+  /*
+   * A player with one recorded result is most of the list and none of the
+   * interest — 5,838 of 8,709 appear exactly once. They stay reachable: their page
+   * is unchanged, and the directory fetches the rest of the list when someone
+   * searches for a name that is not in the first file.
+   */
+  const regulars = playerRows.filter((r) => r[2] >= DIRECTORY_MIN_RESULTS);
+  const occasional = playerRows.filter((r) => r[2] < DIRECTORY_MIN_RESULTS);
+
+  const files = [
+    ['tournaments-index.json', { generatedAt: new Date().toISOString(), total: eventRows.length, recentFrom, archived: olderEvents.length, events: recentEvents }],
+    ['tournaments-archive.json', { events: olderEvents }],
+    ['players-index.json', { generatedAt: new Date().toISOString(), total: playerRows.length, minResults: DIRECTORY_MIN_RESULTS, archived: occasional.length, players: regulars }],
+    ['players-archive.json', { players: occasional }],
+  ];
+
+  for (const [name, payload] of files) {
+    const json = JSON.stringify(payload);
+    await writeFile(path.join(PUBLIC, name), json);
+    log(`  ${name.padEnd(26)} ${(Buffer.byteLength(json) / 1024).toFixed(0)} KB`);
+  }
 }
 
 /* ------------------------------------------------------------------- main */
@@ -630,6 +825,14 @@ async function main() {
     { id: 'en', index: built.en },
     { id: 'jp', index: built.jp },
   ]);
+
+  /*
+   * Leader-against-Leader records, from the pairings the matchup ingest reads.
+   * Absent on a checkout that has never run it, which is why this returns null
+   * rather than failing — the archetype pages say so and everything else is
+   * unaffected.
+   */
+  await writeMatchups();
 
   /* One canonical set for the pages that resolve a single deck or a player. */
   await writeFile(

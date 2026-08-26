@@ -1,0 +1,68 @@
+name: Update matchups
+
+# Reads Limitless brackets and records who beat whom, by archetype.
+#
+# One request per tournament, against the same 50-in-5-minutes limit the deck
+# ingest lives under — so this is budgeted and resumable in exactly the same way,
+# and a full backfill of the 277 tournaments on record takes a few runs rather than
+# one long one.
+#
+# Separate from `Update decklists` on purpose. That workflow already spends thirty
+# minutes waiting out the rate limit; adding another pass to it would double the
+# wall clock of the job that keeps the metagame current, to fetch something that is
+# interesting rather than urgent. Running them at different hours also keeps the two
+# from competing for the same window.
+on:
+  schedule:
+    # Once a day, three hours after the morning deck ingest, so the tournaments it
+    # found already have decklists on record to join the pairings against.
+    - cron: '20 10 * * *'
+  workflow_dispatch:
+    inputs:
+      max:
+        description: 'Request budget for this run'
+        type: string
+        default: '200'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-matchups
+  cancel-in-progress: false
+
+jobs:
+  matchups:
+    runs-on: ubuntu-latest
+    # A budget of 200 spends around twenty minutes waiting out rate-limit windows.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Read pairings
+        run: node scripts/ingest-matchups.mjs --max ${{ inputs.max || '200' }}
+
+      # Matchups are sharded per archetype into public/data/matchups/, so the
+      # payloads have to be rebuilt for anything to reach a reader.
+      - run: node scripts/build-indexes.mjs
+
+      - name: Commit new matches
+        run: |
+          git config user.name 'poneglyph-bot'
+          git config user.email 'poneglyph-bot@users.noreply.github.com'
+          git add data public/data
+          # matchups.json carries a timestamp and a duration on every run, so the
+          # question has to be asked about the content rather than about the file.
+          if ! node scripts/substantive-change.mjs; then
+            git reset
+            echo 'No new matches.'
+            exit 0
+          fi
+          matches=$(node -p "require('./data/matchups.json').counts.matches")
+          events=$(node -p "require('./data/matchups.json').counts.tournaments")
+          git commit -m "data: refresh matchups ($matches matches, $events tournaments)"
+          git push

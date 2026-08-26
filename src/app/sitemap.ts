@@ -15,6 +15,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/cards`, lastModified: updated, changeFrequency: 'daily', priority: 0.9 },
     { url: `${BASE}/sets`, lastModified: updated, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE}/decks`, lastModified: updated, changeFrequency: 'daily', priority: 0.9 },
+    /*
+     * Five real pages that were missing from here for no reason other than having
+     * been added after this list was written. /events and /banlist in particular
+     * answer questions people type into a search engine rather than into the site.
+     */
+    { url: `${BASE}/events`, lastModified: updated, changeFrequency: 'daily', priority: 0.8 },
+    { url: `${BASE}/tournaments`, lastModified: updated, changeFrequency: 'daily', priority: 0.7 },
+    { url: `${BASE}/players`, lastModified: updated, changeFrequency: 'daily', priority: 0.7 },
+    { url: `${BASE}/banlist`, lastModified: updated, changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${BASE}/spoilers`, lastModified: updated, changeFrequency: 'daily', priority: 0.7 },
+    { url: `${BASE}/deckbuilder`, lastModified: updated, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE}/data`, lastModified: updated, changeFrequency: 'daily', priority: 0.3 },
     { url: `${BASE}/legal`, lastModified: updated, changeFrequency: 'yearly', priority: 0.3 },
     /* Linked from the footer only, but they are the URLs given to OAuth providers,

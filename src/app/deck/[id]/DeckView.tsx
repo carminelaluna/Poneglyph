@@ -9,6 +9,7 @@ import { formatRecord, isNamedPlayer, ordinal, playerSlug } from '@/lib/meta';
 import {
   getDeckCards,
   getDeckRow,
+  listPrice,
   loadLeaders,
   type Leaders,
   type ShardRow,
@@ -22,7 +23,7 @@ import {
  * metagame page already uses — see lib/shards.ts.
  */
 
-type Entry = { id: string; count: number; name: string; category: string };
+type Entry = { id: string; count: number; name: string; category: string; price: number | null };
 
 /** Character, Event, Stage — the order groupDeck uses at build time. */
 const ORDER = ['Character', 'Event', 'Stage'];
@@ -105,6 +106,8 @@ export default function DeckView({ id }: { id: string }) {
   const archetypeSlug = deck.l.toLowerCase();
   const groups = group(cards);
   const total = cards.reduce((n, c) => n + c.count, 0);
+  /* The Leader is part of what a deck costs, so it is part of the total. */
+  const price = listPrice(cards, leader);
 
   /*
    * Cards the archive has no name for. They are almost always from a set that has
@@ -163,6 +166,21 @@ export default function DeckView({ id }: { id: string }) {
             <div className="stat">
               <dt>Cards</dt>
               <dd>{total + 1}</dd>
+            </div>
+            {/*
+              Lowest listed, summed over every copy, and honest about the gaps: a
+              price is missing for about one card in twenty, and a total that folded
+              those in as zero would read as a cheaper deck rather than as an
+              incomplete figure.
+            */}
+            <div className="stat">
+              <dt>Lowest listed</dt>
+              <dd className={price.total > 0 ? undefined : 'small none'}>
+                {price.total > 0 ? `$${price.total.toFixed(2)}` : 'Not priced'}
+                {price.total > 0 && price.unpriced ? (
+                  <span className="muted small"> · {price.unpriced} unpriced</span>
+                ) : null}
+              </dd>
             </div>
             <div className="stat">
               <dt>Date</dt>

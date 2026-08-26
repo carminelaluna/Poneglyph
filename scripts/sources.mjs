@@ -80,6 +80,12 @@ export const DECK_SOURCES = {
     tournamentsUrl: (page, limit = 50) =>
       `https://play.limitlesstcg.com/api/tournaments?game=OP&limit=${limit}&page=${page}`,
     standingsUrl: (id) => `https://play.limitlesstcg.com/api/tournaments/${id}/standings`,
+    /*
+     * Round, table, both players and the winner, by username — which is what makes
+     * a real Leader-against-Leader record possible rather than a reconstruction
+     * from standings. One request per tournament; see ingest-matchups.mjs.
+     */
+    pairingsUrl: (id) => `https://play.limitlesstcg.com/api/tournaments/${id}/pairings`,
     detailsUrl: (id) => `https://play.limitlesstcg.com/api/tournaments/${id}/details`,
     tournamentPage: (id) => `https://play.limitlesstcg.com/tournament/${id}`,
   },

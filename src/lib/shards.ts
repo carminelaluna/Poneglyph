@@ -16,6 +16,12 @@
  * those still run at build time for metadata and prerendering, and the two must
  * agree or a prerendered page and a fetched one would disagree about the same event.
  */
+import type {
+  EventRow,
+  PlayerIndex,
+  PlayerRow,
+  TournamentIndex,
+} from './directory';
 import type { MetaDeck } from './meta';
 import { isNamedPlayer, playerSlug } from './meta';
 import { dataUrl } from './paths';
@@ -25,7 +31,11 @@ export type Region = 'en' | 'jp';
 /** One deck row as it arrives in a shard. */
 export type ShardRow = MetaDeck & { g: Region };
 
-export type Leaders = Record<string, { n: string; c: string[] }>;
+/** Archetype names and colours, and the Leader's own lowest listed price. */
+export type Leaders = Record<string, { n: string; c: string[]; $?: number | null }>;
+
+/** Card name, category, and lowest listed price — `null` when there is none. */
+export type CardNames = Record<string, [string, string, (number | null)?]>;
 
 /**
  * Which bucket a key falls in — FNV-1a.
@@ -73,7 +83,29 @@ const bucket = <T>(kind: string, key: string) =>
 export const loadLeaders = () => once('leaders', () => json<Leaders>(dataUrl('leaders.json')));
 
 export const loadCardNames = () =>
-  once('card-names', () => json<Record<string, [string, string]>>(dataUrl('card-names.json')));
+  once('card-names', () => json<CardNames>(dataUrl('card-names.json')));
+
+/* --------------------------------------------------------- the directories */
+
+/*
+ * The whole-file payloads behind /tournaments and /players. They live here rather
+ * than in lib/directory.ts for the same reason the metagame fetches do: that file
+ * is the shapes and the arithmetic, free of imports so a test can read it, and this
+ * one is where a payload is fetched and kept.
+ */
+export const loadTournaments = () =>
+  once('tournaments', () => json<TournamentIndex>(dataUrl('tournaments-index.json')));
+
+export const loadTournamentArchive = () =>
+  once('tournaments-archive', () =>
+    json<{ events: EventRow[] }>(dataUrl('tournaments-archive.json'))
+  );
+
+export const loadPlayers = () =>
+  once('players-index', () => json<PlayerIndex>(dataUrl('players-index.json')));
+
+export const loadPlayerArchive = () =>
+  once('players-archive', () => json<{ players: PlayerRow[] }>(dataUrl('players-archive.json')));
 
 /** Card lists for one archetype: deck id -> [[cardId, count], …]. */
 export const loadArchetypeLists = (region: Region, leaderId: string) =>
@@ -195,7 +227,7 @@ export async function getDeckRow(id: string): Promise<ShardRow | null> {
   return (await bucket<ShardRow>('deck', id))[id] ?? null;
 }
 
-/** A deck's card list, resolved to names and categories. */
+/** A deck's card list, resolved to names, categories and prices. */
 export async function getDeckCards(row: ShardRow) {
   const [lists, names] = await Promise.all([
     loadArchetypeLists(row.g, row.l),
@@ -208,7 +240,29 @@ export async function getDeckCards(row: ShardRow) {
     count,
     name: names[id]?.[0] ?? id,
     category: names[id]?.[1] ?? '',
+    /* `undefined` for a card this payload predates, `null` for one with no price. */
+    price: names[id]?.[2] ?? null,
   }));
+}
+
+/**
+ * What a list would cost to put together, at the lowest listed price.
+ *
+ * Returns the count it could not price as well as the total, because those two
+ * numbers have to be read together: a total that quietly skipped a third of the
+ * deck would look like a bargain rather than like missing data.
+ */
+export function listPrice(
+  cards: { count: number; price: number | null }[],
+  leader?: { $?: number | null } | null
+) {
+  let total = leader?.$ ?? 0;
+  let unpriced = leader && (leader.$ ?? null) === null ? 1 : 0;
+  for (const card of cards) {
+    if (card.price === null) unpriced += card.count;
+    else total += card.price * card.count;
+  }
+  return { total, unpriced };
 }
 
 export { isNamedPlayer, playerSlug };

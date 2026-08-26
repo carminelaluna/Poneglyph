@@ -35,6 +35,8 @@ type Row = {
   i: string; n: string; c: string[]; y: string; o: number | null; l: number | null;
   p: number | null; u: number | null; t: string[]; r: string; s: string;
   q: string; f: 0 | 1;
+  /** Lowest listed price, when the price source has one for this card. */
+  $: number | null;
 };
 
 const toCard = (row: Row): DeckCard => ({
@@ -47,6 +49,91 @@ const toCard = (row: Row): DeckCard => ({
 
 /** Character, Event, Stage — the order the decklist pages use. */
 const ORDER = ['Character', 'Event', 'Stage'];
+
+/** Everything from 10 up shares the last column; the curve is flat past it. */
+const TOP_COST = 10;
+
+type DeckStats = {
+  curve: { cost: number; copies: number }[];
+  peak: number;
+  averageCost: number;
+  counters: number;
+  counterPower: number;
+  /** Lowest listed price for one of each card, the Leader included. */
+  price: number;
+  /** Copies the price source has no figure for — named rather than folded in. */
+  unpriced: number;
+};
+
+/**
+ * What the fifty cards add up to.
+ *
+ * All of it is arithmetic on the card index the page has already downloaded, so
+ * none of this costs a request. The two numbers worth explaining:
+ *
+ * **Counter** is the total counter power in the deck, which is the figure people
+ * compare builds by — a deck holding 34 counters at 2000 plays differently from one
+ * holding 34 at 1000, and the count alone does not say which it is.
+ *
+ * **Price** is the *lowest listed* price, summed over every copy, and it names how
+ * many copies it could not price rather than quietly leaving them out. A total that
+ * silently skipped a third of the deck would be worse than no total.
+ */
+function deckStats(deck: Counted[], byId: Map<string, Row>, leader: Row | undefined): DeckStats {
+  const curve = new Map<number, number>();
+  let counters = 0;
+  let counterPower = 0;
+  let price = leader?.$ ?? 0;
+  let unpriced = leader && leader.$ === null ? 1 : 0;
+  let costTotal = 0;
+  let costed = 0;
+
+  for (const { card, count } of deck) {
+    const row = byId.get(card.id);
+    if (!row) continue;
+
+    if (row.o !== null) {
+      const bucket = Math.min(row.o, TOP_COST);
+      curve.set(bucket, (curve.get(bucket) ?? 0) + count);
+      costTotal += row.o * count;
+      costed += count;
+    }
+    if (row.u) {
+      counters += count;
+      counterPower += row.u * count;
+    }
+    if (row.$ === null) unpriced += count;
+    else price += row.$ * count;
+  }
+
+  const bars: { cost: number; copies: number }[] = [];
+  for (let cost = 0; cost <= TOP_COST; cost++) bars.push({ cost, copies: curve.get(cost) ?? 0 });
+  /* Trim the empty tail so a deck topping out at 7 does not draw three empty columns. */
+  while (bars.length > 1 && bars[bars.length - 1].copies === 0) bars.pop();
+
+  return {
+    curve: bars,
+    peak: Math.max(1, ...bars.map((b) => b.copies)),
+    averageCost: costed ? costTotal / costed : 0,
+    counters,
+    counterPower,
+    price,
+    unpriced,
+  };
+}
+
+/**
+ * The curve as a sentence, for anyone not reading it as a picture.
+ *
+ * A row of bars with no text alternative is invisible to a screen reader and says
+ * nothing at all to it; the same numbers read aloud are perfectly usable.
+ */
+const curveLabel = (stats: DeckStats) =>
+  'Cost curve: ' +
+  stats.curve
+    .filter((bar) => bar.copies > 0)
+    .map((bar) => `${bar.copies} at cost ${bar.cost === TOP_COST ? `${TOP_COST} or more` : bar.cost}`)
+    .join(', ');
 
 export default function DeckBuilder() {
   const [rows, setRows] = useState<Row[] | null>(null);
@@ -152,7 +239,7 @@ export default function DeckBuilder() {
     return map;
   }, [rows]);
 
-  const leaderRow = leaderId ? byId.get(leaderId) : undefined;
+  const leaderRow: Row | undefined = leaderId ? byId.get(leaderId) : undefined;
   const leader: Leader | null = leaderRow
     ? { ...toCard(leaderRow), life: leaderRow.l }
     : null;
@@ -313,6 +400,8 @@ export default function DeckBuilder() {
       })).filter((group) => group.entries.length > 0),
     [deck, byId]
   );
+
+  const stats = useMemo(() => deckStats(deck, byId, leaderRow), [deck, byId, leaderRow]);
 
   if (error) {
     return (
@@ -481,6 +570,57 @@ export default function DeckBuilder() {
                 <b className="mono">{total}</b>
                 <span className="muted"> / {DECK_SIZE}</span>
               </p>
+
+              {total > 0 ? (
+                <div className="build-stats">
+                  <div className="build-curve" role="img" aria-label={curveLabel(stats)}>
+                    {stats.curve.map((bar) => (
+                      <span key={bar.cost} className="build-curve-col">
+                        <span className="build-curve-count">{bar.copies || ''}</span>
+                        <span
+                          className="build-curve-bar"
+                          style={{ height: `${(bar.copies / stats.peak) * 100}%` }}
+                        />
+                        <span className="build-curve-cost">
+                          {bar.cost === TOP_COST ? `${TOP_COST}+` : bar.cost}
+                        </span>
+                      </span>
+                    ))}
+                  </div>
+
+                  <dl className="build-figures">
+                    <div>
+                      <dt>Average cost</dt>
+                      <dd className="mono">{stats.averageCost.toFixed(2)}</dd>
+                    </div>
+                    <div>
+                      <dt>Counters</dt>
+                      <dd className="mono">
+                        {stats.counters}
+                        <span className="muted">
+                          {' '}
+                          / {stats.counterPower.toLocaleString('en-US')}
+                        </span>
+                      </dd>
+                    </div>
+                    <div>
+                      {/*
+                        "Lowest listed", not "value". It is the cheapest printing on
+                        the price source, summed over every copy — the number that
+                        answers "what would this cost me", and it says outright when
+                        it could not price part of the deck.
+                      */}
+                      <dt>Lowest listed</dt>
+                      <dd className="mono">
+                        {stats.price > 0 ? `$${stats.price.toFixed(2)}` : '—'}
+                        {stats.unpriced ? (
+                          <span className="muted"> · {stats.unpriced} unpriced</span>
+                        ) : null}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+              ) : null}
             </>
           ) : (
             <p className="muted" style={{ margin: 0 }}>

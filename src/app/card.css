@@ -247,3 +247,48 @@
   color: var(--glyph);
   background: var(--slab-lift);
 }
+
+/* ---------------------------------------------------------- price history */
+
+.price-line {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+/*
+ * Stretched rather than scaled: the shape of the line is the point, and the
+ * numbers beside it carry the magnitude. `non-scaling-stroke` on the path is what
+ * keeps the stroke even after preserveAspectRatio="none".
+ */
+.price-spark {
+  width: 8rem;
+  height: 2.2rem;
+  flex-shrink: 0;
+}
+
+.price-spark path {
+  stroke: var(--glyph-dim);
+}
+
+.price-move {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.86rem;
+  color: var(--glyph-mid);
+}
+
+.price-move.up {
+  color: var(--rune-lit);
+}
+
+.price-line:has(.price-move.up) .price-spark path {
+  stroke: var(--rune-lit);
+}
+
+.price-move.down {
+  color: var(--c-red);
+}
+
+.price-line:has(.price-move.down) .price-spark path {
+  stroke: var(--c-red);
+}

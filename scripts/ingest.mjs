@@ -17,6 +17,7 @@
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { SOURCES, RULES_SOURCES } from './sources.mjs';
+import { appendPrices } from './price-history.mjs';
 
 const args = process.argv.slice(2);
 const flag = (name, fallback = null) => {
@@ -692,6 +693,7 @@ async function main() {
     writeFile(path.join(OUT_DIR, 'meta.json'), JSON.stringify(meta, null, 2)),
   ]);
   await writeSlimIndex(cards);
+  await recordPrices(cards);
 
   log('done in', ((Date.now() - started) / 1000).toFixed(1) + 's');
   console.table(meta.counts);
@@ -733,6 +735,42 @@ async function writeSlimIndex(cards) {
   await writeFile(file, JSON.stringify(slim));
   const kb = (Buffer.byteLength(JSON.stringify(slim)) / 1024).toFixed(0);
   log(`browser index -> public/data/cards-index.json (${kb} KB)`);
+}
+
+/**
+ * Today's prices, appended to what came before.
+ *
+ * Until now a price was a single number with no yesterday: the ingest overwrote it
+ * twice a day, so "is this card going up" — which is most of why anyone looks at a
+ * price at all — had no answer anywhere in the archive.
+ *
+ * The append and the trim are in scripts/price-history.mjs, pure and tested. The
+ * trim only fires once the archive is ninety days old, and a bug in it would rebase
+ * every series wrongly three months from now; that is not something to find out
+ * from a chart.
+ *
+ * Nothing is back-filled. The source publishes a price and a date it was scraped,
+ * not a series, so the first run records one day and the card page says it does not
+ * have enough history yet — which is true, and better than drawing a flat line out
+ * of one number and letting it read as a stable price.
+ */
+async function recordPrices(cards) {
+  const file = path.join(OUT_DIR, 'price-history.json');
+  const today = new Date().toISOString().slice(0, 10);
+
+  const held = await readFile(file, 'utf8')
+    .then(JSON.parse)
+    .catch(() => ({ days: [], prices: {} }));
+
+  const { days, prices, moved } = appendPrices(held, cards, today);
+
+  const payload = { generatedAt: new Date().toISOString(), days, prices };
+  await writeFile(file, JSON.stringify(payload));
+  const kb = (Buffer.byteLength(JSON.stringify(payload)) / 1024).toFixed(0);
+  log(
+    `price history -> ${days.length} day(s), ${moved} price(s) moved today, ` +
+      `${Object.keys(prices).length} cards, ${kb} KB`
+  );
 }
 
 main().catch((err) => {

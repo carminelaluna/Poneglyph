@@ -23,6 +23,7 @@
 import { writeFile, readFile, mkdir, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { DECK_SOURCES } from './sources.mjs';
+import { Budget, apiGet } from './limitless.mjs';
 
 const args = process.argv.slice(2);
 const flag = (name, fallback = null) => {
@@ -45,78 +46,17 @@ const MIN_PLAYERS = Number(flag('min-players', 8));
 const log = (...m) => console.log('[decks]', ...m);
 
 // ---------------------------------------------------------------------------
-// a rate limiter that listens to the server rather than guessing
+// the shared Limitless client
 // ---------------------------------------------------------------------------
 
-class Budget {
-  constructor(max) {
-    this.remaining = max;
-    this.spent = 0;
-    /** Seconds until the server's window resets, from the last RateLimit header. */
-    this.resetIn = 0;
-    this.serverRemaining = Infinity;
-  }
-
-  get exhausted() {
-    return this.remaining <= 0;
-  }
-
-  /** Limitless answers with `RateLimit: "50-in-5min"; r=48; t=269`. */
-  observe(headers) {
-    const header = headers.get('ratelimit');
-    if (!header) return;
-    const r = header.match(/r=(\d+)/);
-    const t = header.match(/t=(\d+)/);
-    if (r) this.serverRemaining = Number(r[1]);
-    if (t) this.resetIn = Number(t[1]);
-  }
-
-  /** Pause before the server would start refusing, rather than after. */
-  async waitIfNeeded() {
-    if (this.serverRemaining > 2) return;
-    const seconds = Math.min(this.resetIn + 2, 320);
-    log(`rate limit nearly spent — waiting ${seconds}s for the window to reset`);
-    await new Promise((r) => setTimeout(r, seconds * 1000));
-    this.serverRemaining = Infinity;
-  }
-
-  spend() {
-    this.remaining--;
-    this.spent++;
-  }
-}
-
-const budget = new Budget(BUDGET);
-
-async function api(url, { retries = 3, optional = false } = {}) {
-  await budget.waitIfNeeded();
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      const res = await fetch(url, {
-        headers: { 'user-agent': 'poneglyph-decks/1.0 (+https://poneglyph.gg)' },
-        signal: AbortSignal.timeout(45_000),
-      });
-      budget.spend();
-      budget.observe(res.headers);
-
-      if (res.status === 429) {
-        const wait = Number(res.headers.get('retry-after') ?? 60);
-        log(`429 — backing off ${wait}s`);
-        await new Promise((r) => setTimeout(r, wait * 1000));
-        continue;
-      }
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
-    } catch (err) {
-      if (attempt === retries) {
-        if (optional) return null;
-        throw new Error(`${url}: ${err.message}`);
-      }
-      await new Promise((r) => setTimeout(r, 500 * attempt ** 2));
-    }
-  }
-  return null;
-}
+/*
+ * `Budget` and the request helper moved to scripts/limitless.mjs when the matchup
+ * ingest needed them too. Two copies would have meant two rate limiters against one
+ * server, each unaware of the other's requests.
+ */
+const budget = new Budget(BUDGET, log);
+const api = (url, options = {}) =>
+  apiGet(url, budget, { agent: 'poneglyph-decks/1.0 (+https://poneglyph.gg)', ...options });
 
 // ---------------------------------------------------------------------------
 // card resolution

@@ -2,12 +2,17 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { meta } from '@/lib/cards';
 import { decksMeta, hasDeckData } from '@/lib/decks';
+import matchupsJson from '@data/matchups.json';
+import priceHistory from '@data/price-history.json';
 
 export const metadata: Metadata = {
   title: 'Data sources',
   description:
     'Where Poneglyph gets its card data, how fresh it is, and how the archive is rebuilt.',
 };
+
+const matchups = matchupsJson as { counts: { matches: number; tournaments: number; pending: number } };
+const priceDays = (priceHistory as { days?: string[] }).days ?? [];
 
 export default function DataPage() {
   const built = new Date(meta.generatedAt);
@@ -153,6 +158,47 @@ export default function DataPage() {
           </table>
         </div>
       ) : null}
+
+      {/*
+        Two things the archive keeps that no upstream publishes: a record of who
+        beat whom, and yesterday's prices. Both are built here over time rather
+        than fetched, so how far back they go is a fact about this site and belongs
+        on the page that says where everything comes from.
+      */}
+      <div className="meta-block">
+        <h2>Kept over time</h2>
+        <p className="muted" style={{ maxWidth: '64ch', marginTop: 0 }}>
+          Neither of these can be fetched. Prices arrive as one number with a scrape
+          date, so a history exists only because each ingest writes a point; pairings
+          are published per tournament, so a matchup record exists only once every
+          bracket has been read. Both started when the archive started keeping them,
+          and nothing is back-filled.
+        </p>
+        <table className="table">
+          <tbody>
+            <tr>
+              <td className="muted">Matches recorded</td>
+              <td className="mono">{matchups.counts.matches.toLocaleString('en-US')}</td>
+            </tr>
+            <tr>
+              <td className="muted">Brackets read</td>
+              <td className="mono">
+                {matchups.counts.tournaments.toLocaleString('en-US')}
+                {matchups.counts.pending
+                  ? ` · ${matchups.counts.pending.toLocaleString('en-US')} to go`
+                  : ''}
+              </td>
+            </tr>
+            <tr>
+              <td className="muted">Price history</td>
+              <td className="mono">
+                {priceDays.length} day{priceDays.length === 1 ? '' : 's'} ·{' '}
+                {priceDays[0] ?? '—'} → {priceDays.at(-1) ?? '—'}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <div className="meta-block">
         <h2>How a rebuild works</h2>

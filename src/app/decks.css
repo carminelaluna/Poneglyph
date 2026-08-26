@@ -609,3 +609,60 @@
 .deck-export-button {
   padding: 0.55rem 1rem;
 }
+
+/* ---------------------------------------------------------------- matchups */
+
+/*
+ * The bar is centred on 50%, growing right when the archetype is ahead and left
+ * when it is behind. A plain 0-100 bar makes an even matchup look half good
+ * instead of even, which is the one reading this table must not encourage.
+ */
+.matchup-bar {
+  display: flex;
+  align-items: center;
+  min-width: 10rem;
+}
+
+/* Two halves of equal width meeting at the axis, so 50% is the middle. */
+.matchup-half {
+  flex: 0 0 3rem;
+  display: flex;
+  height: 0.5rem;
+}
+
+.matchup-half.left {
+  justify-content: flex-end;
+  border-right: 1px solid var(--edge-strong);
+  padding-right: 1px;
+}
+
+.matchup-half.right {
+  justify-content: flex-start;
+  padding-left: 1px;
+}
+
+.matchup-half i {
+  display: block;
+  height: 100%;
+}
+
+.matchup-half.left i {
+  border-radius: 0.2rem 0 0 0.2rem;
+  background: color-mix(in srgb, var(--c-red) 75%, var(--edge));
+}
+
+.matchup-half.right i {
+  border-radius: 0 0.2rem 0.2rem 0;
+  background: var(--rune-lit);
+}
+
+.matchup-bar b {
+  margin-left: 0.6rem;
+  font-weight: 500;
+  font-size: 0.78rem;
+}
+
+/* Kept visibly provisional: too few games to read as a matchup. */
+.matchup-thin {
+  opacity: 0.6;
+}

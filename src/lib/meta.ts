@@ -87,7 +87,7 @@ export type MetaIndex = {
   eras: Era[];
   tiers: { id: string; label: string }[];
   leaders: Record<string, { n: string; c: string[] }>;
-  cards: Record<string, [string, string]>;
+  cards: Record<string, [string, string, (number | null)?]>;
   decks: MetaDeck[];
 };
 

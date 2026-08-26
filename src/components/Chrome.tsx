@@ -28,6 +28,11 @@ const NAV = [
  * Sets is not here either. Browsing by set is a filter on the card archive, and
  * /cards already has that facet — two entries for one question. The set pages stay,
  * linked from every card and from the footer, since a set has a page worth reading.
+ *
+ * Nor are /tournaments and /players, for the opposite reason: they are new, and
+ * eight entries is already the most a phone will hold on one line. Both are linked
+ * from the metagame page and from each other, which is where someone is standing
+ * when the question occurs to them, and both are in the footer and the sitemap.
  */
 
 /*

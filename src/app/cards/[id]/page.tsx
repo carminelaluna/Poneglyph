@@ -6,6 +6,8 @@ import CardViewer from '@/components/CardViewer';
 import RulesText from '@/components/RulesText';
 import { art, cards, filters, formatPrice, formatPower, getCard } from '@/lib/cards';
 import { cardArchetypes, getPlay, hasDeckData } from '@/lib/decks';
+import { MIN_POINTS, priceMove, readSeries, sparkline, type Stored } from '@/lib/prices';
+import priceHistory from '@data/price-history.json';
 import { pigment } from '@/lib/colors';
 import '../../card.css';
 import '../../decks.css';
@@ -57,6 +59,10 @@ export default async function CardPage({ params }: Params) {
   )[0];
 
   /* How the competitive field actually uses this card, if deck data has been ingested. */
+  /* Build-time, from data/price-history.json — the browser fetches nothing. */
+  const series = readSeries(priceHistory as unknown as Stored, card.id);
+  const move = priceMove(series);
+
   const play = hasDeckData ? getPlay(card.id) : null;
   const playedBy = play ? cardArchetypes(card.id, 6) : [];
 
@@ -256,6 +262,48 @@ export default async function CardPage({ params }: Params) {
               </div>
             </div>
           ) : null}
+
+          {/*
+            What the price has done, which the archive could not say at all until
+            it started keeping a series: a price was one number, overwritten twice
+            a day. Nothing is back-filled, so a card the ingest has only seen once
+            says so rather than drawing a flat line that reads as a steady price.
+          */}
+          <div className="meta-block">
+            <h2>Price</h2>
+            {move && series.length >= MIN_POINTS ? (
+              <>
+                <div className="price-line">
+                  <svg
+                    className="price-spark"
+                    viewBox="0 0 120 32"
+                    preserveAspectRatio="none"
+                    role="img"
+                    aria-label={`${formatPrice(move.from)} on ${series[0].day}, ${formatPrice(move.to)} on ${series[series.length - 1].day}`}
+                  >
+                    <path d={sparkline(series)} fill="none" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+                  </svg>
+                  <span className={`price-move${move.delta > 0 ? ' up' : move.delta < 0 ? ' down' : ''}`}>
+                    {move.delta > 0 ? '+' : ''}
+                    {formatPrice(move.delta)}
+                    {move.percent === null ? null : (
+                      <span className="muted"> ({move.percent > 0 ? '+' : ''}{move.percent}%)</span>
+                    )}
+                  </span>
+                </div>
+                <p className="muted" style={{ fontSize: '0.74rem', margin: '0.5rem 0 0' }}>
+                  {formatPrice(move.low)}–{formatPrice(move.high)} across {move.days} recorded
+                  {move.days === 1 ? ' day' : ' days'}, lowest listing. From {series[0].day}.
+                </p>
+              </>
+            ) : (
+              <p className="muted" style={{ fontSize: '0.78rem', margin: 0 }}>
+                {series.length
+                  ? `Only ${series.length} day${series.length === 1 ? '' : 's'} on record so far — the archive keeps a price from each ingest and needs a few before a line means anything.`
+                  : 'No price on record for this card.'}
+              </p>
+            )}
+          </div>
 
           {card.keywords.length ? (
             <div className="meta-block">

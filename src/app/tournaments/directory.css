@@ -1,0 +1,92 @@
+/*
+ * The two directories — /tournaments and /players.
+ *
+ * One stylesheet for both: they are the same table with different columns, and the
+ * controls above them ask the same shape of question. The table itself is
+ * `.meta-table` from decks.css, which both pages import for exactly that reason —
+ * a second table style that looked almost the same would be the worse outcome. Only
+ * what is particular to a directory is here.
+ */
+
+.dir-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+}
+
+.dir-search {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.dir-select {
+  flex: 0 1 11rem;
+}
+
+.dir-count {
+  margin: 0.9rem 0 0.6rem;
+  font-size: 0.78rem;
+}
+
+/* Dense: these tables are read by scanning a column, not by reading a row. */
+.dir-table td,
+.dir-table th {
+  padding-block: 0.45rem;
+}
+
+.dir-name {
+  display: block;
+  font-weight: 500;
+  color: inherit;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 32ch;
+}
+
+.dir-name:hover {
+  color: var(--rune-lit);
+  text-decoration: underline;
+}
+
+.dir-tags {
+  display: block;
+  margin-top: 1px;
+  font-size: 0.7rem;
+  color: var(--glyph-faint);
+}
+
+/* Never wrapped: a date broken across two lines reads as two dates. */
+.dir-date {
+  white-space: nowrap;
+  font-size: 0.72rem;
+}
+
+/*
+ * Kept byte-identical to the copy in browse.css, which is loaded on /cards and
+ * not here — two routes, two stylesheets. Differing would be worse than repeating:
+ * the same control would be a different colour depending on which page you were on.
+ */
+.link-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--glyph-dim);
+  font-size: 0.72rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.link-btn:hover {
+  color: var(--rune-lit);
+}
+
+.link-btn:disabled {
+  color: var(--glyph-faint);
+  cursor: default;
+  text-decoration: none;
+}

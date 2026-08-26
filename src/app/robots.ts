@@ -15,7 +15,15 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       // /art is a proxy, not content — keeping crawlers out of it avoids
       // thousands of upstream fetches on our behalf.
-      { userAgent: '*', allow: '/', disallow: ['/art/'] },
+      //
+      // /account, /submit and /review render nothing without a session: a crawler
+      // gets the signed-out shell, which is one page of text repeated under three
+      // URLs and is not what anyone is searching for.
+      {
+        userAgent: '*',
+        allow: '/',
+        disallow: ['/art/', '/account/', '/submit/', '/review/'],
+      },
     ],
     sitemap: `${BASE}/sitemap.xml`,
   };
