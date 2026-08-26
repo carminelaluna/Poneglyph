@@ -94,15 +94,21 @@ function DisplayName({
  * legal page: off the record, easy to lose, and visible to nobody but whoever
  * received it. Three fields and a row are better on all three counts.
  *
- * What it asks for is what a reviewer actually needs to decide — a name, what they
+ * Collapsed to one line until it is wanted. Asking is something you do once and
+ * never again, so a form sitting open under the account block is three fields of
+ * furniture for everyone who has already asked and for everyone who never will.
+ * The line carries the answer instead — what the button says *is* the status — so
+ * the common case is reading one sentence and moving on.
+ *
+ * What it asks for is what a reviewer actually needs to decide: a name, what they
  * run, and somewhere it can be checked. Deliberately not a form that could be
- * filled in convincingly by someone who runs nothing: the questions are the kind
- * with an answer only a real organizer has to hand.
+ * filled in convincingly by someone who runs nothing.
  *
  * Nothing here changes a role. It records a question; `/review` records the answer.
  */
 function OrganizerRequest({ userId }: { userId: string }) {
   const [request, setRequest] = useState<OrganizerRequestRow | null | undefined>(undefined);
+  const [open, setOpen] = useState(false);
   const [organizerName, setOrganizerName] = useState('');
   const [events, setEvents] = useState('');
   const [link, setLink] = useState('');
@@ -126,6 +132,8 @@ function OrganizerRequest({ userId }: { userId: string }) {
     setFailed(null);
     try {
       await requestOrganizer({ userId, organizerName, events, link });
+      /* Left open: the panel turning into "waiting for review" is the confirmation,
+         and a form that simply vanished would leave you wondering. */
       load();
     } catch (err) {
       setFailed(err instanceof Error ? err.message : 'Could not send that.');
@@ -150,7 +158,29 @@ function OrganizerRequest({ userId }: { userId: string }) {
   /* undefined is "not looked yet" and null is "nothing sent" — see useAccount. */
   if (request === undefined) return null;
 
-  if (request && request.status === 'pending') {
+  const status = request?.status;
+
+  if (!open) {
+    return (
+      <p className="account-ask-line">
+        <button type="button" className="chip chip-link" onClick={() => setOpen(true)}>
+          {status === 'pending'
+            ? 'Organizer role — waiting for review'
+            : status === 'rejected'
+              ? 'Organizer role — not granted'
+              : 'Ask for the organizer role'}
+        </button>
+      </p>
+    );
+  }
+
+  const close = (
+    <button type="button" className="account-link" onClick={() => setOpen(false)}>
+      Close
+    </button>
+  );
+
+  if (request && status === 'pending') {
     return (
       <div className="slab slab-pad account-ask">
         <p className="eyebrow">Organizer role</p>
@@ -161,30 +191,35 @@ function OrganizerRequest({ userId }: { userId: string }) {
           Nothing else is needed from you. Results you submit later are reviewed
           separately, one event at a time.
         </p>
-        <button type="button" className="account-link" disabled={busy} onClick={withdraw}>
-          {busy ? 'Withdrawing…' : 'Withdraw the request'}
-        </button>
+        {failed ? <p className="build-error">{failed}</p> : null}
+        <p className="account-actions">
+          <button type="button" className="account-link" disabled={busy} onClick={withdraw}>
+            {busy ? 'Withdrawing…' : 'Withdraw the request'}
+          </button>
+          {close}
+        </p>
       </div>
     );
   }
 
-  if (request && request.status === 'rejected') {
+  if (request && status === 'rejected') {
     return (
       <div className="slab slab-pad account-ask">
         <p className="eyebrow">Organizer role</p>
         <p style={{ margin: '0.4rem 0 0' }}>Not granted.</p>
-        {/* .account-notice, not the review page's .sub-note: that stylesheet is
-            not loaded here, and a class that resolves to nothing renders as an
-            unstyled paragraph rather than as an error anyone would notice. */}
-        {request.review_note ? (
-          <p className="account-notice">{request.review_note}</p>
-        ) : null}
+        {/* .account-notice, not the review page's .sub-note: that stylesheet is not
+            loaded here, and a class resolving to nothing renders as an unstyled
+            paragraph rather than as anything anyone would notice. */}
+        {request.review_note ? <p className="account-notice">{request.review_note}</p> : null}
         <p className="muted account-ask-note">
           You can ask again — say what changed, and it will be read again.
         </p>
-        <button type="button" className="account-link" onClick={() => setRequest(null)}>
-          Ask again
-        </button>
+        <p className="account-actions">
+          <button type="button" className="account-link" onClick={() => setRequest(null)}>
+            Ask again
+          </button>
+          {close}
+        </p>
       </div>
     );
   }
@@ -235,11 +270,13 @@ function OrganizerRequest({ userId }: { userId: string }) {
         />
       </label>
 
+      {failed ? <p className="build-error">{failed}</p> : null}
+
       <div className="account-actions">
         <button type="submit" className="chip chip-link" disabled={busy}>
           {busy ? 'Sending…' : 'Ask for the role'}
         </button>
-        {failed ? <p className="build-error">{failed}</p> : null}
+        {close}
       </div>
     </form>
   );

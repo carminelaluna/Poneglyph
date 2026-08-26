@@ -170,6 +170,19 @@
   max-width: 56ch;
 }
 
-.account-ask .account-link {
-  justify-self: start;
+.account-ask .account-actions {
+  margin: 0.2rem 0 0;
+}
+
+/*
+ * Collapsed, this is the whole feature: one button whose label is the status.
+ * Sits apart from the account block above it so it reads as a thing you can do
+ * rather than as another line of what you are.
+ */
+.account-ask-line {
+  margin: 0;
+}
+
+.account-ask-line .chip {
+  padding: 0.5rem 0.9rem;
 }
