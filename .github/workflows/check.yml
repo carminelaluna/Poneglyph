@@ -1,0 +1,57 @@
+name: Check
+
+# Source hygiene, types and the deck rules, on every code change.
+#
+# Nothing ran before this: the first thing to notice a type error was the
+# production build in `publish-site`, and the first thing to notice a rule that had
+# stopped being true was a reader. Both are the wrong place to find out.
+#
+# Deliberately not a site build. `publish-site` already does that, and it refuses to
+# deploy when it fails, so repeating a four-minute export here would buy a slower
+# signal rather than a new one. What this adds is the fast half: stray control
+# characters, reserved SQL column names, `tsc`, and the tests.
+on:
+  push:
+    branches: [main-node]
+    # The ingest workflows commit only data. They run with GITHUB_TOKEN, which by
+    # design starts no further workflow, so this is belt and braces — but it also
+    # covers a data refresh pushed by hand.
+    paths-ignore:
+      - 'data/**'
+      - 'public/data/**'
+      - '**.md'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      # The same major the site is built with. The tests are TypeScript run
+      # straight through `node --test`, which needs the type stripping that is on
+      # by default from 22.18 — `22` resolves to the latest of the line.
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Sources
+        run: npm run check
+
+      - name: Types
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test

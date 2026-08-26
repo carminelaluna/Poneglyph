@@ -3,21 +3,35 @@ name: Publish site
 # Builds the static site and force-pushes it to main-selfhost, which is what
 # GitHub Pages serves.
 #
-# Triggered by the ingest workflows finishing rather than by a push. A commit made
-# with GITHUB_TOKEN does not start another workflow — that is deliberate on GitHub's
-# part, to stop workflows triggering each other forever — so `on: push` would never
-# fire here, and the site would sit at whatever was last deployed by hand.
+# Two triggers, because one commit in three comes from a person and the rest come
+# from a robot.
 #
-# `workflow_run` fires whether or not the ingest committed anything, and five
-# schedules add up to twelve triggers a day. Most find nothing, so the job first
-# compares the tip of main-node against the commit the live site was built from and
-# stops there when they match.
+# A commit made with GITHUB_TOKEN — every ingest — starts no further workflow. That
+# is deliberate on GitHub's part, to stop workflows triggering each other for ever,
+# and it is why `workflow_run` is here: the ingests finishing is the signal, not
+# their commits. A push by a person does fire normally, and that case had no trigger
+# at all, so a change to the site itself sat undeployed until a scheduled ingest
+# happened to finish.
+#
+# `workflow_run` fires whether or not the ingest committed anything, and the
+# schedules add up to more than a dozen triggers a day. Most find nothing, so the
+# job first compares the tip of main-node against the commit the live site was built
+# from and stops there when they match.
 #
 # When it does build, only what changed is pushed: the build id is derived from the
 # contents of data/, so identical data gives byte-identical output and git sends
 # nothing but the commit object.
 
 on:
+  # A code change, pushed by a person. GITHUB_TOKEN commits — every ingest — start
+  # no workflow, which is what workflow_run below is for; a human push is the case
+  # that trigger cannot see, and without this one a change to the site itself sat
+  # undeployed until the next scheduled ingest happened to finish. Markdown is
+  # ignored because none of it is built into the site.
+  push:
+    branches: [main-node]
+    paths-ignore:
+      - '**.md'
   workflow_run:
     workflows:
       - Update decklists
@@ -26,6 +40,7 @@ on:
       - Update spoilers
       - Refresh prices
       - Update events
+      - Update matchups
     types: [completed]
   workflow_dispatch:
 
@@ -40,8 +55,11 @@ concurrency:
 
 jobs:
   publish:
-    # Do not publish on top of a failed ingest.
+    # Do not publish on top of a failed ingest. A push and a manual run have no
+    # `workflow_run` to read, so they have to be named: without them the job is
+    # skipped, which is the silent way for this trigger to do nothing at all.
     if: >-
+      github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch' ||
       github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
@@ -102,6 +120,14 @@ jobs:
 
       - run: npm ci
         if: steps.moved.outputs.skip != 'true'
+
+      # The same three checks the Check workflow runs on a push. They are repeated
+      # here because a push starts both workflows at once, so Check failing would
+      # not by itself stop this one from deploying — and this is the run that puts
+      # something in front of a reader. Twenty seconds against a four-minute export.
+      - name: Verify
+        if: steps.moved.outputs.skip != 'true'
+        run: npm run verify
 
       - name: Build the static site
         if: steps.moved.outputs.skip != 'true'
