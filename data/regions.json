@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-26T08:42:52.732Z",
+  "generatedAt": "2026-08-26T09:07:21.161Z",
   "regions": [
     {
       "id": "EN",
@@ -22,14 +22,14 @@
     {
       "id": "JP",
       "label": "Japanese",
-      "decks": 5849,
-      "recent": 573,
+      "decks": 5859,
+      "recent": 583,
       "archived": 5276,
       "fieldDecks": 0,
       "sampling": "winners",
       "window": {
         "from": "2022-07-09",
-        "to": "2026-08-24"
+        "to": "2026-08-25"
       },
       "eras": 46,
       "sources": [
