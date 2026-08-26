@@ -48,16 +48,24 @@ const nextConfig = {
   // Card art is served from upstream CDNs unless `npm run ingest:images` has
   // mirrored it into public/cards, so plain <img> is used throughout.
   images: { unoptimized: true },
+  /*
+   * A project page lives at /<repo>/, a user page and a custom domain at the root.
+   * Next rewrites its own links and assets for this; `fetch` it does not, which is
+   * what src/lib/paths.ts is for.
+   *
+   * This applies to **every** build, and it used to apply only to the export. The
+   * variable it reads is NEXT_PUBLIC_, so `dataUrl()` prefixed every payload URL
+   * with /Poneglyph in `npm run dev` while the dev server went on answering at the
+   * root — every fetch on the card browser, the deck builder and the metagame page
+   * 404ed locally, and the pages said the archive had failed to load. Serving dev
+   * from the same path production uses is the fix, and it is the same reasoning as
+   * `serve:static` mounting `out/` under the base path rather than at the root.
+   */
+  ...(basePath ? { basePath: `/${basePath}` } : {}),
   ...(isExport
     ? {
         output: 'export',
         generateBuildId: buildIdFromData,
-        /*
-         * A project page lives at /<repo>/, a user page and a custom domain at the
-         * root. Next rewrites its own links and assets for this; `fetch` it does not,
-         * which is what src/lib/paths.ts is for.
-         */
-        ...(basePath ? { basePath: `/${basePath}` } : {}),
         /*
          * Emit /event/abc/index.html rather than /event/abc.html. Static hosts serve
          * a directory index without being asked; whether they also try adding .html

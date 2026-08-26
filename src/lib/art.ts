@@ -16,6 +16,8 @@
  * of 60 cards weigh 18 MB.
  */
 
+import { asset } from './paths';
+
 const CDN = process.env.NEXT_PUBLIC_CDN_URL?.replace(/\/$/, '');
 
 export const ART_WIDTHS = [96, 320, 600] as const;
@@ -26,7 +28,8 @@ export type ArtWidth = (typeof ART_WIDTHS)[number];
  *   96 for table rows, 320 for grid tiles, 600 for the detail view and lightbox.
  */
 export const art = (printingId: string, width: ArtWidth = 320) =>
-  CDN ? `${CDN}/${printingId}_${width}.webp` : `/art/${printingId}`;
+  /* The proxy is a route in this app, so under a base path it moves with it. */
+  CDN ? `${CDN}/${printingId}_${width}.webp` : asset(`art/${printingId}`);
 
 /** Every width, so the browser can choose for the layout and the screen. */
 export const artSrcSet = (printingId: string) =>
