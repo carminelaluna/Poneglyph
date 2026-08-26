@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Big_Shoulders, Archivo, JetBrains_Mono } from 'next/font/google';
+import BackToTop from '@/components/BackToTop';
 import { Masthead } from '@/components/Chrome';
 import Footer from '@/components/Footer';
 import { meta } from '@/lib/cards';
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Masthead />
         <main>{children}</main>
         <Footer />
+        <BackToTop />
       </body>
     </html>
   );

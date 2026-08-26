@@ -987,3 +987,54 @@ select {
 .released-card:hover {
   border-color: var(--edge-strong);
 }
+
+/* ------------------------------------------------------- back to top */
+
+/*
+ * Fixed to the corner, and out of the way until there is something to go back
+ * from — see components/BackToTop.tsx. It is faded rather than unmounted so the
+ * appearance is not a jump, and `visibility` is what keeps it unclickable while
+ * transparent; `opacity: 0` alone still takes the click.
+ */
+.to-top {
+  position: fixed;
+  right: clamp(0.8rem, 3vw, 1.6rem);
+  bottom: clamp(0.8rem, 3vw, 1.6rem);
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.8rem;
+  font: inherit;
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--glyph-mid);
+  background: linear-gradient(180deg, var(--slab-hi), var(--slab));
+  border: 1px solid var(--edge-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--lift);
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(0.4rem);
+  transition: opacity 0.18s var(--ease), transform 0.18s var(--ease), visibility 0.18s;
+}
+
+.to-top-shown {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+
+.to-top:hover,
+.to-top:focus-visible {
+  color: var(--glyph);
+  border-color: var(--rune);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .to-top {
+    transition: none;
+  }
+}

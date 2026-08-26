@@ -23,7 +23,8 @@
     "build:static": "node scripts/build-static.mjs",
     "serve:static": "node scripts/serve-static.mjs",
     "deploy:site": "node scripts/deploy-site.mjs",
-    "ingest:events": "node scripts/ingest-events.mjs"
+    "ingest:events": "node scripts/ingest-events.mjs",
+    "build:cdn:lock": "node scripts/build-cdn.mjs --lock"
   },
   "dependencies": {
     "next": "16.3.2",

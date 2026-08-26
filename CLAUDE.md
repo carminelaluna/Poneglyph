@@ -25,6 +25,7 @@ that implies official standing.** `/legal` is the full notice.
 | `npm run build:indexes` | **Run after any deck ingest** — derives everything |
 | `npm run ingest:images` | Mirror card art from the official CDN into `public/cards` |
 | `npm run build:cdn` | Convert that mirror to WebP at 3 widths, into `cdn/` |
+| `npm run build:cdn:lock` | Same, plus a referrer check — **read the cost first** |
 | `npm run deploy:cdn` | Upload `cdn/` to Cloudflare Pages |
 | `npm run build:static` | `out/` for GitHub Pages — needs `NEXT_PUBLIC_CDN_URL` |
 | `npm run serve:static` | Serve `out/` on 4322 **the way Pages does** — see below |
@@ -148,6 +149,23 @@ requests.
 The binding constraint is **20,000 files per deployment** on the free plan;
 `build-cdn.mjs` refuses to run past it rather than failing at upload. `_headers`
 sets a one-year immutable cache, which is the thing GitHub Pages cannot do.
+
+**Restricting the bundle to the site costs the free tier.** `_headers` names the site
+in `Access-Control-Allow-Origin` instead of `*` and adds `X-Robots-Tag: noindex`.
+Neither stops hotlinking — an `<img>` makes no CORS request and never reads that
+header — but both are free, and nothing here fetches these URLs with JavaScript.
+
+Actually refusing foreign requests needs per-request logic, and Cloudflare bills it
+plainly: *"requests to static assets are free and unlimited. A request is considered
+static when it does not invoke Functions."* Root middleware matches every path, so
+turning it on means **no request to the bundle is static any more** — all of them
+count against the free plan's 100,000 Functions requests a day. A card grid is 60
+images, so roughly 1,600 grid views before images start failing.
+
+`npm run build:cdn:lock` writes that middleware; plain `build:cdn` does not. Weigh it
+against what it buys: `Referer` is chosen by the client, so anyone who wants to
+hotlink sets it and walks through, and the bandwidth it would spend is the unmetered
+kind. It stops casual embedding, at the cost of a cap.
 
 `wrangler` is a devDependency, not `npx` — the npm script resolves the local binary.
 The deploy passes `--branch poneglyph-art` because that is the project's production

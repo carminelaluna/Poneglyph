@@ -11,9 +11,15 @@ const NAV = [
   { href: '/events', label: 'Events' },
   { href: '/spoilers', label: 'Spoilers' },
   { href: '/banlist', label: 'Banlist' },
-  { href: '/data', label: 'Data' },
-  { href: '/legal', label: 'Legal' },
 ];
+
+/*
+ * Data and Legal are not here. They are reference pages you visit once, and putting
+ * them in the top bar cost two slots out of eight in a menu that is read on a phone.
+ * Both stay linked from the footer of every page — and the Bandai notice itself is in
+ * that footer in full, not only on /legal, so nothing about the disclaimer depends on
+ * this list.
+ */
 
 export function Masthead() {
   const pathname = usePathname();
