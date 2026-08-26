@@ -146,3 +146,88 @@
   opacity: 0.4;
   cursor: default;
 }
+
+/* --------------------------------------------------- sent, and reviewed */
+
+/*
+ * Shared with /review: the same row is what an organizer sees about their own
+ * submission and what a reviewer sees about everyone's, so it is styled once.
+ */
+.sub-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.sub-row {
+  padding: 0.7rem 0.9rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.sub-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.sub-head b {
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * Three states and three colours, because the difference between them is the
+ * whole reason this list exists. Amber for waiting rather than red: nothing is
+ * wrong with a submission that has not been looked at yet.
+ */
+.sub-status {
+  flex-shrink: 0;
+  padding: 0.1rem 0.45rem;
+  border-radius: 0.3rem;
+  border: 1px solid var(--edge);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.sub-pending {
+  color: var(--c-yellow);
+  border-color: color-mix(in srgb, var(--c-yellow) 35%, var(--edge));
+}
+
+.sub-approved {
+  color: var(--rune-lit);
+  border-color: color-mix(in srgb, var(--rune-lit) 35%, var(--edge));
+}
+
+.sub-rejected {
+  color: var(--c-red);
+  border-color: color-mix(in srgb, var(--c-red) 35%, var(--edge));
+}
+
+.sub-meta,
+.sub-actions {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--glyph-mid);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* The reviewer's own words, so they read as a quotation rather than as chrome. */
+.sub-note {
+  margin: 0;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.78rem;
+  border-left: 2px solid var(--edge-strong);
+  color: var(--glyph-mid);
+}

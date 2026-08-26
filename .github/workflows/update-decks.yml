@@ -57,13 +57,23 @@ jobs:
 
       # Region indexes are derived from every corpus, so they rebuild after any ingest.
       # Approved organizer submissions, before the indexes are derived so they are
-      # part of what gets derived. continue-on-error until Supabase is configured:
-      # a missing key is a "not set up yet", not a reason to lose a deck ingest that
-      # has already spent thirty minutes on Limitless's rate limit.
+      # part of what gets derived.
+      #
+      # This used to read the project URL from `secrets.SUPABASE_URL`, a secret that
+      # was never created, and to carry `continue-on-error: true` for the case where
+      # Supabase was not set up yet. Together those meant the step exited 1 on every
+      # single run and said nothing: an approved submission would have waited in the
+      # database indefinitely with a green tick next to it.
+      #
+      # The URL is not a secret — it ships in the browser bundle under its
+      # NEXT_PUBLIC_ name — so it is written here in the open, exactly as
+      # publish-site.yml writes it. "Not configured" is now a clean exit inside the
+      # script, which is what continue-on-error was really for, so a genuine failure
+      # is allowed to stop the run and be seen. The deck ingest is resumable, so the
+      # cost of that is a repeat of one request budget, not lost decklists.
       - name: Pull approved submissions
-        continue-on-error: true
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_URL: https://wftkmhvxrlmyvaxdpegs.supabase.co
           # Bypasses every row-level policy. Secrets only — never NEXT_PUBLIC_.
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node scripts/ingest-submissions.mjs

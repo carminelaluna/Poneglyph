@@ -126,3 +126,17 @@
 .saved-deck:hover {
   border-color: var(--rune);
 }
+
+/* Renaming yourself — the one field on a profile its owner may change. */
+.account-rename {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0;
+}
+
+.account-rename .control {
+  flex: 1 1 14rem;
+  min-width: 0;
+}

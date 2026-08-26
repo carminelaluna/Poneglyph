@@ -16,7 +16,8 @@ import { accountsEnabled, supabase } from './supabase';
  * into existence a moment after the page settles.
  */
 
-export type Profile = { display_name: string | null; role: 'user' | 'organizer' };
+export type Role = 'user' | 'organizer' | 'admin';
+export type Profile = { display_name: string | null; role: Role };
 
 export function useAccount() {
   const [session, setSession] = useState<Session | null>(null);
@@ -67,14 +68,44 @@ export function useAccount() {
     setProfile(null);
   }, []);
 
+  /**
+   * The one field of a profile its owner may change.
+   *
+   * `role` is deliberately not in the payload. The update policy re-reads the
+   * stored role in its `with check`, so sending a different one is refused by the
+   * database rather than by this function — but not sending it at all is what makes
+   * the common case obviously correct.
+   */
+  const rename = useCallback(
+    async (displayName: string) => {
+      const client = supabase();
+      if (!client || !session) return;
+      const name = displayName.trim().slice(0, 60);
+      const { error } = await client
+        .from('profiles')
+        .update({ display_name: name || null })
+        .eq('id', session.user.id);
+      if (error) throw new Error(error.message);
+      setProfile((held) => (held ? { ...held, display_name: name || null } : held));
+    },
+    [session]
+  );
+
   return {
     session,
     profile,
     checked,
     signedIn: Boolean(session),
+    /*
+     * Exactly what the insert policy on `submissions` checks, and not a superset:
+     * an admin is not implicitly an organizer there, so offering them the form
+     * would be the page promising something the database then refuses.
+     */
     isOrganizer: profile?.role === 'organizer',
+    isAdmin: profile?.role === 'admin',
     userId: session?.user.id ?? null,
     signOut,
+    rename,
   };
 }
 
@@ -153,5 +184,132 @@ export async function deleteDeck(id: string) {
   const client = supabase();
   if (!client) return;
   const { error } = await client.from('decks').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
+/* ---------------------------------------------------------- submissions */
+
+export type SubmissionStatus = 'pending' | 'approved' | 'rejected';
+
+export type Submission = {
+  id: string;
+  event_name: string;
+  event_date: string;
+  venue: string | null;
+  tier: string;
+  region: 'EN' | 'JP';
+  sampling: 'field' | 'winners';
+  players: number | null;
+  status: SubmissionStatus;
+  review_note: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  /* PostgREST returns an aggregate as a one-element array of counts. */
+  submission_decks: { count: number }[];
+};
+
+export type SubmittedDeck = {
+  id: string;
+  player: string | null;
+  place: number | null;
+  wins: number;
+  losses: number;
+  ties: number;
+  leader_id: string;
+  cards: { id: string; count: number }[];
+};
+
+const SUBMISSION_COLUMNS =
+  'id, event_name, event_date, venue, tier, region, sampling, players, status, ' +
+  'review_note, reviewed_at, created_at, submission_decks(count)';
+
+/**
+ * What an organizer has sent, and what happened to it.
+ *
+ * The form used to be write-only: you submitted a tournament and the site never
+ * mentioned it again, so "was it approved, rejected, or did I misclick" had no
+ * answer anywhere. The policy to read your own submissions existed from the first
+ * schema; nothing had ever called it.
+ *
+ * No `organizer_id` filter, for the same reason `listDecks` has no `user_id` one —
+ * the row-level policy is the boundary, and writing the filter here would suggest
+ * the boundary is in the browser.
+ */
+export async function listSubmissions(): Promise<Submission[]> {
+  const client = supabase();
+  if (!client) return [];
+  const { data, error } = await client
+    .from('submissions')
+    .select(SUBMISSION_COLUMNS)
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as Submission[];
+}
+
+/** Taking one back. Only possible while it is pending — the policy says so too. */
+export async function withdrawSubmission(id: string) {
+  const client = supabase();
+  if (!client) return;
+  const { error } = await client.from('submissions').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
+/* --------------------------------------------------------------- review */
+
+/**
+ * Everything waiting, for whoever holds the admin role.
+ *
+ * This is the same table and the same query as `listSubmissions`; what differs is
+ * which rows come back, and that is decided by the policies rather than by an
+ * argument passed from the browser. A reader without the role gets their own rows
+ * and nothing else, which is why this cannot be used to look at other people's
+ * submissions by calling it from the console.
+ */
+export async function listForReview(status: SubmissionStatus | 'all' = 'pending') {
+  const client = supabase();
+  if (!client) return [];
+  let query = client.from('submissions').select(SUBMISSION_COLUMNS);
+  if (status !== 'all') query = query.eq('status', status);
+  const { data, error } = await query.order('created_at', { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as Submission[];
+}
+
+/** The decks inside one submission, for reading before saying yes to them. */
+export async function submittedDecks(submissionId: string): Promise<SubmittedDeck[]> {
+  const client = supabase();
+  if (!client) return [];
+  const { data, error } = await client
+    .from('submission_decks')
+    .select('id, player, place, wins, losses, ties, leader_id, cards')
+    .eq('submission_id', submissionId)
+    .order('place', { ascending: true, nullsFirst: false });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as SubmittedDeck[];
+}
+
+/**
+ * Approving or rejecting one submission.
+ *
+ * Approving does not publish anything. `ingest-submissions.mjs` reads rows in this
+ * state on its next scheduled run and `build-indexes.mjs` folds them in, so the
+ * gap between saying yes here and seeing it on the site is one ingest cycle —
+ * which is the same gap every other source has.
+ */
+export async function reviewSubmission(
+  id: string,
+  status: Exclude<SubmissionStatus, 'pending'>,
+  note: string
+) {
+  const client = supabase();
+  if (!client) throw new Error('Accounts are not configured.');
+  const { error } = await client
+    .from('submissions')
+    .update({
+      status,
+      review_note: note.trim() || null,
+      reviewed_at: new Date().toISOString(),
+    })
+    .eq('id', id);
   if (error) throw new Error(error.message);
 }

@@ -37,7 +37,23 @@ const flag = (name) => {
 };
 
 const FIXTURE = flag('fixture');
-const URL_BASE = process.env.SUPABASE_URL?.replace(/\/+$/, '');
+
+/*
+ * The project URL is not a secret — it is compiled into the browser bundle under
+ * its NEXT_PUBLIC_ name and readable by anyone who opens the site — so it is read
+ * from either name. That is not tidiness: the workflow set `SUPABASE_URL` from a
+ * repository secret that had never been created, so this ingest exited 1 on every
+ * run behind `continue-on-error`, and an approved submission would have sat in the
+ * database for ever without one line of red anywhere.
+ *
+ * The **service role key** is a real secret and has no fallback. It bypasses every
+ * row-level policy, so there is no name it could safely be read from that also
+ * reaches the browser.
+ */
+const URL_BASE = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL)?.replace(
+  /\/+$/,
+  ''
+);
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const log = (...m) => console.log('[submissions]', ...m);
@@ -53,13 +69,25 @@ const named = (value, fallback) => {
   return text && !/^(na|n\/a|unknown|none|null)$/i.test(text) ? text : fallback;
 };
 
+/**
+ * Nothing configured at all — a checkout with no Supabase project behind it.
+ *
+ * That is a real answer rather than a failure, and it is the same answer the site
+ * gives: `accountsEnabled` is false, the account page says so, and everything else
+ * works. Half-configured is a different thing and is treated as one below.
+ */
+const CONFIGURED = Boolean(URL_BASE || KEY);
+
 async function fromSupabase() {
   if (!URL_BASE || !KEY) {
     console.error(
-      '[submissions] SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are not set.\n' +
-        '              The service role key belongs in the workflow secrets — never in\n' +
-        '              .env.local and never under a NEXT_PUBLIC_ name, since anything\n' +
-        '              with that prefix is compiled into the browser bundle.\n' +
+      '[submissions] half configured — ' +
+        `${URL_BASE ? 'the project URL is set but' : 'no project URL, and'} ` +
+        `the service role key is ${KEY ? 'set' : 'missing'}.\n` +
+        '              The key belongs in the workflow secrets — never in .env.local\n' +
+        '              and never under a NEXT_PUBLIC_ name, since anything with that\n' +
+        '              prefix is compiled into the browser bundle. The URL may be read\n' +
+        '              from either SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL.\n' +
         '              To try the mapping without a database: --fixture <file>'
     );
     process.exit(1);
@@ -131,6 +159,17 @@ function toDecks(submission, cardsById) {
 
 async function main() {
   const started = Date.now();
+
+  /*
+   * A checkout with no project behind it stops here, having written nothing and
+   * failed nothing. Any *existing* decks-community.json is left alone: it was
+   * committed by a run that could read the database, and deleting it because this
+   * machine has no key would drop approved results from the site.
+   */
+  if (!FIXTURE && !CONFIGURED) {
+    log('no Supabase project configured — skipping (the site builds without one)');
+    return;
+  }
 
   const cards = JSON.parse(await readFile(path.join(DATA, 'cards.json'), 'utf8'));
   const cardsById = new Map((Array.isArray(cards) ? cards : cards.cards).map((c) => [c.id, c]));

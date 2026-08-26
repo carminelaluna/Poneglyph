@@ -1,0 +1,95 @@
+/* The review queue — see ReviewQueue.tsx. The submission rows themselves are
+   styled in submit.css, because an organizer and a reviewer are looking at the
+   same row from two sides. */
+
+.review-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.review-decide {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.3rem;
+}
+
+.review-decide .control {
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+
+.review-decide .chip:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.review-decks {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.review-deck {
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+}
+
+.review-deck-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.review-deck-head img {
+  width: 2.4rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--edge);
+  flex-shrink: 0;
+}
+
+.review-deck-head b {
+  font-weight: 500;
+}
+
+/* Pushes the count or the complaint to the far edge, where the eye scans down. */
+.review-deck-head > :last-child {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 0.74rem;
+}
+
+/*
+ * Fifty cards, in columns. A reviewer reads these looking for one wrong line, so
+ * they are dense and monospaced-by-number rather than laid out as a card grid —
+ * pictures would make the page beautiful and the scan slower.
+ */
+.review-cards {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  columns: 2;
+  column-gap: 1.2rem;
+  font-size: 0.76rem;
+  line-height: 1.7;
+}
+
+@media (min-width: 48rem) {
+  .review-cards {
+    columns: 3;
+  }
+}
+
+.review-cards li {
+  break-inside: avoid;
+  color: var(--glyph-mid);
+}
+
+.review-over {
+  color: var(--c-yellow);
+}

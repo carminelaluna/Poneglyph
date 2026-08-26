@@ -22,10 +22,67 @@ const PROVIDERS = [
   { id: 'google', label: 'Continue with Google' },
 ] as const;
 
+/**
+ * The display name, which until now could be set but never changed.
+ *
+ * `rename self only` has been in the schema from the first version — it is the
+ * policy written specifically to allow this one field and refuse the role next to
+ * it — and nothing had ever called it. An OAuth sign-in fills the name in from the
+ * provider, which is a reasonable default and a poor permanent answer.
+ */
+function DisplayName({
+  current,
+  onSave,
+  onDone,
+}: {
+  current: string;
+  onSave: (name: string) => Promise<void>;
+  onDone: () => void;
+}) {
+  const [value, setValue] = useState(current);
+  const [saving, setSaving] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
+
+  const save = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setSaving(true);
+    setFailed(null);
+    try {
+      await onSave(value);
+      onDone();
+    } catch (err) {
+      setFailed(err instanceof Error ? err.message : 'Could not save that.');
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form className="account-rename" onSubmit={save}>
+      <input
+        className="control"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        maxLength={60}
+        placeholder="How you want to be listed"
+        aria-label="Display name"
+        autoFocus
+      />
+      <button type="submit" className="chip chip-link" disabled={saving}>
+        {saving ? 'Saving…' : 'Save'}
+      </button>
+      <button type="button" className="account-link" onClick={onDone}>
+        Cancel
+      </button>
+      {failed ? <p className="build-error">{failed}</p> : null}
+    </form>
+  );
+}
+
 export default function AccountView() {
-  const { session, profile, checked, signedIn, signOut } = useAccount();
+  const { session, profile, checked, signedIn, signOut, rename } = useAccount();
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [renaming, setRenaming] = useState(false);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -108,14 +165,34 @@ export default function AccountView() {
       <>
         <div className="account slab slab-pad" style={{ maxWidth: 'none' }}>
           <p className="eyebrow">Signed in</p>
-          <h2 className="display" style={{ margin: '0.3rem 0 0', fontSize: '1.3rem' }}>
-            {name}
-          </h2>
+          {renaming ? (
+            <DisplayName
+              current={profile?.display_name ?? ''}
+              onDone={() => setRenaming(false)}
+              onSave={rename}
+            />
+          ) : (
+            <h2 className="display" style={{ margin: '0.3rem 0 0', fontSize: '1.3rem' }}>
+              {name}{' '}
+              <button
+                type="button"
+                className="account-link"
+                style={{ verticalAlign: 'middle' }}
+                onClick={() => setRenaming(true)}
+              >
+                Change
+              </button>
+            </h2>
+          )}
           <p className="muted" style={{ fontSize: '0.8rem', marginTop: '0.4rem' }}>
             {profile?.role === 'organizer' ? (
               <>
                 Organizer — you can <Link href="/submit">submit tournament results</Link> for
                 review.
+              </>
+            ) : profile?.role === 'admin' ? (
+              <>
+                Reviewer — <Link href="/review">submissions waiting for review</Link>.
               </>
             ) : (
               'Player account. Submitting tournaments needs the organizer role, which is granted by hand.'

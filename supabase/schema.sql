@@ -21,8 +21,12 @@
 create table public.profiles (
   id          uuid primary key references auth.users on delete cascade,
   display_name text,
-  -- 'user' or 'organizer'. Granted in the dashboard, never from the client.
-  role        text not null default 'user' check (role in ('user', 'organizer')),
+  -- 'user', 'organizer' or 'admin'. Granted in the dashboard, never from the
+  -- client. An admin is the person who reviews submissions; the role exists so
+  -- that reviewing is a page on the site rather than hand-editing a `status`
+  -- column in the table editor, which is what it used to be.
+  role        text not null default 'user'
+                check (role in ('user', 'organizer', 'admin')),
   created_at  timestamptz not null default now()
 );
 
@@ -144,6 +148,36 @@ create policy "withdraw while pending"
   on public.submissions for delete
   using (auth.uid() = organizer_id and status = 'pending');
 
+-- ------------------------------------------------------------------ review
+--
+-- Approving used to mean opening the Supabase table editor and changing a column
+-- by hand. That is fine for the first few and stops being fine quickly: the
+-- decklists are JSON in a cell, so the one thing a reviewer actually has to look
+-- at is the thing hardest to look at there.
+--
+-- The gate does not move. It is still a role granted by hand in the dashboard,
+-- still unreachable from any client, and an organizer still cannot touch `status`.
+-- What changes is only *where* the person holding that role does the work.
+--
+-- Written as `role = 'admin'` against the reader's own profile row, which the
+-- "read own profile" policy above already allows — so no policy here reads anyone
+-- else's row, and the property that nothing in this file exposes one account's
+-- data to another still holds.
+create policy "admins read every submission"
+  on public.submissions for select
+  using (
+    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+  );
+
+create policy "admins review submissions"
+  on public.submissions for update
+  using (
+    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+  )
+  with check (
+    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+  );
+
 -- -------------------------------------------------------- submitted decks
 
 create table public.submission_decks (
@@ -192,6 +226,15 @@ create policy "own submission decks"
       select 1 from public.submissions s
       where s.id = submission_id and s.organizer_id = auth.uid() and s.status = 'pending'
     )
+  );
+
+-- Reading, and only reading. A reviewer has to see the fifty cards to say yes to
+-- them; editing someone else's decklist is not review, it is authorship, and the
+-- honest answer to a list that is wrong is to reject it with a note.
+create policy "admins read every submitted deck"
+  on public.submission_decks for select
+  using (
+    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
   );
 
 -- ------------------------------------------------------------------ notes

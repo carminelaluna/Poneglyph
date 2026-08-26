@@ -12,7 +12,12 @@ import {
 } from '@/lib/deck-rules';
 import { dataUrl } from '@/lib/paths';
 import { accountsEnabled, supabase } from '@/lib/supabase';
-import { useAccount } from '@/lib/useAccount';
+import {
+  listSubmissions,
+  useAccount,
+  withdrawSubmission,
+  type Submission,
+} from '@/lib/useAccount';
 
 /**
  * Submitting a tournament.
@@ -68,6 +73,111 @@ const blankDeck = (key: number): DeckEntry => ({
   list: '',
 });
 
+const TIER_LABEL = new Map<string, string>(TIERS.map(([id, label]) => [id, label]));
+
+const day = (value: string) =>
+  new Date(`${value.slice(0, 10)}T00:00:00Z`).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+
+/**
+ * What you have sent, and what happened to it.
+ *
+ * This form used to be write-only. You submitted a tournament, saw one confirmation
+ * screen, and the site never mentioned it again — so "approved, rejected, or did I
+ * misclick" had no answer anywhere on it. The policy to read your own submissions
+ * was in the first schema; nothing had ever called it.
+ *
+ * A rejection carries a note, and the note is the point: "the fourth list is 49
+ * cards" is something the organizer can fix and send again.
+ */
+function SubmissionHistory({ reloadKey }: { reloadKey: number }) {
+  const [rows, setRows] = useState<Submission[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const load = useCallback(() => {
+    listSubmissions()
+      .then(setRows)
+      .catch((err) => setError(err instanceof Error ? err.message : 'Could not load.'));
+  }, []);
+
+  useEffect(load, [load, reloadKey]);
+
+  const withdraw = async (id: string) => {
+    setBusy(id);
+    try {
+      await withdrawSubmission(id);
+      setRows((held) => (held ?? []).filter((r) => r.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not withdraw it.');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  if (rows === null && !error) return null;
+
+  return (
+    <section className="submit-block">
+      <div className="section-head">
+        <h2 className="display">Your submissions</h2>
+        <span className="muted" style={{ fontSize: '0.78rem' }}>
+          {rows?.length ? `${rows.length} sent` : null}
+        </span>
+      </div>
+
+      {error ? <p className="build-error">{error}</p> : null}
+
+      {rows && rows.length === 0 ? (
+        <p className="empty">Nothing sent yet.</p>
+      ) : (
+        <ul className="sub-list">
+          {(rows ?? []).map((row) => (
+            <li key={row.id} className="sub-row slab">
+              <div className="sub-head">
+                <b>{row.event_name}</b>
+                <span className={`sub-status sub-${row.status}`}>{row.status}</span>
+              </div>
+              <p className="sub-meta">
+                {day(row.event_date)} · {TIER_LABEL.get(row.tier) ?? row.tier} ·{' '}
+                {row.region === 'JP' ? 'Japanese' : 'English'} ·{' '}
+                {row.submission_decks?.[0]?.count ?? 0} decks ·{' '}
+                {row.sampling === 'field' ? 'whole field' : 'winners only'}
+              </p>
+              {row.review_note ? <p className="sub-note">{row.review_note}</p> : null}
+              {row.status === 'pending' ? (
+                <p className="sub-actions">
+                  <span className="muted">Waiting for review.</span>
+                  <button
+                    type="button"
+                    className="account-link"
+                    disabled={busy === row.id}
+                    onClick={() => withdraw(row.id)}
+                  >
+                    {busy === row.id ? 'Withdrawing…' : 'Withdraw'}
+                  </button>
+                </p>
+              ) : null}
+              {row.status === 'approved' ? (
+                <p className="sub-actions">
+                  <span className="muted">
+                    In the corpus from the next ingest — see the{' '}
+                    <Link href="/decks">metagame page</Link>.
+                  </span>
+                </p>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 export default function SubmitForm() {
   const { checked, signedIn, isOrganizer, userId } = useAccount();
   const [rows, setRows] = useState<Row[] | null>(null);
@@ -83,6 +193,8 @@ export default function SubmitForm() {
   const [decks, setDecks] = useState<DeckEntry[]>([blankDeck(1)]);
   const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
   const [error, setError] = useState<string | null>(null);
+  /* Bumped after a send, so the history below re-reads rather than going stale. */
+  const [sentCount, setSentCount] = useState(0);
 
   useEffect(() => {
     if (!accountsEnabled) return;
@@ -194,6 +306,7 @@ export default function SubmitForm() {
       const { error: deckError } = await client.from('submission_decks').insert(payload);
       if (deckError) throw new Error(deckError.message);
 
+      setSentCount((n) => n + 1);
       setState('sent');
     } catch (err) {
       setState('failed');
@@ -225,19 +338,26 @@ export default function SubmitForm() {
   }
   if (state === 'sent') {
     return (
-      <div className="slab slab-pad" style={{ marginTop: '1.5rem' }}>
-        <h2 className="display" style={{ margin: 0, fontSize: '1.2rem' }}>
-          Submitted for review
-        </h2>
-        <p className="muted" style={{ marginTop: '0.6rem', maxWidth: '60ch' }}>
-          It joins the metagame figures once it has been looked at. Nothing appears on the
-          site before then — that review is what keeps the numbers worth reading.
-        </p>
-        <p style={{ marginTop: '1.2rem' }}>
-          <button type="button" className="chip chip-link" onClick={() => globalThis.location.reload()}>
-            Submit another
-          </button>
-        </p>
+      <div className="submit">
+        <div className="slab slab-pad">
+          <h2 className="display" style={{ margin: 0, fontSize: '1.2rem' }}>
+            Submitted for review
+          </h2>
+          <p className="muted" style={{ marginTop: '0.6rem', maxWidth: '60ch' }}>
+            It joins the metagame figures once it has been looked at. Nothing appears on the
+            site before then — that review is what keeps the numbers worth reading.
+          </p>
+          <p style={{ marginTop: '1.2rem' }}>
+            <button
+              type="button"
+              className="chip chip-link"
+              onClick={() => globalThis.location.reload()}
+            >
+              Submit another
+            </button>
+          </p>
+        </div>
+        <SubmissionHistory reloadKey={sentCount} />
       </div>
     );
   }
@@ -452,6 +572,8 @@ export default function SubmitForm() {
         ) : null}
         {error ? <p className="build-error">{error}</p> : null}
       </div>
+
+      <SubmissionHistory reloadKey={sentCount} />
     </div>
   );
 }
