@@ -63,6 +63,49 @@ create policy "rename self only"
   using (auth.uid() = id)
   with check (auth.uid() = id and role = (select role from public.profiles where id = auth.uid()));
 
+-- The one way a role changes without opening the dashboard, and it is deliberately
+-- the narrowest rule that does the job.
+--
+-- `using` reads the row being changed: it must currently be a 'user' or an
+-- 'organizer', so an admin cannot be demoted or edited by another admin.
+-- `with check` reads the row as it would become: it must still be one of those two,
+-- so **no client can ever mint an admin**. Granting that role stays a thing you do
+-- in Supabase, by hand, which is what keeps the whole structure standing up.
+--
+-- What this does allow an admin to do is move somebody between user and organizer —
+-- which is the decision the request queue below exists to record — and, since RLS
+-- cannot restrict columns, to change that person's display name. That is not a
+-- threat to the corpus, which is what these policies are protecting.
+-- Reading the accounts it can act on, and only those.
+--
+-- Needed because an update that RLS filters out is not an error in PostgREST: it
+-- affects zero rows and comes back looking like a success. Without a way to read
+-- the row back, "Grant the role" would report that it had done something whenever
+-- this policy was missing — the exact failure the review page exists to avoid.
+--
+-- Restricted the same way the update is: an admin's row is not readable here
+-- either, so this cannot be used to enumerate the people who hold that role.
+create policy "admins read the accounts they can act on"
+  on public.profiles for select
+  using (
+    role in ('user', 'organizer')
+    and exists (
+      select 1 from public.profiles me
+      where me.id = auth.uid() and me.role = 'admin'
+    )
+  );
+
+create policy "admins move accounts between user and organizer"
+  on public.profiles for update
+  using (
+    role in ('user', 'organizer')
+    and exists (
+      select 1 from public.profiles me
+      where me.id = auth.uid() and me.role = 'admin'
+    )
+  )
+  with check (role in ('user', 'organizer'));
+
 -- ------------------------------------------------------------- saved decks
 
 create table public.decks (
@@ -87,6 +130,72 @@ alter table public.decks enable row level security;
 create policy "own decks" on public.decks for all
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+-- ------------------------------------------------- becoming an organizer
+
+-- Asking for the organizer role, in the open.
+--
+-- Before this the answer on the site was "ask at the contact address on the legal
+-- page", which is an email — off the record, easy to lose, and invisible to anyone
+-- but the person who received it. A row is none of those things.
+--
+-- Asking is not being granted. Nothing here changes a role; approving a request is
+-- an admin acting on `profiles` under the policy above, and the request is only the
+-- record of the decision and the reason for it.
+create table public.organizer_requests (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null references auth.users on delete cascade,
+
+  -- Their own words: who they are, what they run, and where it can be checked.
+  -- A store name and a link is most of what a reviewer needs; the rest is judgment.
+  organizer_name text not null,
+  events      text not null,
+  link        text,
+
+  status      text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  review_note text,
+  reviewed_at timestamptz,
+  created_at  timestamptz not null default now()
+);
+
+-- One open request per account. Someone who has been rejected can ask again — a
+-- shop changes hands, an answer changes — but nobody can queue fifty of them.
+create unique index organizer_requests_one_open
+  on public.organizer_requests (user_id)
+  where status = 'pending';
+
+create index organizer_requests_status_idx on public.organizer_requests (status);
+
+alter table public.organizer_requests enable row level security;
+
+create policy "ask as yourself"
+  on public.organizer_requests for insert
+  with check (auth.uid() = user_id and status = 'pending');
+
+create policy "read own requests"
+  on public.organizer_requests for select
+  using (auth.uid() = user_id);
+
+-- Taking it back, while it is still waiting. Not editing it: a request that could
+-- be rewritten after a reviewer read it is a request nobody can rely on having read.
+create policy "withdraw while pending"
+  on public.organizer_requests for delete
+  using (auth.uid() = user_id and status = 'pending');
+
+create policy "admins read every request"
+  on public.organizer_requests for select
+  using (
+    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+  );
+
+create policy "admins answer requests"
+  on public.organizer_requests for update
+  using (
+    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+  )
+  with check (
+    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+  );
 
 -- ------------------------------------------------------------- submissions
 

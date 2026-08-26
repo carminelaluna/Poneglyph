@@ -330,9 +330,9 @@ export default function SubmitForm() {
   if (!isOrganizer) {
     return (
       <p className="empty">
-        Submitting tournaments needs the organizer role. It is granted by hand — ask at the
-        contact address on the <Link href="/legal">legal page</Link>, saying which events you
-        run.
+        Submitting tournaments needs the organizer role.{' '}
+        <Link href="/account">Ask for it on your account page</Link> — it is granted by a
+        person reading what you run, not automatically.
       </p>
     );
   }

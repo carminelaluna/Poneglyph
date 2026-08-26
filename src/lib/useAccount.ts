@@ -254,6 +254,143 @@ export async function withdrawSubmission(id: string) {
   if (error) throw new Error(error.message);
 }
 
+/* ------------------------------------------------- becoming an organizer */
+
+export type OrganizerRequest = {
+  id: string;
+  user_id: string;
+  organizer_name: string;
+  events: string;
+  link: string | null;
+  status: SubmissionStatus;
+  review_note: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+};
+
+const REQUEST_COLUMNS =
+  'id, user_id, organizer_name, events, link, status, review_note, reviewed_at, created_at';
+
+/**
+ * Asking for the organizer role.
+ *
+ * The site used to answer "how do I submit results" with an email address on the
+ * legal page — off the record, easy to lose, and visible to nobody but whoever
+ * received it. This is the same question as a row.
+ *
+ * Asking is not being granted: nothing here touches a role. A unique index allows
+ * one open request per account, so a second attempt while one is pending comes back
+ * as a duplicate rather than as a queue.
+ */
+export async function requestOrganizer(request: {
+  userId: string;
+  organizerName: string;
+  events: string;
+  link: string;
+}) {
+  const client = supabase();
+  if (!client) throw new Error('Accounts are not configured.');
+  const { error } = await client.from('organizer_requests').insert({
+    user_id: request.userId,
+    organizer_name: request.organizerName.trim().slice(0, 120),
+    events: request.events.trim().slice(0, 600),
+    link: request.link.trim().slice(0, 300) || null,
+  });
+  if (error) {
+    throw new Error(
+      error.code === '23505' ? 'You already have a request waiting.' : error.message
+    );
+  }
+}
+
+/** The most recent one this account sent, or null. */
+export async function myOrganizerRequest(): Promise<OrganizerRequest | null> {
+  const client = supabase();
+  if (!client) return null;
+  const { data, error } = await client
+    .from('organizer_requests')
+    .select(REQUEST_COLUMNS)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data as OrganizerRequest) ?? null;
+}
+
+export async function withdrawOrganizerRequest(id: string) {
+  const client = supabase();
+  if (!client) return;
+  const { error } = await client.from('organizer_requests').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
+/** Everything waiting, for whoever holds the admin role — same query, more rows. */
+export async function listOrganizerRequests(
+  status: SubmissionStatus | 'all' = 'pending'
+): Promise<OrganizerRequest[]> {
+  const client = supabase();
+  if (!client) return [];
+  let query = client.from('organizer_requests').select(REQUEST_COLUMNS);
+  if (status !== 'all') query = query.eq('status', status);
+  const { data, error } = await query.order('created_at', { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as OrganizerRequest[];
+}
+
+/**
+ * Answering one, which for an approval means actually granting the role.
+ *
+ * The role moves **first**. If that write is refused — a policy changed, the
+ * account is gone — the request stays pending and can be tried again; the other
+ * order would leave a request marked approved next to an account that never got
+ * anything, which is the failure nobody would notice.
+ *
+ * The policy behind that update allows `user` and `organizer` and no third value,
+ * so this cannot produce an admin however it is called.
+ */
+export async function decideOrganizerRequest(
+  request: OrganizerRequest,
+  status: Exclude<SubmissionStatus, 'pending'>,
+  note: string
+) {
+  const client = supabase();
+  if (!client) throw new Error('Accounts are not configured.');
+
+  if (status === 'approved') {
+    /*
+     * Read back, and check. A row that row-level security filters out is not an
+     * error in PostgREST — the update affects nothing and returns cleanly — so
+     * without this a missing policy would report the role as granted while the
+     * account stayed exactly where it was, and nobody would find out until the
+     * person tried to submit something.
+     */
+    const { data, error } = await client
+      .from('profiles')
+      .update({ role: 'organizer' })
+      .eq('id', request.user_id)
+      .select('id, role');
+    if (error) throw new Error(`Could not grant the role: ${error.message}`);
+    if (!data || data.length === 0) {
+      throw new Error(
+        'The role was not granted — the database refused the change. Check that ' +
+          'supabase/migrations/2026-08-26-organizer-requests.sql has been run.'
+      );
+    }
+  }
+
+  const { data, error } = await client
+    .from('organizer_requests')
+    .update({
+      status,
+      review_note: note.trim() || null,
+      reviewed_at: new Date().toISOString(),
+    })
+    .eq('id', request.id)
+    .select('id');
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) throw new Error('The request was not updated.');
+}
+
 /* --------------------------------------------------------------- review */
 
 /**
@@ -303,13 +440,21 @@ export async function reviewSubmission(
 ) {
   const client = supabase();
   if (!client) throw new Error('Accounts are not configured.');
-  const { error } = await client
+  /* Read back for the same reason as above: RLS filtering is not an error. */
+  const { data, error } = await client
     .from('submissions')
     .update({
       status,
       review_note: note.trim() || null,
       reviewed_at: new Date().toISOString(),
     })
-    .eq('id', id);
+    .eq('id', id)
+    .select('id');
   if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error(
+      'Nothing was updated — the database refused the change. Check that ' +
+        'supabase/migrations/2026-08-26-review.sql has been run.'
+    );
+  }
 }

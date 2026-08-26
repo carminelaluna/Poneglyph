@@ -7,10 +7,13 @@ import { DECK_SIZE, MAX_COPIES } from '@/lib/deck-rules';
 import { loadCardNames, loadLeaders, type CardNames, type Leaders } from '@/lib/shards';
 import { accountsEnabled } from '@/lib/supabase';
 import {
+  decideOrganizerRequest,
   listForReview,
+  listOrganizerRequests,
   reviewSubmission,
   submittedDecks,
   useAccount,
+  type OrganizerRequest,
   type Submission,
   type SubmissionStatus,
   type SubmittedDeck,
@@ -121,6 +124,126 @@ function Decks({ submissionId }: { submissionId: string }) {
   );
 }
 
+/**
+ * People asking for the organizer role.
+ *
+ * Above the submissions, because it is the decision that comes first: nobody sends
+ * a tournament until somebody has said yes to them.
+ *
+ * Approving grants the role — the only place on the site where a role changes at
+ * all. The policy behind it allows `user` and `organizer` and no third value, so
+ * this cannot produce an admin however it is called, and an admin's own row is not
+ * reachable through it. Minting that role is still something you do in the Supabase
+ * dashboard, by hand.
+ */
+function OrganizerRequests() {
+  const [rows, setRows] = useState<OrganizerRequest[] | null>(null);
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(() => {
+    listOrganizerRequests('pending')
+      .then(setRows)
+      .catch((err) => setError(err instanceof Error ? err.message : 'Could not load.'));
+  }, []);
+
+  useEffect(load, [load]);
+
+  const decide = async (request: OrganizerRequest, status: 'approved' | 'rejected') => {
+    setBusy(request.id);
+    setError(null);
+    try {
+      await decideOrganizerRequest(request, status, notes[request.id] ?? '');
+      setRows((held) => (held ?? []).filter((row) => row.id !== request.id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save that.');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  if (!rows || rows.length === 0) return null;
+
+  return (
+    <section className="submit-block">
+      <div className="section-head">
+        <h2 className="display">Organizer requests</h2>
+        <span className="muted" style={{ fontSize: '0.78rem' }}>
+          {rows.length} waiting
+        </span>
+      </div>
+
+      <p className="muted" style={{ fontSize: '0.76rem', margin: '0 0 0.8rem', maxWidth: '70ch' }}>
+        Approving grants the role, which lets this account submit tournaments for review.
+        It does not publish anything by itself — every event they send is still read here
+        one at a time.
+      </p>
+
+      {error ? <p className="build-error">{error}</p> : null}
+
+      <ul className="sub-list">
+        {rows.map((row) => (
+          <li key={row.id} className="sub-row slab">
+            <div className="sub-head">
+              <b>{row.organizer_name}</b>
+              <span className="sub-status sub-pending">asked {day(row.created_at)}</span>
+            </div>
+            <p className="sub-note">{row.events}</p>
+            {row.link ? (
+              <p className="sub-meta">
+                {/* Somebody else's URL: opened in a new tab, and never given this
+                    page's referrer or window handle. */}
+                <a
+                  href={row.link}
+                  target="_blank"
+                  rel="noreferrer noopener nofollow"
+                  className="inline-link"
+                >
+                  {row.link}
+                </a>
+              </p>
+            ) : (
+              <p className="sub-meta muted">No link given.</p>
+            )}
+
+            <div className="review-decide">
+              <input
+                className="control"
+                placeholder="Note for them — required to refuse"
+                value={notes[row.id] ?? ''}
+                onChange={(e) => setNotes((held) => ({ ...held, [row.id]: e.target.value }))}
+                maxLength={300}
+              />
+              <button
+                type="button"
+                className="chip chip-link"
+                disabled={busy === row.id}
+                onClick={() => decide(row, 'approved')}
+              >
+                Grant the role
+              </button>
+              <button
+                type="button"
+                className="chip"
+                disabled={busy === row.id || !(notes[row.id] ?? '').trim()}
+                onClick={() => decide(row, 'rejected')}
+                title={
+                  (notes[row.id] ?? '').trim()
+                    ? undefined
+                    : 'Say why — they see this note and can ask again'
+                }
+              >
+                Refuse
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export default function ReviewQueue() {
   const { checked, signedIn, isAdmin } = useAccount();
   const [tab, setTab] = useState<SubmissionStatus | 'all'>('pending');
@@ -185,6 +308,8 @@ export default function ReviewQueue() {
 
   return (
     <div className="submit" style={{ marginTop: '1.2rem' }}>
+      <OrganizerRequests />
+
       <div className="review-tabs">
         {TABS.map((entry) => (
           <button

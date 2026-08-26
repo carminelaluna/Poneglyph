@@ -6,7 +6,16 @@ import Pips from '@/components/Pips';
 import { art } from '@/lib/art';
 import { loadLeaders, type Leaders } from '@/lib/shards';
 import { accountsEnabled, authRedirectTo, emailAuthEnabled, supabase } from '@/lib/supabase';
-import { deleteDeck, listDecks, useAccount, type SavedDeck } from '@/lib/useAccount';
+import {
+  deleteDeck,
+  listDecks,
+  myOrganizerRequest,
+  requestOrganizer,
+  useAccount,
+  withdrawOrganizerRequest,
+  type OrganizerRequest as OrganizerRequestRow,
+  type SavedDeck,
+} from '@/lib/useAccount';
 
 /**
  * Signing in, and what you have once you are.
@@ -74,6 +83,164 @@ function DisplayName({
         Cancel
       </button>
       {failed ? <p className="build-error">{failed}</p> : null}
+    </form>
+  );
+}
+
+/**
+ * Asking for the organizer role.
+ *
+ * The site's answer to "how do I get my events in here" was an email address on the
+ * legal page: off the record, easy to lose, and visible to nobody but whoever
+ * received it. Three fields and a row are better on all three counts.
+ *
+ * What it asks for is what a reviewer actually needs to decide — a name, what they
+ * run, and somewhere it can be checked. Deliberately not a form that could be
+ * filled in convincingly by someone who runs nothing: the questions are the kind
+ * with an answer only a real organizer has to hand.
+ *
+ * Nothing here changes a role. It records a question; `/review` records the answer.
+ */
+function OrganizerRequest({ userId }: { userId: string }) {
+  const [request, setRequest] = useState<OrganizerRequestRow | null | undefined>(undefined);
+  const [organizerName, setOrganizerName] = useState('');
+  const [events, setEvents] = useState('');
+  const [link, setLink] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
+
+  const load = useCallback(() => {
+    myOrganizerRequest()
+      .then((row) => setRequest(row))
+      .catch((err) => {
+        setRequest(null);
+        setFailed(err instanceof Error ? err.message : 'Could not read your request.');
+      });
+  }, []);
+
+  useEffect(load, [load]);
+
+  const send = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setBusy(true);
+    setFailed(null);
+    try {
+      await requestOrganizer({ userId, organizerName, events, link });
+      load();
+    } catch (err) {
+      setFailed(err instanceof Error ? err.message : 'Could not send that.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const withdraw = async () => {
+    if (!request) return;
+    setBusy(true);
+    try {
+      await withdrawOrganizerRequest(request.id);
+      setRequest(null);
+    } catch (err) {
+      setFailed(err instanceof Error ? err.message : 'Could not withdraw it.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /* undefined is "not looked yet" and null is "nothing sent" — see useAccount. */
+  if (request === undefined) return null;
+
+  if (request && request.status === 'pending') {
+    return (
+      <div className="slab slab-pad account-ask">
+        <p className="eyebrow">Organizer role</p>
+        <p style={{ margin: '0.4rem 0 0' }}>
+          Waiting for review — sent as <b>{request.organizer_name}</b>.
+        </p>
+        <p className="muted account-ask-note">
+          Nothing else is needed from you. Results you submit later are reviewed
+          separately, one event at a time.
+        </p>
+        <button type="button" className="account-link" disabled={busy} onClick={withdraw}>
+          {busy ? 'Withdrawing…' : 'Withdraw the request'}
+        </button>
+      </div>
+    );
+  }
+
+  if (request && request.status === 'rejected') {
+    return (
+      <div className="slab slab-pad account-ask">
+        <p className="eyebrow">Organizer role</p>
+        <p style={{ margin: '0.4rem 0 0' }}>Not granted.</p>
+        {/* .account-notice, not the review page's .sub-note: that stylesheet is
+            not loaded here, and a class that resolves to nothing renders as an
+            unstyled paragraph rather than as an error anyone would notice. */}
+        {request.review_note ? (
+          <p className="account-notice">{request.review_note}</p>
+        ) : null}
+        <p className="muted account-ask-note">
+          You can ask again — say what changed, and it will be read again.
+        </p>
+        <button type="button" className="account-link" onClick={() => setRequest(null)}>
+          Ask again
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form className="slab slab-pad account-ask" onSubmit={send}>
+      <p className="eyebrow">Organizer role</p>
+      <p style={{ margin: '0.4rem 0 0' }}>Run events? Ask for the role.</p>
+      <p className="muted account-ask-note">
+        It lets you submit a tournament and its decklists, which after review join the
+        metagame figures alongside Limitless and One Piece Top Decks. Every number on this
+        site is derived from recorded results, so the role is granted by a person reading
+        this — not automatically.
+      </p>
+
+      <label>
+        <span className="eyebrow">Store, league or team</span>
+        <input
+          className="control"
+          value={organizerName}
+          onChange={(e) => setOrganizerName(e.target.value)}
+          placeholder="Rialto Games, Venice"
+          maxLength={120}
+          required
+        />
+      </label>
+      <label>
+        <span className="eyebrow">What you run</span>
+        <textarea
+          className="control"
+          rows={3}
+          value={events}
+          onChange={(e) => setEvents(e.target.value)}
+          placeholder="Weekly locals, 16-24 players, and a monthly Treasure Cup since March."
+          maxLength={600}
+          required
+        />
+      </label>
+      <label>
+        <span className="eyebrow">Somewhere it can be checked</span>
+        <input
+          className="control"
+          type="url"
+          value={link}
+          onChange={(e) => setLink(e.target.value)}
+          placeholder="https://… a shop page, a Discord invite, a Limitless organizer"
+          maxLength={300}
+        />
+      </label>
+
+      <div className="account-actions">
+        <button type="submit" className="chip chip-link" disabled={busy}>
+          {busy ? 'Sending…' : 'Ask for the role'}
+        </button>
+        {failed ? <p className="build-error">{failed}</p> : null}
+      </div>
     </form>
   );
 }
@@ -202,7 +369,7 @@ export default function AccountView() {
                 .
               </>
             ) : (
-              'Player account. Submitting tournaments needs the organizer role, which is granted by hand.'
+              'Player account. Submitting tournament results needs the organizer role.'
             )}
           </p>
           <button
@@ -214,6 +381,13 @@ export default function AccountView() {
             Sign out
           </button>
         </div>
+
+        {/*
+          Only for a plain account. An organizer has the role and an admin grants
+          it; offering either of them a form to ask for what they already have, or
+          hand out themselves, would be a page not paying attention.
+        */}
+        {profile && profile.role === 'user' ? <OrganizerRequest userId={session.user.id} /> : null}
 
         <SavedDecks />
       </>

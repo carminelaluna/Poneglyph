@@ -67,6 +67,11 @@ list for OPTCGSim.
 
 **Export any decklist** in the format OPTCGSim reads, straight to the clipboard.
 
+**Run events?** Ask for the organizer role from your account page — who you are,
+what you run, somewhere it can be checked — and you can submit a tournament and its
+decklists. Both the role and each event are granted by a person reading them: every
+number here is derived from recorded results, so nothing joins them unreviewed.
+
 **Find a tournament** on `/events`: every official event Bandai has announced,
 filterable by region and type, with venues, registration links and when
 registration opens — which is a Sunday, and which they publish as a guideline.

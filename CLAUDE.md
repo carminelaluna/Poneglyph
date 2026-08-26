@@ -265,9 +265,9 @@ to `public/data/banlist.json` for that; the `/banlist` page imports the build-ti
 decks only they can see. An **organizer** can also submit a tournament, which after
 review joins the metagame corpus.
 
-**Roles are granted by hand, in the dashboard.** There are three — `user`,
-`organizer`, `admin` — and nothing in the policies lets an account change its own
-`role` or a submission's `status`. The update policy on `profiles` re-reads the
+**No client can mint an admin, and that is the line the whole model rests on.**
+There are three roles — `user`, `organizer`, `admin`. Nothing lets an account change
+its own `role` or a submission's `status`. The update policy on `profiles` re-reads the
 stored role in its `with check`, because `using (auth.uid() = id)` alone would let
 anyone promote themselves with one PATCH. That is the entire security model: every
 number here is derived from recorded results, so an account that could add a
@@ -278,10 +278,29 @@ opening the Supabase table editor and changing a cell — fine for the first few
 poor immediately after, since the decklists are JSON in a column and the fifty cards
 are the one thing a reviewer has to actually read. `admin` is what the two new
 policies check, it is still granted by hand, and it is still checked against the
-reader's **own** profile row — so nothing added for the review page reads anyone
-else's data. Rejecting requires a note, and the organizer sees it. An existing
-project needs `supabase/migrations/2026-08-26-review.sql`; `schema.sql` already has
-it for a new one.
+reader's **own** profile row. Rejecting requires a note, and the organizer sees it.
+
+`supabase/` holds `schema.sql`, the whole thing for a new project, and `migrations/`,
+the same changes for one that already exists. **They run in the order they are
+dated** — the requests file leans on the `admin` role the review file creates. Both
+are safe to run twice.
+
+**Asking for the organizer role is a row, not an email.** The site used to answer
+"how do I submit results" with the contact address on `/legal` — off the record, easy
+to lose, visible to nobody but whoever received it. A plain account now asks from its
+account page (who they are, what they run, somewhere it can be checked) and `/review`
+answers. One open request per account, enforced by a partial unique index rather than
+by the form.
+
+Approving is **the one place a role changes outside the dashboard**, and the policy is
+the narrowest rule that does it: `using` requires the target row to be a `user` or an
+`organizer`, so an admin's row is unreachable through it, and `with check` requires the
+new value to be one of those two, so no client can produce an admin however it is
+called. An admin can also *read* those rows — not to browse them, but because
+**PostgREST does not treat an RLS-filtered update as an error**: it affects nothing and
+returns cleanly. Without reading the row back, "Grant the role" would report success
+every time that policy was missing. Both review writes now assert they changed a row
+and name the migration when they did not.
 
 **An organizer can see what happened to what they sent.** `/submit` lists their own
 submissions with status and the reviewer's note, and lets them withdraw one that is

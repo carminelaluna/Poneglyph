@@ -140,3 +140,36 @@
   flex: 1 1 14rem;
   min-width: 0;
 }
+
+/* --------------------------------------------------- asking for the role */
+
+/*
+ * Its own slab under the account block rather than a line inside it. Asking to
+ * become an organizer is a thing you do once and then forget; giving it a box of
+ * its own is also what lets the same space carry the answer afterwards.
+ */
+.account-ask {
+  display: grid;
+  gap: 0.7rem;
+  max-width: 34rem;
+}
+
+.account-ask label {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.account-ask textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.account-ask-note {
+  margin: 0;
+  font-size: 0.78rem;
+  max-width: 56ch;
+}
+
+.account-ask .account-link {
+  justify-self: start;
+}
