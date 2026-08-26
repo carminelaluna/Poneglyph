@@ -101,6 +101,106 @@ const MONTHS = {
 };
 
 /**
+ * Which part of the world a venue is in.
+ *
+ * Matched against the whole address rather than its last segment: some venues end in
+ * a hall name ("ExCel London Hall 1-11") or a US zip, and the country sits earlier.
+ * Anything not recognised stays null — a wrong region is worse than no region, since
+ * the whole point is filtering by it.
+ *
+ * The Finals pages state their regions outright, and those win over this.
+ */
+const REGIONS = [
+  ['Europe', ['netherlands', 'united kingdom', ' uk', 'france', 'spain', 'croatia', 'sweden',
+    'greece', 'czechia', 'czech republic', 'portugal', 'germany', 'italy', 'belgium', 'poland',
+    'austria', 'switzerland', 'denmark', 'norway', 'finland', 'ireland', 'hungary', 'romania',
+    'slovakia', 'slovenia', 'serbia', 'bulgaria', 'lithuania', 'latvia', 'estonia', 'luxembourg',
+    'malta', 'cyprus', 'iceland', 'london', 'utrecht', 'paris', 'madrid', 'lisbon']],
+  ['Latin America', ['mexico', 'chile', 'brazil', 'brasil', 'argentina', 'peru', 'colombia',
+    'ecuador', 'uruguay', 'paraguay', 'bolivia', 'venezuela', 'costa rica', 'panama',
+    'guatemala', 'dominican', 'santiago', 'puebla']],
+  ['Oceania', ['australia', 'new zealand', 'melbourne', 'sydney', 'brisbane', 'auckland']],
+  ['Asia', ['japan', 'korea', 'singapore', 'taiwan', 'thailand', 'philippines', 'indonesia',
+    'malaysia', 'hong kong', 'vietnam', 'india']],
+  /* Last: "USA" is a substring of nothing else here, but state codes are short. */
+  ['North America', ['usa', 'united states', 'canada', ', ab', ', bc', ', on', ', qc',
+    'convention center', 'convention centre']],
+];
+
+/**
+ * The regions Bandai itself uses, as headings above groups of events.
+ *
+ * A heading that names one of these is context, not an event — and it is better
+ * evidence than an address, because it is what they filed the event under.
+ */
+const KNOWN_REGIONS = ['North America', 'Europe', 'Oceania', 'Latin America', 'Asia'];
+
+const canonicalRegion = (text) =>
+  KNOWN_REGIONS.find((r) => r.toLowerCase() === String(text ?? '').trim().toLowerCase()) ?? null;
+
+function regionOf(venue) {
+  if (!venue) return null;
+  const text = ` ${venue.toLowerCase()} `;
+  for (const [region, needles] of REGIONS) {
+    if (needles.some((n) => text.includes(n))) return region;
+  }
+  /* A bare US state code and zip — "Dallas, TX 75202" — with no country named. */
+  if (/,\s*[a-z]{2}\s+\d{5}/i.test(venue)) return 'North America';
+  return null;
+}
+
+/**
+ * When registration opens, from the "Application Period" table.
+ *
+ * Bandai publishes one opening date per event month — "For August Events: May 24,
+ * 2026" — and a time per region. Every one of those dates is a Sunday.
+ *
+ * They also say, in the same block, that it is **a guideline** and that the real
+ * date can vary by organiser. That caveat travels with the data and is printed on
+ * the page; a date that looks exact and is not would be worse than none.
+ */
+function parseApplicationPeriod(html) {
+  /*
+   * Read from the flattened lines, not the markup. The dates sit as bare text split
+   * by <br> on one page and the region times are <h5> headings with the time in a
+   * later element on another — the same field in two shapes, which is the pattern
+   * across this whole site. Flattened, both read as:
+   *
+   *   For August Events: May 24, 2026
+   *   North America:
+   *   9:00am PDT / 12:00pm EDT
+   */
+  const rows = lines(html);
+  const opens = {};
+  const times = {};
+
+  for (let i = 0; i < rows.length; i++) {
+    const forMonth =
+      /^For\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+Events\s*:\s*(.+)$/i.exec(
+        rows[i]
+      );
+    if (forMonth) {
+      const date = startDate(forMonth[2]);
+      if (date) opens[forMonth[1].toLowerCase()] = date;
+      continue;
+    }
+
+    /*
+     * The colon is what separates the times table from the region headings that
+     * group the events themselves — "North America:" here, bare "North America"
+     * there. Without it every region heading would swallow the event beneath it.
+     */
+    const forRegion = /^(North America|Europe|Oceania|Latin America|Asia)\s*:$/i.exec(rows[i]);
+    if (forRegion) {
+      const next = rows[i + 1] ?? '';
+      if (/\d/.test(next) && next.length <= 48) times[canonicalRegion(forRegion[1])] = next;
+    }
+  }
+
+  return { opens, times };
+}
+
+/**
  * The first day a date line refers to, as YYYY-MM-DD, for sorting.
  *
  * Their dates come in at least six shapes — "August 1, 2026", "August 15-16 2026"
@@ -198,15 +298,23 @@ function parsePage(html, url) {
     const body = chunk.slice(chunk.search(/<\/h[45]>/i));
     if (!heading) continue;
 
+    /*
+     * A heading that names a region groups what follows; it is never an event.
+     * Checked at both levels — the Finals pages put them in <h4>, the Regionals page
+     * in <h5> — and by name rather than by level, which is why "Event Schedule and
+     * Tournament Organizer" no longer gets mistaken for a place.
+     */
+    const named_region = canonicalRegion(heading);
+    if (named_region) {
+      region = named_region;
+      continue;
+    }
+
     const rows = lines(body);
     const text = rows.join(' | ');
     const date = field(text, 'Date');
 
-    if (!date) {
-      /* A section title. An h4 is a region; an h5 without a date is just noise. */
-      if (level === 'h4') region = heading;
-      continue;
-    }
+    if (!date) continue;
 
     /* The first line that is not a labelled field — the organiser, when they name one. */
     const named = rows.find((line) => !/^(date|venue|link)\s*:/i.test(line) && line.length > 1);
@@ -215,16 +323,26 @@ function parsePage(html, url) {
     /* The registration link, when there is one — some events list a date only. */
     const link = /<a[^>]+href="([^"]+)"[^>]*>[^<]*registration/i.exec(body)?.[1] ?? null;
 
+    const cleanVenue = venue && !/^tba$|^tbd$/i.test(venue) ? venue : null;
+
+    /*
+     * A note this specific event carries — "*Registration begins 2nd August
+     * 9AM(CEST)". Rarer than the table but exact, so it wins over the guideline.
+     */
+    const note = rows.find((line) => /registration\s+(begins|opens)/i.test(line));
+
     events.push({
       name: named ?? heading,
       /* Kept apart so the page can show them as context rather than as the name. */
       label: named ? heading : null,
-      region,
+      /* The page's own heading first; the address only when it did not say. */
+      region: region ?? regionOf(cleanVenue),
       date,
       start: startDate(date),
       /* Named, not blank: a missing venue is "not announced", not an empty cell. */
-      venue: venue && !/^tba$|^tbd$/i.test(venue) ? venue : null,
+      venue: cleanVenue,
       link: link ? decode(link) : null,
+      registrationNote: note ? decode(note).replace(/^\*+\s*/, '') : null,
     });
   }
 
@@ -237,10 +355,19 @@ function parsePage(html, url) {
    * Rather than guess which headings are place names, drop any that varies with
    * nothing.
    */
-  const regions = new Set(events.map((e) => e.region));
-  if (regions.size <= 1) for (const event of events) event.region = null;
+  /*
+   * When registration opens, from the table at the foot of the page, matched to each
+   * event by the month it runs in. A per-event note wins over it — see the event
+   * loop — and both are labelled as Bandai's guideline on the page.
+   */
+  const period = parseApplicationPeriod(html);
+  for (const event of events) {
+    if (!event.start) continue;
+    const month = Object.keys(MONTHS)[Number(event.start.slice(5, 7)) - 1];
+    event.opens = period.opens[month] ?? null;
+  }
 
-  return { title, url, events };
+  return { title, url, events, registrationTimes: period.times };
 }
 
 async function main() {

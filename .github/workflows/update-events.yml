@@ -1,0 +1,75 @@
+name: Update events
+
+# Official events from Bandai's own pages: Regionals, Finals, Treasure Cups and the
+# rest, with dates, venues, registration links and when registration opens.
+#
+# Once a day. Event schedules move on the scale of weeks, and the ingest reads
+# twenty-four of their pages one at a time — polling it hourly would be their
+# bandwidth spent on a page that had not changed.
+on:
+  schedule:
+    # 10:00 UTC is noon in Italy on summer time, 11:00 in winter. Cron has no
+    # timezone, so one of the two is what you get; noon in summer was the ask.
+    - cron: '0 10 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-events
+  cancel-in-progress: true
+
+jobs:
+  events:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      # Refuses to write when it parses fewer than ten events, so their markup
+      # changing leaves yesterday's list in place rather than emptying the page.
+      - run: node scripts/ingest-events.mjs
+
+      - name: Commit if the schedule moved
+        run: |
+          git config user.name 'poneglyph-bot'
+          git config user.email 'poneglyph-bot@users.noreply.github.com'
+          git add data public/data
+          # events-official.json is stamped with generatedAt on every run, so this
+          # asks whether anything other than a timestamp changed.
+          if ! node scripts/substantive-change.mjs; then
+            git reset
+            echo 'No change to the event schedule.'
+            exit 0
+          fi
+          events=$(node -p "require('./data/events-official.json').counts.events")
+          types=$(node -p "require('./data/events-official.json').counts.types")
+          git commit -m "data: refresh events ($events events across $types types)"
+          git push
+
+      - name: Summary
+        if: always()
+        run: |
+          node -e "
+            const d = require('./data/events-official.json');
+            const all = d.groups.flatMap(g => g.events.map(e => ({ ...e, type: g.type })));
+            const count = (key) => {
+              const out = {};
+              for (const e of all) out[e[key] ?? 'not stated'] = (out[e[key] ?? 'not stated'] ?? 0) + 1;
+              return out;
+            };
+            const rows = (o) => Object.entries(o).map(([k, v]) => '| ' + k + ' | ' + v + ' |').join('\n');
+            console.log('## Official events\n');
+            console.log('| | |\n| --- | --- |');
+            console.log('| events | ' + all.length + ' |');
+            console.log('| pages read | ' + d.groups.length + ' |');
+            console.log('| with a registration link | ' + all.filter(e => e.link).length + ' |');
+            console.log('| with an opening date | ' + all.filter(e => e.opens).length + ' |');
+            console.log('\n### By type\n\n| type | events |\n| --- | --- |');
+            console.log(rows(count('type')));
+            console.log('\n### By region\n\n| region | events |\n| --- | --- |');
+            console.log(rows(count('region')));
+          " >> "$GITHUB_STEP_SUMMARY"

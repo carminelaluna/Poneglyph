@@ -45,6 +45,7 @@ ingest-decks.mjs     Limitless -> data/decks|tournaments|decks-state.json
 ingest-topdecks.mjs  Top Decks -> data/decks-{en,jp}.json
 ingest-spoilers.mjs  leaks    -> data/spoilers.json
 ingest-banlist.mjs   Bandai   -> data/banlist.json
+ingest-events.mjs    Bandai   -> data/events-official.json (+ public/data)
 build-indexes.mjs    all      -> public/data/decks-{en,jp}-{index,archive}.json,
                                 public/data/decks-{en,jp}/*.json,
                                 public/data/{events,players,deck}/*.json (64 each),
@@ -319,6 +320,28 @@ Three things about parsing them:
 - Their text carries zero-width characters. One date ends `2026` + U+200B. `decode()`
   strips U+200B/C/D, U+FEFF and U+00A0, written as escapes rather than literals.
 
+**When registration opens is published, and it is a guideline.** At the foot of the
+Regionals, Treasure Cup and Extra Grand Battle pages is an *Application Period*
+table: one opening date per event month (`For August Events: May 24, 2026`) and a
+time per region. Every one of those dates is a **Sunday** — checked, all five.
+
+In the same block Bandai writes that *"the exact registration date and time may vary
+by tournament organizer"* and that the table is *"a guideline provided only for
+reference"*. That caveat travels with the data and is printed on the page. Where an
+event carries its own note — `*Registration begins 2nd August 9AM(CEST)` — that is
+exact and wins over the table.
+
+Both the table and the region headings are read from `lines()`, not from the markup:
+the dates are bare text split by `<br>` on one page while the region times are `<h5>`
+headings with the value in a later element on another.
+
+**Regions come from their headings first, the address second.** `North America`,
+`Europe`, `Oceania` and `Latin America` appear as headings above groups of events —
+`<h4>` on the Finals pages, `<h5>` on the Regionals one — so a heading is matched
+*by name* rather than by level. Matching by level is what let "Event Schedule and
+Tournament Organizer" be read as a place. `regionOf()` falls back to scanning the
+whole address, not its last segment: some venues end in a hall name or a US zip.
+
 **Windows and WSL share one `node_modules`.** The project lives on the Windows
 filesystem, so running `npm` from WSL over `/mnt/c` reuses the same install — and
 native modules only ship one platform's binary. `wrangler` (via `workerd`) and
@@ -378,7 +401,9 @@ Pre-release art is not ours to re-host.
 
 `update-cards` (daily, gated on `ingest.mjs --check` which exits 3 when current),
 `refresh-prices` (2×/day), `update-decks` (2×/day), `update-rules` (8h),
-`update-spoilers` (6h). Each commits only when something substantive changed, which
+`update-spoilers` (6h), `update-events` (daily, 10:00 UTC — noon in Italy on summer
+time, 11:00 in winter; cron has no timezone). Each commits only when something
+substantive changed, which
 is **`node scripts/substantive-change.mjs`** — stage everything, then ask.
 
 Naming the files that lack a timestamp does not work, and had already failed twice.

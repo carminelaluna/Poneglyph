@@ -1,16 +1,4 @@
-/* Official events — see page.tsx. */
-
-.event-jump {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-  margin-top: 1.5rem;
-}
-
-.event-jump .chip {
-  padding: 0.4rem 0.75rem;
-  font-size: 0.8rem;
-}
+/* Official events — see page.tsx and EventBrowser.tsx. */
 
 .event-list {
   list-style: none;
@@ -101,4 +89,27 @@
 
 .event-name .muted {
   font-size: 0.72rem;
+}
+
+.event-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.1rem 1.6rem;
+  margin-top: 1.5rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--slab-hi), var(--slab));
+}
+
+.event-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* When tickets go on sale. Quieter than the venue, since it is a guideline. */
+.event-opens {
+  font-size: 0.74rem;
+  color: var(--rune-lit);
 }

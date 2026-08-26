@@ -25,6 +25,7 @@ on:
       - Update rules data
       - Update spoilers
       - Refresh prices
+      - Update events
     types: [completed]
   workflow_dispatch:
 

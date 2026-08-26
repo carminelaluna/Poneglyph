@@ -50,8 +50,8 @@ tournament standings → back to a card. Every name is a link.
 CSV variants.
 
 **Find a tournament** on `/events`: every official event Bandai has announced,
-grouped by type rather than spread over a page per series, with venues and
-registration links.
+filterable by region and type, with venues, registration links and when
+registration opens — which is a Sunday, and which they publish as a guideline.
 
 **See what is coming** on `/spoilers`, and what is currently banned on `/banlist`,
 both read from source rather than maintained by hand.
@@ -138,7 +138,7 @@ attribution.
 
 ## Keeping it current
 
-Six GitHub Actions workflows, each committing only when something substantive
+Seven GitHub Actions workflows, each committing only when something substantive
 changed:
 
 | Workflow | Cadence | Does |
@@ -146,8 +146,9 @@ changed:
 | `update-cards` | daily | Rebuilds the card archive, gated on `ingest.mjs --check` |
 | `refresh-prices` | 2×/day | Market prices |
 | `update-decks` | 2×/day | New tournaments, then `build:indexes` |
-| `update-rules` | every 8h | Banlist, Top Decks archives, official events |
+| `update-rules` | every 8h | Banlist and Top Decks archives |
 | `update-spoilers` | every 6h | Unreleased-set reveals |
+| `update-events` | daily at noon | Official events, venues and registration dates |
 | `publish-site` | after any of them | Builds `out/` and pushes it to `main-selfhost` |
 
 `publish-site` runs on `workflow_run` rather than on a push, because a commit made
