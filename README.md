@@ -31,6 +31,7 @@ npm run dev             # http://localhost:4321
 | — Japanese | 5,849, back to Jul 2022 |
 | Events / players | 7,150 · 8,701 |
 | Release windows | 43 English, 46 Japanese |
+| Official events announced | 67 across 6 types |
 
 ## What you can do with it
 
@@ -47,6 +48,10 @@ tournament standings → back to a card. Every name is a link.
 
 **Export any decklist** in the format OPTCGSim reads, plus one-line, annotated and
 CSV variants.
+
+**Find a tournament** on `/events`: every official event Bandai has announced,
+grouped by type rather than spread over a page per series, with venues and
+registration links.
 
 **See what is coming** on `/spoilers`, and what is currently banned on `/banlist`,
 both read from source rather than maintained by hand.
@@ -66,6 +71,7 @@ scripts/ingest-decks.mjs    Limitless tournaments
 scripts/ingest-topdecks.mjs Top Decks archives (JP + EN)
 scripts/ingest-spoilers.mjs unreleased sets
 scripts/ingest-banlist.mjs  banned & restricted
+scripts/ingest-events.mjs   official events (Regionals, Finals, Cups)
 scripts/build-indexes.mjs   merges everything into what the site reads
 scripts/check-sources.mjs   source hygiene, runs before the card ingest
 ```
@@ -97,6 +103,7 @@ The full reasoning, the invariants and the traps live in [CLAUDE.md](CLAUDE.md).
 | [Limitless](https://onepiece.limitlesstcg.com) | **Tournaments** — standings with full decklists | Documented API, no key |
 | [One Piece Top Decks](https://onepiecetopdecks.com) | JP and EN archives back to OP-01; leaks | WordPress API |
 | [Official rules pages](https://en.onepiece-cardgame.com/rules/) | Banlist, block-number updates | HTML |
+| [Official event pages](https://en.onepiece-cardgame.com/events/) | **Events** — dates, venues, registration links | HTML |
 
 Punk Records also publishes Japanese, Korean, Thai and Chinese card data —
 `npm run ingest -- --lang japanese` builds any of them.
@@ -131,7 +138,7 @@ attribution.
 
 ## Keeping it current
 
-Five GitHub Actions workflows, each committing only when something substantive
+Six GitHub Actions workflows, each committing only when something substantive
 changed:
 
 | Workflow | Cadence | Does |
@@ -139,7 +146,7 @@ changed:
 | `update-cards` | daily | Rebuilds the card archive, gated on `ingest.mjs --check` |
 | `refresh-prices` | 2×/day | Market prices |
 | `update-decks` | 2×/day | New tournaments, then `build:indexes` |
-| `update-rules` | every 8h | Banlist and Top Decks archives |
+| `update-rules` | every 8h | Banlist, Top Decks archives, official events |
 | `update-spoilers` | every 6h | Unreleased-set reveals |
 | `publish-site` | after any of them | Builds `out/` and pushes it to `main-selfhost` |
 
@@ -174,6 +181,7 @@ the default here because a bad upstream day is then a visible diff and a
 | `npm run ingest:decks` | Tournaments. `-- --max N --since YYYY-MM-DD`, `-- --rebuild` |
 | `npm run ingest:topdecks` | JP/EN archives. `-- --region jp` |
 | `npm run ingest:spoilers` / `:banlist` | Reveals / banned list |
+| `npm run ingest:events` | Official events: Regionals, Finals, Cups |
 | `npm run build:indexes` | **After any deck ingest** |
 | `npm run ingest:images` | Mirror card art locally |
 | `npm run build:cdn` / `deploy:cdn` | Build the WebP bundle / upload to Cloudflare |

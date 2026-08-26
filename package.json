@@ -22,7 +22,8 @@
     "deploy:cdn": "wrangler pages deploy ./cdn --project-name poneglyph-art --branch poneglyph-art",
     "build:static": "node scripts/build-static.mjs",
     "serve:static": "node scripts/serve-static.mjs",
-    "deploy:site": "node scripts/deploy-site.mjs"
+    "deploy:site": "node scripts/deploy-site.mjs",
+    "ingest:events": "node scripts/ingest-events.mjs"
   },
   "dependencies": {
     "next": "16.3.2",

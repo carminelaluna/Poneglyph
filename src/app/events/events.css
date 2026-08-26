@@ -1,0 +1,104 @@
+/* Official events — see page.tsx. */
+
+.event-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 1.5rem;
+}
+
+.event-jump .chip {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.event-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+/*
+ * Date, then what and where, then the link. The date column is fixed so the dates
+ * line up down the page — an event list is read by scanning that column, and it
+ * cannot be scanned when every row starts at a different place.
+ */
+.event-row {
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--slab-hi), var(--slab));
+}
+
+.event-when {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--glyph-dim);
+}
+
+.event-what {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.event-what b {
+  font-weight: 500;
+}
+
+.event-what span {
+  font-size: 0.78rem;
+}
+
+.event-go .chip {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+/* Kept rather than hidden: a season's earlier stops are how you judge the next one. */
+.event-past {
+  opacity: 0.5;
+}
+
+.event-tag {
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.35rem;
+  border: 1px solid var(--edge);
+  border-radius: 0.25rem;
+  color: var(--glyph-faint);
+}
+
+@media (max-width: 44rem) {
+  .event-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+
+  .event-go {
+    justify-self: start;
+  }
+}
+
+/* Organiser, then the region and season the page filed it under. */
+.event-name {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.event-name .muted {
+  font-size: 0.72rem;
+}

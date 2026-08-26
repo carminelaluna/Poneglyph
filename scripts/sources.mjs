@@ -169,6 +169,18 @@ export const RULES_SOURCES = {
      * Without this, ~53 legal cards read as Extra-only.
      */
     blockUpdateUrl: 'https://en.onepiece-cardgame.com/rules/blockicon-card/',
+    /*
+     * Official events — Regionals, Finals, Treasure Cups and the rest, each with a
+     * date, a venue and a registration link.
+     *
+     * The index is read rather than a list of pages being kept here: Bandai adds a
+     * page per season and per event series, and the URLs change. Following the index
+     * means a new series appears on its own.
+     *
+     * These pages looked client-rendered and were written off twice. They are not —
+     * the events are in the served HTML, further down than a first glance reaches.
+     */
+    eventsUrl: 'https://en.onepiece-cardgame.com/events/',
   },
 };
 

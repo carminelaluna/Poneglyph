@@ -21,6 +21,7 @@ that implies official standing.** `/legal` is the full notice.
 | `npm run ingest:topdecks` | Top Decks archives, both regions |
 | `npm run ingest:spoilers` | Unreleased sets |
 | `npm run ingest:banlist` | Banned & restricted list |
+| `npm run ingest:events` | Official events from Bandai — Regionals, Finals, Cups |
 | `npm run build:indexes` | **Run after any deck ingest** — derives everything |
 | `npm run ingest:images` | Mirror card art from the official CDN into `public/cards` |
 | `npm run build:cdn` | Convert that mirror to WebP at 3 widths, into `cdn/` |
@@ -299,6 +300,25 @@ reclassified all 275 tournaments as `unknown`. Re-fetching cost 289 requests.
 — each aborts before overwriting. Keep it that way: an empty banlist that looks
 successful is worse than no banlist.
 
+**Bandai's event pages are server-rendered.** They were written off twice as
+client-rendered, both times after reading the first sixty lines and finding only
+navigation. The events are further down the same HTML, and there are 67 of them.
+Check the whole document before concluding a page has no data — and note that
+`grep -c` counts *lines*, which on minified HTML is one.
+
+Three things about parsing them:
+
+- The layout varies. The event name is `<h5>` on the Regionals page and `<h4>` on the
+  Mall Tour one; the fields sit bare with `<br>` on one page, in `<div>` on another,
+  and wrapped as `<strong>Date: </strong>value` on a third — where "everything up to
+  the next tag" is the empty string. `lines()` flattens first and reads by label.
+- The real name is often not the heading. Finals headings are `[Season 1]`, shared by
+  three events; the organiser is in a `<strong>` and the region in the preceding
+  `<h4>`. A heading that is identical across every event on a page is dropped — that
+  is how "Event Schedule and Tournament Organizer" stopped appearing on all 28 rows.
+- Their text carries zero-width characters. One date ends `2026` + U+200B. `decode()`
+  strips U+200B/C/D, U+FEFF and U+00A0, written as escapes rather than literals.
+
 **Windows and WSL share one `node_modules`.** The project lives on the Windows
 filesystem, so running `npm` from WSL over `/mnt/c` reuses the same install — and
 native modules only ship one platform's binary. `wrangler` (via `workerd`) and
@@ -335,6 +355,7 @@ matters for a 716 MB, 14,530-file deploy.
 | [Limitless](https://onepiece.limitlesstcg.com) | Tournaments + full decklists | Documented API, no key |
 | [Top Decks](https://onepiecetopdecks.com) | JP/EN archives, leaks | WordPress API + query-string decks |
 | [Bandai rules](https://en.onepiece-cardgame.com/rules/) | Banlist, block updates | HTML, no API |
+| [Bandai events](https://en.onepiece-cardgame.com/events/) | Regionals, Finals, Cups — dates, venues, registration | HTML, no API |
 
 **Do not point card images at anyone else's CDN.** Bandai's blocks browser
 embedding outright. The optcgapi mirror does not, but a 24-printing sample found

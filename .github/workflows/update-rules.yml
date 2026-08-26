@@ -28,6 +28,14 @@ jobs:
       - run: node scripts/ingest-banlist.mjs
       - run: node scripts/ingest-topdecks.mjs
 
+      # Official events. Same source as the banlist — Bandai's own site — so it rides
+      # the same schedule rather than getting a workflow of its own.
+      #
+      # continue-on-error because a Regional list going quiet for eight hours is not
+      # a reason to skip the banlist, and the ingest keeps the last good file anyway.
+      - run: node scripts/ingest-events.mjs
+        continue-on-error: true
+
       # Region indexes are derived from every corpus, so they rebuild after any ingest.
       - run: node scripts/build-indexes.mjs
 

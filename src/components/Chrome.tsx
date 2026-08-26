@@ -8,6 +8,7 @@ const NAV = [
   { href: '/cards', label: 'Cards' },
   { href: '/decks', label: 'Metagame' },
   { href: '/sets', label: 'Sets' },
+  { href: '/events', label: 'Events' },
   { href: '/spoilers', label: 'Spoilers' },
   { href: '/banlist', label: 'Banlist' },
   { href: '/data', label: 'Data' },
