@@ -131,10 +131,10 @@ create policy "read own requests"
   on public.organizer_requests for select
   using (auth.uid() = user_id);
 
-drop policy if exists "withdraw while pending" on public.organizer_requests;
-create policy "withdraw while pending"
-  on public.organizer_requests for delete
-  using (auth.uid() = user_id and status = 'pending');
+-- Deliberately no update and no delete for the person who sent it: a request that
+-- could be rewritten, or taken back and replaced, after a reviewer had read it is
+-- a request nobody can rely on having read. (An earlier version of this file did
+-- allow a withdrawal; 0004 removes it.)
 
 drop policy if exists "admins read every request" on public.organizer_requests;
 create policy "admins read every request"

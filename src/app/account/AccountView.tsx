@@ -12,7 +12,6 @@ import {
   myOrganizerRequest,
   requestOrganizer,
   useAccount,
-  withdrawOrganizerRequest,
   type OrganizerRequest as OrganizerRequestRow,
   type SavedDeck,
 } from '@/lib/useAccount';
@@ -25,6 +24,13 @@ import {
  * confirmation and for reset, and is hidden until SMTP is configured because an
  * account whose password cannot be reset is a trap.
  */
+
+const day = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 
 const PROVIDERS = [
   { id: 'discord', label: 'Continue with Discord' },
@@ -142,19 +148,6 @@ function OrganizerRequest({ userId }: { userId: string }) {
     }
   };
 
-  const withdraw = async () => {
-    if (!request) return;
-    setBusy(true);
-    try {
-      await withdrawOrganizerRequest(request.id);
-      setRequest(null);
-    } catch (err) {
-      setFailed(err instanceof Error ? err.message : 'Could not withdraw it.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
   /* undefined is "not looked yet" and null is "nothing sent" — see useAccount. */
   if (request === undefined) return null;
 
@@ -184,20 +177,42 @@ function OrganizerRequest({ userId }: { userId: string }) {
     return (
       <div className="slab slab-pad account-ask">
         <p className="eyebrow">Organizer role</p>
-        <p style={{ margin: '0.4rem 0 0' }}>
-          Waiting for review — sent as <b>{request.organizer_name}</b>.
-        </p>
+        <p style={{ margin: '0.4rem 0 0' }}>Waiting for review.</p>
+
+        {/*
+          What was sent, and nothing that could change it. A request that could be
+          rewritten — or taken back and replaced — after a reviewer had read it is a
+          request nobody can rely on having read, so once it is in it stands until it
+          is answered. The database says the same: no update policy for the person
+          who sent it, and no delete either.
+        */}
+        <dl className="account-sent">
+          <div>
+            <dt>Sent as</dt>
+            <dd>{request.organizer_name}</dd>
+          </div>
+          <div>
+            <dt>What you run</dt>
+            <dd>{request.events}</dd>
+          </div>
+          {request.link ? (
+            <div>
+              <dt>Link</dt>
+              <dd className="account-sent-link">{request.link}</dd>
+            </div>
+          ) : null}
+          <div>
+            <dt>Asked</dt>
+            <dd>{day(request.created_at)}</dd>
+          </div>
+        </dl>
+
         <p className="muted account-ask-note">
-          Nothing else is needed from you. Results you submit later are reviewed
-          separately, one event at a time.
+          Nothing else is needed from you. If something in it is wrong, say so when it
+          is answered — a refusal carries a note and you can ask again.
         </p>
         {failed ? <p className="build-error">{failed}</p> : null}
-        <p className="account-actions">
-          <button type="button" className="account-link" disabled={busy} onClick={withdraw}>
-            {busy ? 'Withdrawing…' : 'Withdraw the request'}
-          </button>
-          {close}
-        </p>
+        <p className="account-actions">{close}</p>
       </div>
     );
   }

@@ -206,11 +206,10 @@ create policy "read own requests"
   on public.organizer_requests for select
   using (auth.uid() = user_id);
 
--- Taking it back, while it is still waiting. Not editing it: a request that could
--- be rewritten after a reviewer read it is a request nobody can rely on having read.
-create policy "withdraw while pending"
-  on public.organizer_requests for delete
-  using (auth.uid() = user_id and status = 'pending');
+-- Deliberately no update and no delete for the person who sent it. A request that
+-- could be rewritten — or taken back and replaced — after a reviewer had read it is
+-- a request nobody can rely on having read, and the queue is small enough that the
+-- way out of a mistaken one is a refusal, which carries a note and allows another.
 
 create policy "admins read every request"
   on public.organizer_requests for select

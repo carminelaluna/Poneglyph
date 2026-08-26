@@ -281,6 +281,11 @@ const REQUEST_COLUMNS =
  * Asking is not being granted: nothing here touches a role. A unique index allows
  * one open request per account, so a second attempt while one is pending comes back
  * as a duplicate rather than as a queue.
+ *
+ * And once it is sent it stands: there is no update and no delete for the person who
+ * sent it. A request that could be rewritten — or taken back and replaced — after a
+ * reviewer had read it is a request nobody can rely on having read. The way out of a
+ * mistaken one is a refusal, which carries a note and allows another.
  */
 export async function requestOrganizer(request: {
   userId: string;
@@ -315,13 +320,6 @@ export async function myOrganizerRequest(): Promise<OrganizerRequest | null> {
     .maybeSingle();
   if (error) throw new Error(error.message);
   return (data as OrganizerRequest) ?? null;
-}
-
-export async function withdrawOrganizerRequest(id: string) {
-  const client = supabase();
-  if (!client) return;
-  const { error } = await client.from('organizer_requests').delete().eq('id', id);
-  if (error) throw new Error(error.message);
 }
 
 /** Everything waiting, for whoever holds the admin role — same query, more rows. */

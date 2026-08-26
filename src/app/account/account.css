@@ -186,3 +186,33 @@
 .account-ask-line .chip {
   padding: 0.5rem 0.9rem;
 }
+
+/*
+ * What was sent, once it has been. Read-only by construction — there is nothing on
+ * this panel that changes the request, because the database has nothing that would
+ * accept the change.
+ */
+.account-sent {
+  margin: 0.6rem 0 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.account-sent dt {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--glyph-faint);
+}
+
+.account-sent dd {
+  margin: 0.15rem 0 0;
+  font-size: 0.84rem;
+  white-space: pre-wrap;
+}
+
+/* Somebody pasted this; it may be long and it must not push the panel wide. */
+.account-sent-link {
+  overflow-wrap: anywhere;
+  color: var(--glyph-mid);
+}

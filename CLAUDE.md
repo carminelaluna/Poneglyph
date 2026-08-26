@@ -302,6 +302,14 @@ account page (who they are, what they run, somewhere it can be checked) and `/re
 answers. One open request per account, enforced by a partial unique index rather than
 by the form.
 
+**Once sent, it stands.** No update policy for the sender and no delete either: a
+request that could be rewritten, or taken back and replaced, after a reviewer had
+read it is a request nobody can rely on having read. The way out of a mistaken one
+is a refusal, which carries a note and allows another. Collapsed, the whole feature
+is one button whose label is the status; a **tournament submission** is a different
+case and can still be withdrawn while pending, because that is the organizer's own
+work rather than a decision someone else has already read.
+
 Approving is **the one place a role changes outside the dashboard**, and the policy is
 the narrowest rule that does it: `using` requires the target row to be a `user` or an
 `organizer`, so an admin's row is unreachable through it, and `with check` requires the
