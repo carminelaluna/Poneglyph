@@ -70,7 +70,7 @@ async function fromSupabase() {
     'submissions?status=eq.approved&select=' +
     encodeURIComponent(
       'id,event_name,event_date,venue,tier,region,sampling,players,' +
-        'submission_decks(id,player,placing,wins,losses,ties,leader_id,cards)'
+        'submission_decks(id,player,place,wins,losses,ties,leader_id,cards)'
     );
 
   const res = await fetch(`${URL_BASE}/rest/v1/${query}`, {
@@ -105,7 +105,11 @@ function toDecks(submission, cardsById) {
       leaderId: row.leader_id,
       leaderName: leader?.name ?? row.leader_id,
       colors: leader?.colors ?? [],
-      placing: Number.isFinite(row.placing) ? row.placing : null,
+      /*
+       * The column is `place`, the corpus field is `placing`. PLACING is a reserved
+       * word in PostgreSQL, so it cannot be a bare column name — see schema.sql.
+       */
+      placing: Number.isFinite(row.place) ? row.place : null,
       record: {
         wins: row.wins ?? 0,
         losses: row.losses ?? 0,

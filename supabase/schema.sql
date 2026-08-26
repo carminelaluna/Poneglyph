@@ -152,7 +152,19 @@ create table public.submission_decks (
 
   -- As reported. "Not recorded" is a real answer and is stored as null.
   player        text,
-  placing       integer,
+  /*
+   * `place`, not `placing`.
+   *
+   * PLACING is a **reserved** word in PostgreSQL — it belongs to the
+   * `overlay(string placing string from int)` syntax — so a bare `placing integer`
+   * fails to parse, complaining at the column name itself and giving no hint why.
+   * It could be quoted as "placing", but then every query touching it has to quote
+   * it too, forever, and the one that forgets fails the same puzzling way.
+   *
+   * The corpus calls this `placing`; ingest-submissions.mjs maps the name across.
+   * `role` and `format` elsewhere in this file are *non*-reserved and are fine bare.
+   */
+  place         integer,
   wins          integer not null default 0,
   losses        integer not null default 0,
   ties          integer not null default 0,

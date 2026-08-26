@@ -401,6 +401,14 @@ month. Splitting by recency is what worked.
 
 ## Gotchas
 
+**PLACING is reserved in PostgreSQL.** A bare `placing integer` column will not
+parse, and the error points at the column name without saying that the word itself is
+the problem — it belongs to the `overlay(… placing … from …)` syntax. The column is
+called `place` and ingest-submissions.mjs maps it to the corpus field `placing`;
+quoting it instead would mean quoting it in every query forever. `npm run check` now
+scans .sql files for reserved column names, and `role`, `format` and `name` are
+*non*-reserved and fine bare.
+
 **Control characters in regexes.** A `\b` written through a patch became a literal
 `0x08` three separate times. It is invisible in an editor and in a diff, the regex
 compiles, and it matches nothing. The last one made the block-update list read as
