@@ -27,13 +27,18 @@ export default function DeckBuilderPage() {
 
       {/*
         Said plainly, because the alternative is someone losing an hour's work to a
-        stray refresh. There is no server here and nothing to save to.
+        stray refresh.
+
+        The last sentence used to read "there are no accounts here and nothing is
+        uploaded", which was true when it was written and stopped being true the day
+        saving arrived. A caveat that is out of date is worse than none: it is the
+        page telling you something about itself that it can no longer do.
       */}
       <div className="notice">
         <p style={{ margin: 0 }}>
-          <strong>Nothing is saved — reloading starts over.</strong> Copy the deck for the
-          simulator when you want to keep it. There are no accounts here and nothing is
-          uploaded.
+          <strong>Nothing is kept unless you keep it.</strong> Reloading starts over. Copy the
+          deck for the simulator, or — with an <Link href="/account">account</Link> — save it
+          and it is yours to reopen.
         </p>
       </div>
 

@@ -861,12 +861,22 @@ select {
    ==================================================================== */
 
 /* Reveals are provisional, so the page says so before it shows anything. */
+/*
+ * An aside, not a banner.
+ *
+ * This was a dashed red box on a red wash, and it appears on ten pages — so the
+ * treatment reserved for "look at this" was what a reader met on almost every page
+ * they opened, which is the reliable way to teach someone to stop looking. Red is
+ * also the accent this site spends on the thing you are meant to click.
+ *
+ * What is left is a rule down the side: enough to say these sentences are set
+ * apart from the paragraph above them, and nothing more. The words are unchanged —
+ * they are the caveats that stop a number being read as more than it is.
+ */
 .notice {
-  margin: 1.5rem 0 0;
-  padding: 1rem 1.15rem;
-  border: 1px dashed var(--rune);
-  border-radius: var(--radius);
-  background: rgba(192, 81, 46, 0.06);
+  margin: 1.4rem 0 0;
+  padding: 0.15rem 0 0.15rem 1rem;
+  border-left: 2px solid var(--edge-strong);
   font-size: 0.84rem;
   line-height: 1.6;
   color: var(--glyph-mid);
