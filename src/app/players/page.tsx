@@ -22,20 +22,11 @@ export default function PlayersPage() {
       </h1>
       <p className="muted" style={{ maxWidth: '68ch', marginTop: '0.8rem' }}>
         Assembled from the same{' '}
-        <Link href="/tournaments">tournament results</Link> as everything else here — nobody
+        <Link href="/tournaments" className="inline-link">tournament results</Link> as everything else here — nobody
         signs up, and there is nothing to opt into. A name links to every deck that person has
-        on record.
+        on record. Spellings are never merged into one person:{' '}
+        <Link href="/data" className="inline-link">how the archive is built</Link> says why.
       </p>
-
-      <div className="notice">
-        <p style={{ margin: 0 }}>
-          <strong>Spellings are never merged.</strong> <code>Ric Masterflash</code> and{' '}
-          <code>ricmasterflash</code> stay two entries unless the sources wrote them
-          identically: guessing that two handles are one person is the kind of tidying that
-          silently invents a career. Placeholders like <code>NA</code> are dropped rather than
-          listed — that string alone appears 172 times and would otherwise top this table.
-        </p>
-      </div>
 
       <PlayerBrowser />
     </div>

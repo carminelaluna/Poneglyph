@@ -23,22 +23,12 @@ export default function SubmitPage() {
       </h1>
       <p className="muted" style={{ maxWidth: '66ch', marginTop: '0.8rem' }}>
         What you send joins the numbers other people read — alongside Limitless and One Piece
-        Top Decks, and counted the same way. Everything is reviewed before it appears.
+        Top Decks, and counted the same way. Everything is reviewed before it appears, and
+        nothing here is refused for being incomplete: a 49-card list, or one naming a card the
+        archive has not ingested yet, can still be sent. Paste the lists in the format the
+        simulator reads, which is what the <Link href="/deckbuilder" className="inline-link">deck builder</Link>{' '}
+        exports.
       </p>
-
-      <div className="notice">
-        <p style={{ margin: 0 }}>
-          <strong>Paste the decklists, do not rebuild them.</strong> The format is the one
-          OPTCGSim reads — <code>4xOP01-025</code>, one card per line, Leader included — which
-          is also what this site&rsquo;s <Link href="/deckbuilder">deck builder</Link> exports.
-          A list that came out of here goes straight back in.
-        </p>
-        <p style={{ margin: '0.6rem 0 0' }}>
-          Everything here is checked and nothing is refused. A deck that is 49 cards, or names
-          a card the archive has not ingested yet, can still be sent — our data being behind is
-          not a reason to lose a real result.
-        </p>
-      </div>
 
       <SubmitForm />
     </div>

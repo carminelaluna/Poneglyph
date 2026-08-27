@@ -200,6 +200,58 @@ export default function DataPage() {
         </table>
       </div>
 
+      {/*
+        The caveats that used to sit in a boxed callout on the top of /decks,
+        /tournaments and /players — one on each, so a reader met the same treatment
+        on nearly every page and learned to skip it.
+
+        They are here because they are all the same kind of thing: not a warning
+        about the page you are on, but an explanation of how the archive was built,
+        which is what this page is for. Each of those pages keeps one line pointing
+        at this one.
+      */}
+      <div className="meta-block">
+        <h2>How to read the numbers</h2>
+        <div style={{ color: 'var(--glyph-mid)', lineHeight: 1.7, display: 'grid', gap: '0.85rem', maxWidth: '68ch' }}>
+          <p style={{ margin: 0 }}>
+            <strong>Share and win rate are counted from different decks.</strong> Limitless
+            publishes whole Swiss fields; One Piece Top Decks publishes only the decks that
+            placed. Share counts every recorded deck, because &ldquo;how much of the field was
+            this&rdquo; is answerable from any of them. A win rate counts only decks that came
+            from a whole field, and every one is shown with the sample it came from — a win
+            rate over decks that placed would read near 100% and describe the sample rather
+            than the deck.
+          </p>
+          <p style={{ margin: 0 }}>
+            <strong>Decks recorded and entrants are different numbers.</strong> A 128-player
+            Regional can appear here with four decklists on record, because that is what the
+            source published. Where no source reported a field size, the page says so instead
+            of printing a zero — a blank reads as a bug and a zero reads as an empty room.
+          </p>
+          <p style={{ margin: 0 }}>
+            <strong>Player names are never merged across spellings.</strong>{' '}
+            <code>Ric Masterflash</code> and <code>ricmasterflash</code> stay two entries
+            unless the sources wrote them identically. Guessing that two handles are one
+            person is the kind of tidying that silently invents a career. Placeholders are
+            dropped rather than listed: <code>NA</code> alone appears 172 times in the raw
+            data and would otherwise top every leaderboard.
+          </p>
+          <p style={{ margin: 0 }}>
+            <strong>Matchups come from brackets, not from records.</strong> A win rate is a
+            deck&rsquo;s record against the field; a matchup is its record against a named
+            opponent, joined from published pairings and the Leader each player registered at
+            that event. Only Limitless publishes pairings, so matchups cover its events and
+            say so. Mirrors are left out, and a pair that has met fewer than five times is
+            held back — 67% from three games is noise wearing a percentage.
+          </p>
+          <p style={{ margin: 0 }}>
+            <strong>Time windows are measured from the newest result on record</strong>, not
+            from today. Results arrive in batches, so anchoring on the clock would quietly
+            empty &ldquo;last 7 days&rdquo; whenever ingestion paused.
+          </p>
+        </div>
+      </div>
+
       <div className="meta-block">
         <h2>How a rebuild works</h2>
         <ol className="muted" style={{ paddingLeft: '1.2rem', lineHeight: 1.75, maxWidth: '64ch' }}>

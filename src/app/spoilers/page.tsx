@@ -62,18 +62,14 @@ export default function SpoilersPage() {
         here is maintained by hand.
       </p>
 
-      <div className="notice">
-        <p style={{ margin: 0 }}>
-          <strong>These are community reveals, not official releases.</strong> Card numbers, names
-          and release windows come from{' '}
-          <a href={source.home} target="_blank" rel="noreferrer noopener">
-            {source.label}
-          </a>
-          &rsquo;s {source.category} coverage and can change before a set ships. The card images
-          are theirs and are shown from their site — follow the article links below for the full
-          reveals.
-        </p>
-      </div>
+      <p className="muted source-line">
+        Community reveals, not official releases: read from{' '}
+        <a href={source.home} target="_blank" rel="noreferrer noopener" className="inline-link">
+          {source.label}
+        </a>
+        &rsquo;s {source.category} coverage, shown with their images, and liable to change
+        before a set ships.
+      </p>
 
       {sets.length === 0 ? (
         <p className="empty">No unreleased sets are being covered right now.</p>

@@ -25,21 +25,12 @@ export default function TournamentsPage() {
         Every recorded tournament
       </h1>
       <p className="muted" style={{ maxWidth: '68ch', marginTop: '0.8rem' }}>
-        {decks.toLocaleString('en-US')} decklists came from these events. Looking for what is
-        coming rather than what has happened? The{' '}
-        <Link href="/events">official calendar</Link> lists the Regionals, Cups and Finals
+        {decks.toLocaleString('en-US')} decklists came from these events. Decks recorded and
+        entrants are different numbers — <Link href="/data" className="inline-link">how the archive is built</Link>{' '}
+        says why. Looking for what is coming rather than what has happened? The{' '}
+        <Link href="/events" className="inline-link">official calendar</Link> lists the Regionals, Cups and Finals
         Bandai has announced.
       </p>
-
-      <div className="notice">
-        <p style={{ margin: 0 }}>
-          <strong>Decks and entrants are different numbers.</strong> Limitless publishes whole
-          Swiss fields; One Piece Top Decks publishes only the decks that placed. So a
-          128-player Regional can appear here with four decklists on record, and the entrant
-          count is whatever the source reported — where none did, it says so rather than
-          printing a zero.
-        </p>
-      </div>
 
       <TournamentBrowser />
     </div>

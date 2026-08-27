@@ -54,16 +54,14 @@ export default function BanlistPage() {
         Alternate arts count as the same card — a ban applies to every printing of it.
       </p>
 
-      <div className="notice">
-        <p style={{ margin: 0 }}>
-          Taken from{' '}
-          <a href={source.url} target="_blank" rel="noreferrer noopener">
-            the official rules page
-          </a>
-          . Poneglyph is not a source of rulings — if this page and Bandai disagree, Bandai is
-          right. Restrictions apply to both Standard and Extra unless stated otherwise.
-        </p>
-      </div>
+      <p className="muted source-line">
+        Read from{' '}
+        <a href={source.url} target="_blank" rel="noreferrer noopener" className="inline-link">
+          the official rules page
+        </a>
+        . Restrictions apply to both Standard and Extra unless stated otherwise, and if this
+        page and Bandai disagree, <a href="/legal" className="inline-link">Bandai is right</a>.
+      </p>
 
       <Section
         title="Banned"

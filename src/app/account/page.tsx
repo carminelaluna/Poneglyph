@@ -23,22 +23,12 @@ export default function AccountPage() {
       </h1>
       <p className="muted" style={{ maxWidth: '62ch', marginTop: '0.8rem' }}>
         An account is only needed to keep decks of your own, and — for tournament
-        organizers — to submit results. Everything else here works without one.
+        organizers — to submit results. Everything else here works without one. It stores an
+        account id, the name you sign in with and the decks you save, and nothing else:{' '}
+        <Link href="/privacy" className="inline-link">privacy</Link> has the detail,{' '}
+        <Link href="/terms" className="inline-link">terms</Link>{' '}
+        what is expected of you.
       </p>
-
-      {/*
-        Said before the button, not after. Anyone about to hand over an identity is
-        entitled to know what happens to it first.
-      */}
-      <div className="notice">
-        <p style={{ margin: 0 }}>
-          <strong>What is stored:</strong> an account id, the name you sign in with, and the
-          decks you choose to save. Nothing is shared with anyone, there is no analytics on
-          this site and no advertising. Signing in through Discord or Google means no password
-          exists here to lose. The detail is on <Link href="/privacy">privacy</Link>, and what
-          is expected of you on <Link href="/terms">terms</Link>.
-        </p>
-      </div>
 
       <AccountView />
     </div>

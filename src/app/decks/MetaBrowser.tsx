@@ -64,23 +64,31 @@ export default function MetaBrowser() {
         count={decks.length}
       />
 
+      {/*
+        Conditional, and therefore still here rather than on /data with the rest of
+        the caveats: it explains the table in front of you right now — why a column
+        is missing, or which decks the one you can see was counted from. A line, not
+        a box; the reasoning is one link away.
+      */}
       {!fieldSample ? (
-        <div className="notice" style={{ marginTop: 0, marginBottom: '1.25rem' }}>
-          <p style={{ margin: 0 }}>
-            <strong>These are decks that placed, not whole fields.</strong> Three in four are
-            first-place lists, so <em>share of wins</em> answers what is winning. A win rate from
-            that sample would read near 100% and describe the sample rather than the deck, so it
-            is not shown.
-          </p>
-        </div>
+        <p className="muted source-line" style={{ marginBottom: '1.1rem' }}>
+          These are decks that placed, not whole fields, so the column reads{' '}
+          <em>share of wins</em> and no win rate is shown —{' '}
+          <Link href="/data" className="inline-link">
+            why
+          </Link>
+          .
+        </p>
       ) : index.sampling === 'mixed' ? (
-        <div className="notice" style={{ marginTop: 0, marginBottom: '1.25rem' }}>
-          <p style={{ margin: 0 }}>
-            <strong>Mixed sources.</strong> Share counts every recorded deck; win rate counts only
-            the {index.fieldDecks?.toLocaleString('en-US')} from whole tournament fields, because
-            the rest are decks that placed. Each row shows the sample its win rate came from.
-          </p>
-        </div>
+        <p className="muted source-line" style={{ marginBottom: '1.1rem' }}>
+          Mixed sources: share counts every recorded deck, win rate only the{' '}
+          {index.fieldDecks?.toLocaleString('en-US')} from whole fields, and each row shows the
+          sample it came from —{' '}
+          <Link href="/data" className="inline-link">
+            why
+          </Link>
+          .
+        </p>
       ) : null}
 
       {loadingArchive ? (

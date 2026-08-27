@@ -23,18 +23,11 @@ export default function ReviewPage() {
       </h1>
       <p className="muted" style={{ maxWidth: '66ch', marginTop: '0.8rem' }}>
         Approving does not publish anything by itself. The next{' '}
-        <Link href="/data">ingest</Link> reads approved rows and folds them into the corpus
-        with the rest, so what happens here is a decision rather than a deployment.
+        <Link href="/data" className="inline-link">ingest</Link> reads approved rows and folds them into the corpus
+        with the rest, so what happens here is a decision rather than a deployment — and a
+        field uploaded as though it were the whole Swiss when it was the top cut does not look
+        wrong once it is in. It just moves the numbers.
       </p>
-
-      <div className="notice">
-        <p style={{ margin: 0 }}>
-          <strong>What is being decided.</strong> Every share and win rate on this site is
-          derived from recorded results. A tournament that never happened, or a field
-          uploaded as though it were the whole Swiss when it was the top cut, does not look
-          wrong once it is in — it just moves the numbers. That is what the review is for.
-        </p>
-      </div>
 
       <ReviewQueue />
     </div>

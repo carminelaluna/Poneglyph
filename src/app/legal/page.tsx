@@ -46,6 +46,33 @@ export default function LegalPage() {
           reliably. If a rights holder would prefer that specific material not be displayed here,
           it will be removed on request.
         </p>
+        <p>
+          Pre-release and spoiler images are the exception: they are shown from the site that
+          published the reveal, with attribution and a link to it, and are not copied here.
+          Card numbers, names and release windows for unreleased sets come from community
+          coverage and can change before a set ships — they are reported, not confirmed.
+        </p>
+      </Section>
+
+      {/*
+        This used to be a boxed notice on /events. It is a statement about what this
+        site is and is not, which is what this page is for; the events page keeps
+        one line crediting the source.
+      */}
+      <Section title="Events listed here">
+        <p>
+          Dates, venues, formats and registration details for official events are read from
+          Bandai&rsquo;s own event pages and reproduced for reference.{' '}
+          <strong>This site takes no registrations and runs no events.</strong> Every
+          registration link goes to Bandai&rsquo;s page or to the organiser&rsquo;s own, and
+          anything here can be out of date the moment they change it — theirs is the copy that
+          counts.
+        </p>
+        <p>
+          Where Bandai publishes when registration opens, they also say it is a guideline that
+          organisers vary. That caveat is reproduced with the dates rather than dropped, because
+          presenting the table as a firm time would be inventing a certainty they disclaim.
+        </p>
       </Section>
 
       <Section title="Rules and rulings">

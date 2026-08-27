@@ -21,26 +21,10 @@ export default function DeckBuilderPage() {
       </h1>
       <p className="muted" style={{ maxWidth: '68ch', marginTop: '0.8rem' }}>
         Pick a Leader and the pool narrows to what it can play. Copy limits, rotation and the{' '}
-        <Link href="/banlist">banned list</Link> are checked while you build, and the export is
-        the same one the decklist pages use.
+        <Link href="/banlist" className="inline-link">banned list</Link> are checked while you build, and the export is
+        the same one the decklist pages use. Reloading starts over — copy the deck for the
+        simulator, or save it to an <Link href="/account" className="inline-link">account</Link> to reopen it later.
       </p>
-
-      {/*
-        Said plainly, because the alternative is someone losing an hour's work to a
-        stray refresh.
-
-        The last sentence used to read "there are no accounts here and nothing is
-        uploaded", which was true when it was written and stopped being true the day
-        saving arrived. A caveat that is out of date is worse than none: it is the
-        page telling you something about itself that it can no longer do.
-      */}
-      <div className="notice">
-        <p style={{ margin: 0 }}>
-          <strong>Nothing is kept unless you keep it.</strong> Reloading starts over. Copy the
-          deck for the simulator, or — with an <Link href="/account">account</Link> — save it
-          and it is yours to reopen.
-        </p>
-      </div>
 
       <DeckBuilder />
     </div>

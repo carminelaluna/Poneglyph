@@ -862,29 +862,24 @@ select {
 
 /* Reveals are provisional, so the page says so before it shows anything. */
 /*
- * An aside, not a banner.
+ * Where a page says where its numbers came from.
  *
- * This was a dashed red box on a red wash, and it appears on ten pages — so the
- * treatment reserved for "look at this" was what a reader met on almost every page
- * they opened, which is the reliable way to teach someone to stop looking. Red is
- * also the accent this site spends on the thing you are meant to click.
+ * This replaced `.notice`, which was a dashed red box carrying a paragraph of
+ * caveats and appeared on ten pages — so the treatment reserved for "look at this"
+ * was what a reader met almost everywhere, which is the reliable way to teach
+ * somebody to stop looking.
  *
- * What is left is a rule down the side: enough to say these sentences are set
- * apart from the paragraph above them, and nothing more. The words are unchanged —
- * they are the caveats that stop a number being read as more than it is.
+ * The caveats themselves moved to the pages that exist for them: how the archive is
+ * built to /data, what this site is and is not to /legal, accounts to /privacy and
+ * /terms. What is left on a browse page is one line of provenance in the same voice
+ * as the rest of the prose, because "read from Bandai's own event pages" is
+ * something a reader wants once and never again.
  */
-.notice {
-  margin: 1.4rem 0 0;
-  padding: 0.15rem 0 0.15rem 1rem;
-  border-left: 2px solid var(--edge-strong);
-  font-size: 0.84rem;
+.source-line {
+  margin: 0.9rem 0 0;
+  font-size: 0.78rem;
   line-height: 1.6;
-  color: var(--glyph-mid);
-  max-width: 78ch;
-}
-
-.notice strong {
-  color: var(--glyph);
+  max-width: 74ch;
 }
 
 .spoiler-grid {

@@ -9,6 +9,16 @@ submissions).
 that implies official standing.** `/legal` is the notice, `/privacy` and `/terms` are
 the two URLs the OAuth providers require.
 
+**Caveats live on the page that exists for them, not on every page.** Ten pages each
+carried a dashed red callout, which made the treatment reserved for "look at this"
+the thing a reader met almost everywhere. How the archive is built — sampling, decks
+against entrants, spellings never merged, what a matchup is — is on `/data` under
+*How to read the numbers*; what this site is and is not is on `/legal`; accounts are
+on `/privacy` and `/terms`. A browse page keeps at most one line of provenance
+(`.source-line`) and a link. The exception is `MetaBrowser`, whose two warnings are
+conditional: they describe the table in front of you right now, so they stay, as a
+line rather than a box.
+
 Moving to a domain, another CDN, or a real machine: **[MIGRATIONS.md](MIGRATIONS.md)**.
 
 ---

@@ -105,32 +105,37 @@ export default function EventsPage() {
         Filter by where you are and what you are looking for.
       </p>
 
-      <div className="notice">
-        <p style={{ margin: 0 }}>
-          <strong>Dates, venues and registration come from Bandai.</strong> Read from the{' '}
-          <a href={events.source.index} target="_blank" rel="noreferrer noopener">
-            official event pages
-          </a>{' '}
-          and reproduced here for reference — this site is not affiliated with them, takes no
-          registrations, and every link goes to their page or the organiser&rsquo;s.
-        </p>
+      {/*
+        Bandai publishes one registration date per event month and then says it is a
+        guideline organisers vary. Their caveat travels with their dates rather than
+        being dropped, because presenting the table as a firm time would invent a
+        certainty they disclaim. The rest of what this page is — no affiliation, no
+        registrations taken — is on /legal, where a statement about the site belongs.
+      */}
+      <p className="muted source-line">
+        Read from Bandai&rsquo;s{' '}
+        <a
+          href={events.source.index}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="inline-link"
+        >
+          official event pages
+        </a>
+        ; this site takes no registrations and every link goes to theirs or the
+        organiser&rsquo;s.
         {Object.keys(times).length > 0 ? (
-          <p style={{ margin: '0.6rem 0 0' }}>
-            {/*
-              Their own words, kept: they publish a month-by-month table of when
-              registration opens and then say it is a guideline that organisers vary.
-              Presenting it as a firm time would be inventing certainty they disclaim.
-            */}
-            <strong>Registration usually opens on a Sunday</strong> — Bandai publishes one date
-            per event month, at{' '}
+          <>
+            {' '}
+            Registration usually opens on a Sunday, at{' '}
             {Object.entries(times)
               .map(([region, time]) => `${time} in ${region}`)
               .join(', ')}
-            . They say the exact date and time can vary by organiser, so treat it as a guideline
-            and check the event&rsquo;s own link.
-          </p>
+            , which they publish as a guideline that organisers vary — check the event&rsquo;s
+            own link.
+          </>
         ) : null}
-      </div>
+      </p>
 
       {flat.length === 0 ? (
         <p className="empty">No events are listed right now.</p>
