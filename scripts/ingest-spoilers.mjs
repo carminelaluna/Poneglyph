@@ -30,18 +30,60 @@ const DATA = path.resolve('data');
 
 const log = (...m) => console.log('[spoilers]', ...m);
 
-async function getJson(url, { retries = 3 } = {}) {
+/**
+ * Waits between attempts, in seconds.
+ *
+ * The old backoff was 0.5s and 2s, so all three attempts landed inside four
+ * seconds — which is no use at all against the thing that actually goes wrong here.
+ * The upstream is WordPress behind a filter that occasionally answers a datacenter
+ * IP with an interstitial **200 carrying HTML**, and those are measured in tens of
+ * seconds. Four attempts across a minute clears most of them; the run is a cron job
+ * with nothing waiting on it, so the minute is free.
+ */
+const BACKOFF = [3, 10, 30];
+
+/**
+ * A refusal, as opposed to a breakage.
+ *
+ * `err.refused` marks "the upstream would not talk to us": an HTML body where JSON
+ * was promised, or a 403/429/503. It is deliberately narrow — a 200 of real JSON
+ * that fails to parse, or a shape we did not expect, is a broken assumption and
+ * stays fatal.
+ */
+const refusal = (message) => Object.assign(new Error(message), { refused: true });
+
+async function getJson(url, { retries = 4 } = {}) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const res = await fetch(url, {
-        headers: { 'user-agent': 'poneglyph-spoilers/1.0' },
+        headers: { 'user-agent': 'poneglyph-spoilers/1.0', accept: 'application/json' },
         signal: AbortSignal.timeout(45_000),
       });
+
+      if ([403, 429, 503].includes(res.status)) {
+        throw refusal(`HTTP ${res.status} — the upstream turned us away`);
+      }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
+
+      /*
+       * Read as text and parse here, so a refusal served as a 200 is diagnosable.
+       * Before this the only evidence was "Unexpected token '<'", which does not
+       * say whether we were challenged, rate-limited or served an error page.
+       */
+      const body = await res.text();
+      if (body.trimStart().startsWith('<')) {
+        const snippet = body.trim().slice(0, 120).replace(/\s+/g, ' ');
+        throw refusal(`HTTP ${res.status} with an HTML body — ${snippet}`);
+      }
+      return JSON.parse(body);
     } catch (err) {
-      if (attempt === retries) throw new Error(`${url}: ${err.message}`);
-      await new Promise((r) => setTimeout(r, 500 * attempt ** 2));
+      if (attempt === retries) {
+        const failure = err.refused ? refusal(`${url}: ${err.message}`) : new Error(`${url}: ${err.message}`);
+        throw failure;
+      }
+      const wait = BACKOFF[attempt - 1] ?? 30;
+      log(`  ${err.message} — retrying in ${wait}s`);
+      await new Promise((r) => setTimeout(r, wait * 1000));
     }
   }
   return null;
@@ -304,6 +346,25 @@ async function main() {
 }
 
 main().catch((err) => {
+  /*
+   * An upstream that will not talk to us is not a broken ingest.
+   *
+   * Nothing has been written — this throws long before the write — so the site
+   * keeps serving the reveals it already had, which is the correct outcome. Failing
+   * the run as well would paint the schedule red every few hours for something
+   * entirely outside this repository, and a workflow that is red half the time is a
+   * workflow nobody reads. It says so in the run summary instead.
+   *
+   * Anything else still exits 1: a shape that changed, a parse that broke, a file
+   * that would not write.
+   */
+  if (err.refused) {
+    console.error('[spoilers] upstream refused —', err.message);
+    console.error('[spoilers] nothing written; the archive keeps the reveals it had');
+    console.log(`::warning title=Spoilers upstream refused::${err.message}`);
+    process.exit(0);
+  }
+
   console.error('[spoilers] FAILED —', err.message);
   process.exit(1);
 });

@@ -620,6 +620,17 @@ limit. `update-matchups` runs three hours after `update-decks` for the same reas
 earlier "slimming" of the loader dropped it and a rebuild reclassified all 275 tournaments
 as `unknown`. Re-fetching cost 289 requests.
 
+**A refusal is not a breakage.** onepiecetopdecks.com sits behind a filter that
+occasionally answers a datacenter IP with a Cloudflare challenge — an HTML body
+under a **200**, so `res.ok` is true and the failure surfaces as
+`Unexpected token '<'`. It reddened `update-spoilers` four times in thirty-six hours
+while the same host answered `update-rules` fine, minutes apart. Two things follow.
+The backoff is in *seconds* (3, 10, 30 across four attempts): the old 0.5s/2s put
+every attempt inside one blocked window. And a refusal — HTML where JSON was
+promised, or 403/429/503 — logs a `::warning`, writes nothing and exits **0**, since
+a schedule that is red every few hours for something outside this repository is a
+schedule nobody reads. Everything else still exits 1.
+
 **Ingests refuse to write nonsense.** Too few cards, an empty banlist, a dead spine — each
 aborts before overwriting. An empty banlist that looks successful is worse than none. The
 submissions ingest is the exception: zero approved submissions is a real answer.

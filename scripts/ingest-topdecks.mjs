@@ -76,7 +76,14 @@ async function get(url, { retries = 3 } = {}) {
       return res.text();
     } catch (err) {
       if (attempt === retries) throw new Error(`${url}: ${err.message}`);
-      await new Promise((r) => setTimeout(r, 700 * attempt ** 2));
+      /*
+       * Seconds, not milliseconds. This host sits behind a filter that sometimes
+       * answers a datacenter IP with a challenge, and those clear in tens of
+       * seconds — a backoff of 0.7s and 2.8s put all three attempts inside the same
+       * blocked window. It is the failure that has been reddening update-spoilers,
+       * and this ingest reads the same host.
+       */
+      await new Promise((r) => setTimeout(r, [3000, 10_000, 30_000][attempt - 1] ?? 30_000));
     }
   }
   return null;
