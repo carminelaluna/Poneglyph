@@ -59,6 +59,50 @@ const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const log = (...m) => console.log('[submissions]', ...m);
 
+/**
+ * Nothing configured at all — a checkout with no Supabase project behind it.
+ *
+ * That is a real answer rather than a failure, and it is the same answer the site
+ * gives: `accountsEnabled` is false, the account page says so, and everything else
+ * works. Half-configured is a different thing and is treated as one below.
+ */
+const CONFIGURED = Boolean(URL_BASE || KEY);
+
+async function fromSupabase() {
+  if (!URL_BASE || !KEY) {
+    console.error(
+      [
+        '[submissions] half configured — ' +
+          `${URL_BASE ? 'the project URL is set but' : 'no project URL, and'} ` +
+          `the service role key is ${KEY ? 'set' : 'missing'}.`,
+        '              The key belongs in the workflow secrets — never in .env.local',
+        '              and never under a NEXT_PUBLIC_ name, since anything with that',
+        '              prefix is compiled into the browser bundle. The URL may be read',
+        '              from either SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL.',
+        '              To try the mapping without a database: --fixture <file>',
+      ].join('\n')
+    );
+    process.exit(1);
+  }
+
+  /* One request, with the decks embedded, rather than one per submission. */
+  const query =
+    'submissions?status=eq.approved&select=' +
+    encodeURIComponent(
+      'id,event_name,event_date,venue,tier,region,sampling,players,' +
+        'submission_decks(id,player,place,wins,losses,ties,leader_id,cards)'
+    );
+
+  const res = await fetch(`${URL_BASE}/rest/v1/${query}`, {
+    headers: { apikey: KEY, authorization: `Bearer ${KEY}`, accept: 'application/json' },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Supabase answered ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  }
+  return res.json();
+}
+
 async function main() {
   const started = Date.now();
 

@@ -686,6 +686,14 @@ be quoted (`"tests/*.test.ts"`): a bare directory argument makes Node try to loa
 `tests` as a module and the run fails with `MODULE_NOT_FOUND`. `tsconfig.json` needs
 `allowImportingTsExtensions` because those imports name the `.ts` file.
 
+**A script's own guards need a test that runs the script.** Extracting `toDecks`
+out of `ingest-submissions.mjs` took `CONFIGURED` and `fromSupabase` with it, and
+the extraction was checked with `--fixture` — the one mode that evaluates neither.
+`node --check` parses and sees nothing; `tsc` does not read `.mjs`. The scheduled
+run found it six hours later, by failing after the deck ingest had already spent
+its request budget. `tests/ingest-submissions.test.ts` spawns the script the way CI
+does and reads the exit code, which is the only thing that would have caught it.
+
 **The parity tests do not import the build script.** `shardOf` and `playerSlugOf`
 exist twice on purpose, so the test lifts the *source text* of each copy and runs
 the two against nine thousand real keys. That is the drift the comments warn about,
@@ -776,4 +784,4 @@ site.
 Standard-legal, 20 via the block exception · 2,651 priced · 21,027 decklists —
 English 15,168 from 2022-10, Japanese 5,859 from 2022-07 · 7,163 tournaments · 8,686
 named players, 2,874 with more than one result · 19,419 recorded matches from 277 brackets · 43/46 release windows ·
-53 dated set releases · 67 announced official events across 6 types · 105 tests.
+53 dated set releases · 67 announced official events across 6 types · 109 tests.
