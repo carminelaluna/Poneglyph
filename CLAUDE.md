@@ -634,7 +634,8 @@ under a **200**, so `res.ok` is true and the failure surfaces as
 while the same host answered `update-rules` fine, minutes apart. Two things follow.
 The backoff is in *seconds* (3, 10, 30 across four attempts): the old 0.5s/2s put
 every attempt inside one blocked window. And a refusal — HTML where JSON was
-promised, or 403/429/503 — logs a `::warning`, writes nothing and exits **0**, since
+promised, a 403/429/503, or a connection that never completed (`fetch failed`, a
+timeout, a reset) — logs a `::warning`, writes nothing and exits **0**, since
 a schedule that is red every few hours for something outside this repository is a
 schedule nobody reads. Everything else still exits 1.
 

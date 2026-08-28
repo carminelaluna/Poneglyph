@@ -77,9 +77,21 @@ async function getJson(url, { retries = 4 } = {}) {
       }
       return JSON.parse(body);
     } catch (err) {
+      /*
+       * A connection that never completed is a refusal too — arguably a plainer one
+       * than an HTML body. `fetch failed` is what undici raises for a reset, a DNS
+       * miss or a TLS handshake that went nowhere, and AbortError is our own
+       * timeout. None of them is this repository having got something wrong.
+       */
+      const network =
+        err.name === 'TimeoutError' ||
+        err.name === 'AbortError' ||
+        /fetch failed|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN/i.test(err.message);
+
       if (attempt === retries) {
-        const failure = err.refused ? refusal(`${url}: ${err.message}`) : new Error(`${url}: ${err.message}`);
-        throw failure;
+        throw err.refused || network
+          ? refusal(`${url}: ${err.message}`)
+          : new Error(`${url}: ${err.message}`);
       }
       const wait = BACKOFF[attempt - 1] ?? 30;
       log(`  ${err.message} — retrying in ${wait}s`);
