@@ -758,6 +758,15 @@ lack a timestamp does not work and had already failed twice: `spoilers.json`,
 three workflows committed on *every* run and each commit rebuilt and redeployed the whole
 site to publish a new timestamp.
 
+**A failing step and a stopped pipeline are different decisions.** `update-decks`
+reads approved submissions after spending thirty minutes of Limitless request
+budget, so a hard stop there commits none of the decklists it just fetched and
+freezes the whole archive over a subsystem that may hold no rows at all. The step
+is therefore `continue-on-error` **and** checked in a final step that fails the job.
+The original arrangement had the first half without the second, which is how a URL
+read from a secret that did not exist ran red for a day under a green tick: what was
+missing was not the failing, it was the looking.
+
 **Always `git add data public/data`.** Two workflows did not — one staged only `data/`, the
 other named individual files, a list that went stale the moment the per-entity shards
 appeared. Both run `build-indexes.mjs`, which writes every payload the browser fetches into

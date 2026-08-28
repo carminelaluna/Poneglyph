@@ -55,23 +55,26 @@ jobs:
           echo "Running: node scripts/ingest-decks.mjs $ARGS"
           node scripts/ingest-decks.mjs $ARGS
 
-      # Region indexes are derived from every corpus, so they rebuild after any ingest.
-      # Approved organizer submissions, before the indexes are derived so they are
-      # part of what gets derived.
-      #
-      # This used to read the project URL from `secrets.SUPABASE_URL`, a secret that
-      # was never created, and to carry `continue-on-error: true` for the case where
-      # Supabase was not set up yet. Together those meant the step exited 1 on every
-      # single run and said nothing: an approved submission would have waited in the
-      # database indefinitely with a green tick next to it.
+      # Approved organizer submissions, read before build-indexes so they are part
+      # of what gets derived. Region indexes rebuild after any ingest anyway.
       #
       # The URL is not a secret — it ships in the browser bundle under its
       # NEXT_PUBLIC_ name — so it is written here in the open, exactly as
-      # publish-site.yml writes it. "Not configured" is now a clean exit inside the
-      # script, which is what continue-on-error was really for, so a genuine failure
-      # is allowed to stop the run and be seen. The deck ingest is resumable, so the
-      # cost of that is a repeat of one request budget, not lost decklists.
+      # publish-site.yml writes it. It used to be read from `secrets.SUPABASE_URL`,
+      # a secret that had never been created, so the step exited 1 on every single
+      # run for a day; and because the failure was swallowed and never looked at,
+      # the job stayed green. What was missing was not the failing, it was the
+      # looking.
+      #
+      # So it is continue-on-error **and** checked, at the end of the job. It has to
+      # be that way round because of the ordering: by the time this runs, the deck
+      # ingest has already spent thirty minutes of request budget, and stopping here
+      # would mean those decklists are never committed — the whole archive frozen
+      # over a subsystem that may have no rows in it at all. Fold the submissions in
+      # when it works, commit the decks either way, and go red at the end.
       - name: Pull approved submissions
+        id: submissions
+        continue-on-error: true
         env:
           SUPABASE_URL: https://wftkmhvxrlmyvaxdpegs.supabase.co
           # Bypasses every row-level policy. Secrets only — never NEXT_PUBLIC_.
@@ -102,6 +105,14 @@ jobs:
           events=$(node -p "require('./data/decks-meta.json').counts.tournaments")
           git commit -m "data: refresh decklists ($decks decks, $events tournaments)"
           git push
+
+      # Last, so the decklists above are already committed. A bad service role key
+      # is a real misconfiguration and should be as loud as any other.
+      - name: Did the submissions ingest run?
+        if: steps.submissions.outcome == 'failure'
+        run: |
+          echo '::error title=Submissions ingest failed::Approved organizer submissions were not read. The decklists above were still committed.'
+          exit 1
 
       - name: Summary
         if: always()
