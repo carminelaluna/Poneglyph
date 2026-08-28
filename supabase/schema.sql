@@ -69,10 +69,23 @@ as $$
   select role from public.profiles where id = (select auth.uid());
 $$;
 
-revoke execute on function public.has_role(text) from public, anon;
-revoke execute on function public.my_role() from public, anon;
-grant execute on function public.has_role(text) to authenticated;
-grant execute on function public.my_role() to authenticated;
+/*
+ * `anon` as well as `authenticated`, and that is deliberate rather than lax.
+ *
+ * SELECT policies are OR'd, so Postgres evaluates every one of them — including the
+ * admin policy that calls this — before concluding a row is invisible. Revoked from
+ * anon, a signed-out read of any table below answers `42501 permission denied for
+ * function has_role` instead of coming back empty, and row-level security is meant
+ * to say "nothing here", not to error.
+ *
+ * Nothing leaks by allowing it: neither function takes a user id, both ask about
+ * `auth.uid()`, and for an anonymous caller that is null — so one returns false and
+ * the other null, whatever is passed.
+ */
+revoke execute on function public.has_role(text) from public;
+revoke execute on function public.my_role() from public;
+grant execute on function public.has_role(text) to anon, authenticated;
+grant execute on function public.my_role() to anon, authenticated;
 
 -- A profile appears the moment someone signs up, rather than on first write.
 create function public.handle_new_user()
@@ -105,6 +118,19 @@ create policy "rename self only"
   using (auth.uid() = id)
   with check (auth.uid() = id and role = public.my_role());
 
+-- Reading the accounts it can act on, and only those.
+--
+-- Needed because an update that RLS filters out is not an error in PostgREST: it
+-- affects zero rows and comes back looking like a success. Without a way to read
+-- the row back, "Grant the role" would report that it had done something whenever
+-- this policy was missing — the exact failure the review page exists to avoid.
+--
+-- Restricted the same way the update below is: an admin's row is not readable here
+-- either, so this cannot be used to enumerate the people who hold that role.
+create policy "admins read the accounts they can act on"
+  on public.profiles for select
+  using (role in ('user', 'organizer') and public.has_role('admin'));
+
 -- The one way a role changes without opening the dashboard, and it is deliberately
 -- the narrowest rule that does the job.
 --
@@ -118,19 +144,6 @@ create policy "rename self only"
 -- which is the decision the request queue below exists to record — and, since RLS
 -- cannot restrict columns, to change that person's display name. That is not a
 -- threat to the corpus, which is what these policies are protecting.
--- Reading the accounts it can act on, and only those.
---
--- Needed because an update that RLS filters out is not an error in PostgREST: it
--- affects zero rows and comes back looking like a success. Without a way to read
--- the row back, "Grant the role" would report that it had done something whenever
--- this policy was missing — the exact failure the review page exists to avoid.
---
--- Restricted the same way the update is: an admin's row is not readable here
--- either, so this cannot be used to enumerate the people who hold that role.
-create policy "admins read the accounts they can act on"
-  on public.profiles for select
-  using (role in ('user', 'organizer') and public.has_role('admin'));
-
 create policy "admins move accounts between user and organizer"
   on public.profiles for update
   using (role in ('user', 'organizer') and public.has_role('admin'))

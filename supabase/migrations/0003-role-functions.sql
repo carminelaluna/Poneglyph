@@ -54,10 +54,10 @@ as $$
   select role from public.profiles where id = (select auth.uid());
 $$;
 
-revoke execute on function public.has_role(text) from public, anon;
-revoke execute on function public.my_role() from public, anon;
-grant execute on function public.has_role(text) to authenticated;
-grant execute on function public.my_role() to authenticated;
+revoke execute on function public.has_role(text) from public;
+revoke execute on function public.my_role() from public;
+grant execute on function public.has_role(text) to anon, authenticated;
+grant execute on function public.my_role() to anon, authenticated;
 
 -- ---------------------------------------------------------------- profiles
 

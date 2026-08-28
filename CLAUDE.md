@@ -335,6 +335,13 @@ once, and what it took down was renaming yourself. Roles are asked through
 the table's owner and so do not re-enter its policies; neither takes a user id, so
 neither can be used to probe another account. `npm run check` refuses the shape now.
 
+Both are executable by **`anon` as well as `authenticated`**, which reads as too
+generous and is not. Policies are OR'd, so a signed-out read evaluates the admin
+policy too; revoked from `anon`, that answers `42501 permission denied for function
+has_role` instead of an empty list, and row-level security is meant to say "nothing
+here" rather than to error. Since neither function takes a user id — both ask about
+`auth.uid()`, null for an anonymous caller — the grant discloses nothing.
+
 **Asking for the organizer role is a row, not an email.** The site used to answer
 "how do I submit results" with the contact address on `/legal` — off the record, easy
 to lose, visible to nobody but whoever received it. A plain account now asks from its
