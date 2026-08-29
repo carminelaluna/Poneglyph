@@ -1,20 +1,20 @@
 {
   "site": "Poneglyph",
   "language": "english",
-  "generatedAt": "2026-08-28T17:41:49.380Z",
+  "generatedAt": "2026-08-29T11:47:15.470Z",
   "upstreamBuiltAt": "2026-08-28T11:10:15.000Z",
   "counts": {
     "cards": 2785,
     "printings": 4843,
     "sets": 60,
     "withEffect": 2785,
-    "withPrice": 2651,
+    "withPrice": 2769,
     "traits": 171,
     "keywords": 45
   },
   "coverage": {
     "effect": 100,
-    "price": 95.2,
+    "price": 99.4,
     "block": 100
   },
   "formats": {
@@ -44,5 +44,5 @@
       "role": "prices & set names"
     }
   ],
-  "durationMs": 21984
+  "durationMs": 25329
 }
