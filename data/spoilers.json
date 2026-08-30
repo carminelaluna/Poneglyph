@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-26T00:08:12.267Z",
+  "generatedAt": "2026-08-30T05:18:25.855Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -12,7 +12,7 @@
     "named": 3,
     "articles": 3
   },
-  "durationMs": 1583,
+  "durationMs": 3235,
   "sets": [
     {
       "set": "OP18",
@@ -107,7 +107,7 @@
       "set": "OP16",
       "code": "OP-16",
       "lastCoverage": "2026-03-21T03:10:36",
-      "name": "The Time of Battle",
+      "name": "THE TIME OF BATTLE",
       "cards": 119,
       "slug": "op-16"
     },
