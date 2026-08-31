@@ -118,9 +118,25 @@ describe('an era window', () => {
     assert.equal(windowLabel({ kind: 'era', set: 'OP03' }, index), 'Since OP-03 entered play');
   });
 
-  it('has nothing to say about a set it does not know', () => {
+  /*
+   * The two regions do not share a release calendar: five sets entered play in
+   * Japanese that never did in English. Opening one of those under the English
+   * corpus used to fall through to "no start date, so no filtering" and report the
+   * whole archive under a heading naming that release — real numbers, wrong
+   * question. Reachable by switching region with a release selected, not only by
+   * typing a URL.
+   */
+  it('answers a release this corpus never had with nothing, not everything', () => {
     assert.equal(windowStart({ kind: 'era', set: 'NOPE' }, index), null);
     assert.equal(windowEnd({ kind: 'era', set: 'NOPE' }, index), null);
+    assert.deepEqual(filterDecks(index, { kind: 'era', set: 'NOPE' }), []);
+  });
+
+  it('says so rather than naming a release it cannot show', () => {
+    assert.match(
+      windowLabel({ kind: 'era', set: 'NOPE' }, index),
+      /never entered play in this corpus/
+    );
   });
 });
 

@@ -176,6 +176,15 @@ It also stops ST-30 cutting OP-16 in half. `windowEnd()` is exclusive, so the da
 set arrives belongs to its own era; `withTrend` measures the previous window against
 the same length, and the matchup table takes both ends.
 
+**The two regions do not share a release calendar**, so an era is a question one
+corpus can answer and the other cannot — five sets entered play in Japanese that
+never did in English, and two the other way. A release this corpus never had
+therefore answers with **nothing**, and says so. It used to fall through to "no
+start date, so no filtering" and report the whole archive under a heading naming
+that release: real numbers, wrong question, with the dropdown still reading *Choose
+a release…*. Reachable by switching region with one selected, not only by typing a
+URL.
+
 **Windows are measured from the newest deck on record, not from today.** Results
 arrive in batches; anchoring on the clock would silently empty "last 7 days" whenever
 ingestion paused.

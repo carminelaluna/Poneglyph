@@ -140,11 +140,22 @@ export const DAY_WINDOWS = [7, 15, 30, 90] as const;
  * today. Results arrive in batches, so anchoring on the clock would quietly empty
  * "last 7 days" whenever ingestion paused for a week.
  */
+/**
+ * The era a window names, or null when this corpus does not have it.
+ *
+ * The two regions do not share a release calendar — five sets entered play in
+ * Japanese that never did in English, and two the other way — so an era is a
+ * question one corpus can answer and the other cannot. Which is why the answer to
+ * "not here" has to be nothing rather than everything: see `filterDecks`.
+ */
+const eraIn = (window: Window, index: MetaIndex) =>
+  window.kind === 'era' ? (index.eras.find((e) => e.set === window.set) ?? null) : null;
+
 export function windowStart(window: Window, index: MetaIndex): string | null {
   if (window.kind === 'all') return null;
 
   if (window.kind === 'era') {
-    return index.eras.find((e) => e.set === window.set)?.from ?? null;
+    return eraIn(window, index)?.from ?? null;
   }
 
   const latest = index.window.to;
@@ -191,8 +202,8 @@ export function windowEnd(window: Window, index: MetaIndex): string | null {
 export function windowLabel(window: Window, index: MetaIndex): string {
   if (window.kind === 'all') return 'All recorded results';
   if (window.kind === 'era') {
-    const era = index.eras.find((e) => e.set === window.set);
-    if (!era) return 'One release';
+    const era = eraIn(window, index);
+    if (!era) return 'That release never entered play in this corpus';
     return windowEnd(window, index) ? `While ${era.code} was current` : `Since ${era.code} entered play`;
   }
   return `Last ${window.days} days`;
@@ -204,6 +215,17 @@ export function filterDecks(
   venues: Venue[] = [],
   tiers: string[] = []
 ): MetaDeck[] {
+  /*
+   * A release this corpus never had answers with nothing, not with everything.
+   *
+   * It used to fall through to "no start date, so no filtering", which meant a
+   * link to a Japanese-only release opened under the English corpus reported the
+   * entire archive under a heading naming that release — real numbers, wrong
+   * question, and the dropdown still reading "Choose a release…". It is reachable
+   * by switching region with one selected, not only by typing a URL.
+   */
+  if (window.kind === 'era' && !eraIn(window, index)) return [];
+
   const from = windowStart(window, index);
   const to = windowEnd(window, index);
   const byVenue = venues.length > 0 && venues.length < VENUES.length;
