@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-31T15:11:33.240Z",
+  "generatedAt": "2026-08-31T23:14:48.788Z",
   "source": {
     "id": "limitless",
     "label": "Limitless TCG",
@@ -7,38 +7,38 @@
     "docs": "https://docs.limitlesstcg.com/developer.html"
   },
   "counts": {
-    "tournaments": 281,
-    "decks": 9714,
+    "tournaments": 283,
+    "decks": 9790,
     "archetypes": 104,
     "cardsPlayed": 1560
   },
   "thisRun": {
-    "tournaments": 1,
-    "decks": 240,
+    "tournaments": 2,
+    "decks": 76,
     "empty": 0,
     "wrongSize": 0,
     "illegalCounts": 0,
     "unresolvedCards": 0,
     "unresolvedLeaders": 0,
-    "requests": 8
+    "requests": 10
   },
   "coverage": {
-    "tournamentsRead": 564,
+    "tournamentsRead": 566,
     "oldest": "2026-01-05T18:00:00.000Z",
-    "newest": "2026-08-30T13:00:00.000Z"
+    "newest": "2026-08-31T18:00:00.000Z"
   },
   "filters": {
     "minPlayers": 8,
     "since": "2026-05-31"
   },
   "venues": {
-    "simulator": 170,
-    "webcam": 48,
+    "simulator": 171,
+    "webcam": 49,
     "offline": 63
   },
   "tiers": {
+    "local": 279,
     "finals": 1,
-    "local": 277,
     "championship": 1,
     "qualifier": 1,
     "store": 1
@@ -49,26 +49,26 @@
       "set": "OP17",
       "from": "2026-08-17",
       "kind": "Expansion",
-      "peak": 92.5,
+      "peak": 94.7,
       "cards": 109,
       "codes": [
         "OP-17"
       ],
-      "decks": 916
+      "decks": 992
     },
     {
       "code": "ST-32, ST-31, ST-34",
       "set": "ST32",
       "from": "2026-07-15",
       "kind": "Starter deck",
-      "peak": 37.1,
+      "peak": 34.2,
       "cards": 15,
       "codes": [
         "ST-32",
         "ST-31",
         "ST-34"
       ],
-      "decks": 2210
+      "decks": 2286
     },
     {
       "code": "OP-16",
@@ -80,7 +80,7 @@
       "codes": [
         "OP-16"
       ],
-      "decks": 4107
+      "decks": 4183
     },
     {
       "code": "ST-30",
@@ -92,7 +92,7 @@
       "codes": [
         "ST-30"
       ],
-      "decks": 4107
+      "decks": 4183
     },
     {
       "code": "OP-15",
@@ -104,7 +104,7 @@
       "codes": [
         "OP-15"
       ],
-      "decks": 6818
+      "decks": 6894
     },
     {
       "code": "EB-03",
@@ -116,8 +116,8 @@
       "codes": [
         "EB-03"
       ],
-      "decks": 8345
+      "decks": 8421
     }
   ],
-  "durationMs": 1107
+  "durationMs": 1833
 }
