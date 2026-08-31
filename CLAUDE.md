@@ -694,6 +694,15 @@ it, and two copies would mean two limiters against one server, each unaware of t
 other's requests — which is the shape of an accidental ban rather than of a rate
 limit. `update-matchups` runs three hours after `update-decks` for the same reason.
 
+**`data/decks.json` is 66 MB and GitHub says so on every push.** *"larger than
+GitHub's recommended maximum file size of 50.00 MB"* is a warning, not a refusal —
+the hard limit is 100 MB and a push over it is rejected outright. Measured: 58,214
+rows across 41 months is 1,410 a month and 1.6 MB a month, which reaches 100 MB in
+about 21 months. Nothing to do today; the thing not to do is discover it on the
+push that fails. Splitting the corpus by year is the obvious way out, and it is
+cheaper to do while nothing depends on the file being whole — `build-indexes.mjs`
+reads it once and derives everything else, so it is the only reader.
+
 **`decks-state.json` holds `details`.** That map is the only copy of each event's venue. An
 earlier "slimming" of the loader dropped it and a rebuild reclassified all 275 tournaments
 as `unknown`. Re-fetching cost 289 requests.
