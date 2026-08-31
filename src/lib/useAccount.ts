@@ -2,7 +2,7 @@
 
 import type { Session } from '@supabase/supabase-js';
 import { useCallback, useEffect, useState } from 'react';
-import { accountsEnabled, supabase } from './supabase';
+import { accountsEnabled, authRedirectTo, supabase } from './supabase';
 
 /**
  * Who is signed in, for any page that needs to know.
@@ -91,6 +91,45 @@ export function useAccount() {
     [session]
   );
 
+  /**
+   * Attach another provider to *this* account.
+   *
+   * Supabase gives a Discord sign-in and a Google sign-in two separate users, even
+   * when the address is the same, and that is deliberate on its part: automatically
+   * merging on a matching email is an account takeover waiting for a provider that
+   * does not verify addresses. Linking is therefore something the person has to ask
+   * for while signed in, which is what this does.
+   *
+   * It only ever adds a provider to the account you are already using. Two accounts
+   * that both exist cannot be merged this way — the second sign-in comes back as
+   * "already linked to another user", and the way out of that is to delete the one
+   * you do not want.
+   */
+  const linkProvider = useCallback(async (provider: 'discord' | 'google') => {
+    const client = supabase();
+    if (!client) return;
+    const { error } = await client.auth.linkIdentity({
+      provider,
+      options: { redirectTo: authRedirectTo() },
+    });
+    if (error) throw new Error(error.message);
+  }, []);
+
+  /** Detach one, which Supabase refuses if it is the only way back in. */
+  const unlinkProvider = useCallback(
+    async (provider: string) => {
+      const client = supabase();
+      if (!client || !session) return;
+      const identity = session.user.identities?.find((i) => i.provider === provider);
+      if (!identity) return;
+      const { error } = await client.auth.unlinkIdentity(identity);
+      if (error) throw new Error(error.message);
+      const { data } = await client.auth.getSession();
+      setSession(data.session);
+    },
+    [session]
+  );
+
   return {
     session,
     profile,
@@ -104,8 +143,12 @@ export function useAccount() {
     isOrganizer: profile?.role === 'organizer',
     isAdmin: profile?.role === 'admin',
     userId: session?.user.id ?? null,
+    /* Which providers can currently open this account. */
+    providers: (session?.user.identities ?? []).map((i) => i.provider),
     signOut,
     rename,
+    linkProvider,
+    unlinkProvider,
   };
 }
 

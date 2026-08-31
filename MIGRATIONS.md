@@ -83,6 +83,18 @@ Keep `http://localhost:4322/account/` **and** `http://localhost:4321/Poneglyph/a
 as redirect entries for local work — the dev server serves under the base path too, and
 both lose `/Poneglyph` once that is empty.
 
+**Manual linking must be switched on** for the "Connect Discord/Google" buttons on
+the account page to work: *Authentication → Sign In / Providers → Manual linking*.
+Without it `linkIdentity` comes back with a 422 and the page reports it.
+
+Supabase deliberately does *not* merge two sign-ins that share an email address —
+that would be an account takeover the moment a provider stopped verifying them — so
+one person signing in with Discord and then with Google has two accounts until they
+link one to the other from inside the one they want to keep. Two that already exist
+cannot be merged; the second comes back as "already linked to another user", and the
+way out is to delete the spare in *Authentication → Users*, which takes its saved
+decks with it.
+
 **The trailing slash matters.** The site serves pages as directories, so the redirect
 is `/account/` and an allowlist entry without the slash is treated as a different URL
 and refused.

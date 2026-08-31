@@ -27,10 +27,34 @@ import { WindowBar, WinRate, useMetaIndex, useWindow } from '../useMeta';
  * The page shell around this — leader art, name, rules text — stays server
  * rendered, because that part is the archetype's identity and does not move.
  */
+/**
+ * How the decklist table is ordered.
+ *
+ * Best finish is still the default — it is what an archetype page is usually read
+ * for — but it must not be the only one. Sorted by finish and capped, a four-year
+ * window shows sixty first places and nothing else, so every deck older than the
+ * last sixty wins is unreachable however far back you set the window.
+ */
+const ORDERS = [
+  ['finish', 'Best finish'],
+  ['newest', 'Newest'],
+  ['oldest', 'Oldest'],
+] as const;
+
 export default function ArchetypeView({ leaderId, glow }: { leaderId: string; glow: string }) {
   const { window: window_, setWindow, venues, setVenues, tiers, setTiers, region, setRegion } = useWindow();
   const { index, error, loadingArchive } = useMetaIndex(region, window_);
   const [lists, setLists] = useState<DeckCardLists | null>(null);
+  /*
+   * How the decklists below are ordered, and how many are drawn.
+   *
+   * Both exist because of the same complaint: the table was sorted by finish and
+   * capped at sixty with no way past it, so an archetype with nine hundred results
+   * showed sixty first places — the newest sixty — however far back the window
+   * reached. "Show me the old ones" had no answer on the page.
+   */
+  const [order, setOrder] = useState<'finish' | 'newest' | 'oldest'>('finish');
+  const [limit, setLimit] = useState(60);
 
   /*
    * Card lists for this archetype only. They are a fifth of the whole corpus, so
@@ -60,15 +84,25 @@ export default function ArchetypeView({ leaderId, glow }: { leaderId: string; gl
     const mine = all.find((a) => a.leaderId === leaderId) ?? null;
     const decks = windowed
       .filter((d) => d.l === leaderId)
-      .sort(
-        (a, b) =>
-          (a.p ?? 999) - (b.p ?? 999) || b.d.localeCompare(a.d) || b.w - a.w
-      );
+      .sort((a, b) => {
+        if (order === 'newest') return b.d.localeCompare(a.d) || (a.p ?? 999) - (b.p ?? 999);
+        if (order === 'oldest') return a.d.localeCompare(b.d) || (a.p ?? 999) - (b.p ?? 999);
+        /* A deck with no recorded placing sorts last rather than first. */
+        return (a.p ?? 999) - (b.p ?? 999) || b.d.localeCompare(a.d) || b.w - a.w;
+      });
     const built = lists
       ? archetypeCards(decks.map((d) => d.i), lists, index)
       : null;
-    return { mine, decks, built };
-  }, [index, window_, venues, tiers, leaderId, lists]);
+    /*
+     * The range the table covers, read off the dates rather than off the ends of
+     * the list — those are only oldest-to-newest while the sort happens to be by
+     * date, and printed straight they came out backwards.
+     */
+    const days = decks.map((d) => d.d).sort();
+    const span = days.length ? { from: days[0], to: days[days.length - 1] } : null;
+
+    return { mine, decks, built, span };
+  }, [index, window_, venues, tiers, leaderId, lists, order]);
 
   if (error) {
     return (
@@ -80,7 +114,7 @@ export default function ArchetypeView({ leaderId, glow }: { leaderId: string; gl
   }
   if (!index || !view) return <p className="empty">Reading tournament results…</p>;
 
-  const { mine, decks, built } = view;
+  const { mine, decks, built, span } = view;
 
   return (
     <>
@@ -172,10 +206,34 @@ export default function ArchetypeView({ leaderId, glow }: { leaderId: string; gl
 
           <div className="section-head" style={{ marginTop: '2.5rem' }}>
             <h2 className="display">Decklists</h2>
-            <span className="muted" style={{ fontSize: '0.78rem' }}>
-              {decks.length} in this window · best finishes first
+            <span className="chip-row">
+              {ORDERS.map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  className="chip"
+                  aria-pressed={order === id}
+                  onClick={() => {
+                    setOrder(id);
+                    setLimit(60);
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
             </span>
           </div>
+
+          <p className="muted source-line" style={{ marginTop: '0.2rem' }}>
+            {Math.min(limit, decks.length).toLocaleString('en-US')} of{' '}
+            {decks.length.toLocaleString('en-US')} in this window
+            {span ? (
+              <>
+                {' '}
+                · {span.from} to {span.to}
+              </>
+            ) : null}
+          </p>
 
           <div className="table-scroll">
             <table className="meta-table">
@@ -191,7 +249,7 @@ export default function ArchetypeView({ leaderId, glow }: { leaderId: string; gl
                 </tr>
               </thead>
               <tbody>
-                {decks.slice(0, 60).map((deck) => (
+                {decks.slice(0, limit).map((deck) => (
                   <tr key={deck.i}>
                     <td className="mono" style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                       {deck.p === null ? (
@@ -231,6 +289,18 @@ export default function ArchetypeView({ leaderId, glow }: { leaderId: string; gl
               </tbody>
             </table>
           </div>
+
+          {decks.length > limit ? (
+            <p style={{ marginTop: '1rem' }}>
+              <button
+                type="button"
+                className="chip chip-link"
+                onClick={() => setLimit(limit + 200)}
+              >
+                Show more
+              </button>
+            </p>
+          ) : null}
         </>
       )}
     </>

@@ -33,8 +33,8 @@ const day = (iso: string) =>
   });
 
 const PROVIDERS = [
-  { id: 'discord', label: 'Continue with Discord' },
-  { id: 'google', label: 'Continue with Google' },
+  { id: 'discord', name: 'Discord', label: 'Continue with Discord' },
+  { id: 'google', name: 'Google', label: 'Continue with Google' },
 ] as const;
 
 /**
@@ -297,8 +297,102 @@ function OrganizerRequest({ userId }: { userId: string }) {
   );
 }
 
+/**
+ * Which providers open this account.
+ *
+ * Signing in with Discord and then with Google gives you two accounts, not one,
+ * and that is Supabase behaving correctly rather than a bug: merging two sign-ins
+ * because they carry the same address is an account takeover waiting for a provider
+ * that does not verify addresses. So linking is something you ask for, from inside
+ * the account you want to keep.
+ *
+ * It adds a provider to *this* account. It cannot merge two that already exist —
+ * the second one comes back as "already linked to another user", and the way out of
+ * that is to delete the one you do not want, from Supabase.
+ */
+function SignInMethods({
+  providers,
+  onLink,
+  onUnlink,
+}: {
+  providers: string[];
+  onLink: (provider: 'discord' | 'google') => Promise<void>;
+  onUnlink: (provider: string) => Promise<void>;
+}) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
+
+  const act = async (provider: string, run: () => Promise<void>) => {
+    setBusy(provider);
+    setFailed(null);
+    try {
+      await run();
+    } catch (err) {
+      setFailed(err instanceof Error ? err.message : 'That did not work.');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <div className="slab slab-pad account-ask">
+      <p className="eyebrow">Ways in</p>
+      <p className="muted account-ask-note">
+        Each one opens this same account, with the same decks. Adding a second is worth
+        doing before you need it: it is what stops a lost Discord login from being a lost
+        account.
+      </p>
+
+      <ul className="account-providers-list">
+        {PROVIDERS.map((p) => {
+          const linked = providers.includes(p.id);
+          /* Never offer to remove the last one — that locks the account. */
+          const removable = linked && providers.length > 1;
+
+          return (
+            <li key={p.id}>
+              <span>
+                <b>{p.name}</b>
+                <span className="muted"> {linked ? 'connected' : 'not connected'}</span>
+              </span>
+              {linked ? (
+                removable ? (
+                  <button
+                    type="button"
+                    className="account-link"
+                    disabled={busy === p.id}
+                    onClick={() => act(p.id, () => onUnlink(p.id))}
+                  >
+                    {busy === p.id ? 'Removing…' : 'Remove'}
+                  </button>
+                ) : (
+                  <span className="muted" style={{ fontSize: '0.74rem' }}>
+                    your only way in
+                  </span>
+                )
+              ) : (
+                <button
+                  type="button"
+                  className="chip chip-link"
+                  disabled={busy === p.id}
+                  onClick={() => act(p.id, () => onLink(p.id))}
+                >
+                  {busy === p.id ? 'Opening…' : `Connect ${p.name}`}
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+
+      {failed ? <p className="build-error">{failed}</p> : null}
+    </div>
+  );
+}
+
 export default function AccountView() {
-  const { session, profile, checked, signedIn, signOut, rename } = useAccount();
+  const { session, profile, checked, signedIn, signOut, rename, providers, linkProvider, unlinkProvider } =
+    useAccount();
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [renaming, setRenaming] = useState(false);
@@ -439,6 +533,8 @@ export default function AccountView() {
           it; offering either of them a form to ask for what they already have, or
           hand out themselves, would be a page not paying attention.
         */}
+        <SignInMethods providers={providers} onLink={linkProvider} onUnlink={unlinkProvider} />
+
         {profile && profile.role === 'user' ? <OrganizerRequest userId={session.user.id} /> : null}
 
         <SavedDecks />

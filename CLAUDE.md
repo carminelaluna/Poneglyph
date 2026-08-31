@@ -397,6 +397,15 @@ that is what makes this work on GitHub Pages with nothing behind it. Every value
 trailing slash**, and it is built from `location.origin` so localhost and the live site
 both work.
 
+**Two providers are two accounts until somebody links them.** Supabase gives a
+Discord sign-in and a Google sign-in different users even on one address, and that
+is correct: merging on a matching email is an account takeover waiting for a
+provider that stops verifying them. So the account page lists which providers open
+this account and offers to attach the other — `linkIdentity`, from inside the
+account you are keeping. It needs *Manual linking* enabled in the dashboard, and it
+cannot merge two accounts that both exist: the second comes back as "already linked
+to another user", and the way out is to delete the spare.
+
 `lib/supabase.ts` is imported **only** by pages under `/account` and `/submit`: the
 library is ~100 KB against a site measured in tens, and importing it from a shared
 component would put it on every page. Measured, it reaches 2 chunks out of 16.
