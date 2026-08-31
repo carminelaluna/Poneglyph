@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { dataUrl } from '@/lib/paths';
 import {
+  archiveMonthsFor,
   DAY_WINDOWS,
   VENUES,
   type MetaDeck,
@@ -48,14 +49,22 @@ const fileFor = (region: Region) => REGIONS.find((r) => r.id === region)?.file ?
  * The corpus for a region, in two parts.
  *
  * The first payload carries the last 90 days, which answers every window the page
- * offers by default. Asking for "All" or an era older than that pulls the archive
- * once and merges it in — English whole is three times the size, and most visits
- * are about the last month.
+ * offers by default. Anything older reaches into the archive, which is a file per
+ * month: a window is a date range, so it fetches the months it covers and leaves
+ * the rest alone.
+ *
+ * It was one file until the Limitless backfill, when the English archive went from
+ * 253 KB gzipped to 1.1 MB. That is the whole cost of the split: before the
+ * backfill, an old era was thin and "All" was the only real reason to want the
+ * archive; after it, an old era is the interesting thing on the page and was
+ * costing 1.1 MB to read three months of 2024. Now it costs one to three files of
+ * about 21 KB. "All" still fetches everything, which is what all costs — but in
+ * parallel, and each month is cached on its own.
  */
 export function useMetaIndex(region: Region = 'en', window_?: Window) {
   const [index, setIndex] = useState<MetaIndex | null>(null);
+  /* Keyed `region:YYYY-MM`, so switching region cannot read another one's decks. */
   const [archive, setArchive] = useState<Record<string, MetaDeck[]>>({});
-  const [loadingArchive, setLoadingArchive] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -78,49 +87,60 @@ export function useMetaIndex(region: Region = 'en', window_?: Window) {
     };
   }, [region]);
 
-  /* Whether the chosen window reaches past what the first payload carries. */
-  const wantsArchive = window_ ? needsArchive(window_, index) : false;
+  /* The months this window reaches into, and nothing beyond them. */
+  const wanted = useMemo(
+    () => (index && window_ ? archiveMonthsFor(window_, index) : []),
+    [index, window_]
+  );
+  /* A stable dependency: the array is rebuilt every render, its contents are not. */
+  const wantedKey = wanted.join(',');
 
   useEffect(() => {
-    if (!wantsArchive || archive[region]) return;
+    const missing = wanted.filter((m) => !(`${region}:${m}` in archive));
+    if (missing.length === 0) return;
+
     let cancelled = false;
-    setLoadingArchive(true);
-    fetch(dataUrl(`${fileFor(region)}-archive.json`))
-      .then((res) => (res.ok ? res.json() : { decks: [] }))
-      .then((data: { decks: MetaDeck[] }) => {
-        if (!cancelled) setArchive((prev) => ({ ...prev, [region]: data.decks ?? [] }));
-      })
-      .catch(() => {
-        if (!cancelled) setArchive((prev) => ({ ...prev, [region]: [] }));
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingArchive(false);
-      });
+
+    for (const month of missing) {
+      const key = `${region}:${month}`;
+      fetch(dataUrl(`${fileFor(region)}-archive/${month}.json`))
+        .then((res) => (res.ok ? res.json() : { decks: [] }))
+        .then((data: { decks?: MetaDeck[] }) => {
+          /*
+           * A failed month is stored as an empty list rather than left absent, so a
+           * blip does not become an endless retry every time this effect re-runs.
+           */
+          if (!cancelled) setArchive((prev) => ({ ...prev, [key]: data.decks ?? [] }));
+        })
+        .catch(() => {
+          if (!cancelled) setArchive((prev) => ({ ...prev, [key]: [] }));
+        });
+    }
+
     return () => {
       cancelled = true;
     };
-  }, [region, wantsArchive, archive]);
+    /* `archive` is read, not depended on: adding it would re-run on every arrival. */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [region, wantedKey]);
 
-  /* One object either way, so nothing downstream knows the corpus arrived in two. */
+  /* One object either way, so nothing downstream knows the corpus arrived in parts. */
   const merged = useMemo(() => {
     if (!index) return null;
-    const older = wantsArchive ? archive[region] : undefined;
-    if (!older || older.length === 0) return index;
+    const older = wanted.flatMap((m) => archive[`${region}:${m}`] ?? []);
+    if (older.length === 0) return index;
     return { ...index, decks: [...index.decks, ...older] };
-  }, [index, archive, region, wantsArchive]);
+  }, [index, archive, region, wanted]);
 
-  return { index: merged, error, loadingArchive: loadingArchive && !archive[region] };
-}
+  /*
+   * "Loading" is whether a month this window needs has not arrived, not whether a
+   * request is in flight: months already held are shown at once, and a second
+   * window over the same months waits for nothing. A month that failed is held as
+   * an empty list, so it counts as arrived and the spinner cannot stick.
+   */
+  const loadingArchive = wanted.some((m) => !(`${region}:${m}` in archive));
 
-/** Does this window reach past what the first payload carries? */
-function needsArchive(window: Window, index: MetaIndex | null) {
-  if (!index?.recentFrom) return false;
-  if (window.kind === 'all') return true;
-  if (window.kind === 'era') {
-    const era = index.eras.find((e) => e.set === window.set);
-    return era ? era.from < index.recentFrom : false;
-  }
-  return windowStart(window, index) !== null && windowStart(window, index)! < index.recentFrom;
+  return { index: merged, error, loadingArchive };
 }
 
 const DEFAULT: Window = { kind: 'days', days: 30 };

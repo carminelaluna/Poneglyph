@@ -13,6 +13,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+  archiveMonthsFor,
   filterDecks,
   windowEnd,
   windowLabel,
@@ -37,10 +38,30 @@ const deck = (id: string, day: string): MetaDeck => ({
   f: 1,
 });
 
+/*
+ * Every month the archive has a file for, oldest first, stopping where the index
+ * payload starts. Two gaps on purpose: nothing was recorded in 2023-02 or 2025-07,
+ * and a window covering those months must not name a file that is not there.
+ */
+const months = (() => {
+  const out: string[] = [];
+  for (let y = 2022; y <= 2026; y++) {
+    for (let m = 1; m <= 12; m++) {
+      const key = `${y}-${String(m).padStart(2, '0')}`;
+      if (key < '2022-12' || key > '2026-05') continue;
+      if (key === '2023-02' || key === '2025-07') continue;
+      out.push(key);
+    }
+  }
+  return out;
+})();
+
 /* Newest first, which is how build-indexes writes them. Two sets share a day. */
 const index: MetaIndex = {
   generatedAt: '2026-08-28T00:00:00.000Z',
   window: { from: '2022-12-02', to: '2026-08-28' },
+  recentFrom: '2026-06-01',
+  archiveMonths: months,
   eras: [
     { code: 'OP-03', set: 'OP03', from: '2024-01-01', kind: 'Expansion', decks: 10 },
     { code: 'OP-02', set: 'OP02', from: '2023-06-01', kind: 'Expansion', decks: 10 },
@@ -154,5 +175,69 @@ describe('the other windows', () => {
 
   it('takes everything when there is no window at all', () => {
     assert.equal(filterDecks(index, { kind: 'all' }).length, index.decks.length);
+  });
+});
+
+/*
+ * Which archive files a window asks for.
+ *
+ * The archive was one file until the Limitless backfill took the English corpus
+ * from 21,027 decks to 69,708 and the file from 253 KB gzipped to 1.1 MB. It is a
+ * file per month now, and the whole point is that a window fetches the months it
+ * covers: getting this wrong does not throw, it silently downloads the entire
+ * archive to draw three months of 2024, which is the cost falling on exactly the
+ * reader the backfill was for.
+ */
+describe('the archive months a window needs', () => {
+  it('needs nothing when the window is inside the index payload', () => {
+    assert.deepEqual(archiveMonthsFor({ kind: 'days', days: 7 }, index), []);
+    assert.deepEqual(archiveMonthsFor({ kind: 'days', days: 30 }, index), []);
+  });
+
+  it('takes the whole archive for "All", and stops where the index starts', () => {
+    const all = archiveMonthsFor({ kind: 'all' }, index);
+    assert.deepEqual(all, months);
+    assert.equal(all.at(-1), '2026-05', 'reached into what the index already holds');
+  });
+
+  it('takes an era only up to the day the next expansion arrived', () => {
+    /* OP-01 ran 2022-12-02 to 2023-06-01, exclusive. */
+    assert.deepEqual(archiveMonthsFor({ kind: 'era', set: 'OP01' }, index), [
+      '2022-12',
+      '2023-01',
+      '2023-03',
+      '2023-04',
+      '2023-05',
+      '2023-06',
+    ]);
+  });
+
+  /*
+   * The end is exclusive, so the month it falls in still holds days that belong to
+   * the era. Dropping it would silently lose up to a month of the window.
+   */
+  it('keeps the month the exclusive end falls in', () => {
+    assert.equal(windowEnd({ kind: 'era', set: 'OP01' }, index), '2023-06-01');
+    assert.ok(archiveMonthsFor({ kind: 'era', set: 'OP01' }, index).includes('2023-06'));
+  });
+
+  it('names only months the archive has a file for', () => {
+    const asked = archiveMonthsFor({ kind: 'all' }, index);
+    assert.ok(!asked.includes('2023-02'), 'asked for a month with no file');
+    assert.ok(!asked.includes('2025-07'), 'asked for a month with no file');
+    for (const m of asked) assert.ok(months.includes(m), `${m} is not in the archive`);
+  });
+
+  /*
+   * The same refusal filterDecks makes. Falling through to "no start date, so
+   * every month" would fetch 1.1 MB to display nothing at all.
+   */
+  it('asks for nothing for a release this corpus never had', () => {
+    assert.deepEqual(archiveMonthsFor({ kind: 'era', set: 'NOPE' }, index), []);
+  });
+
+  it('asks for nothing when the corpus has no archive', () => {
+    assert.deepEqual(archiveMonthsFor({ kind: 'all' }, { ...index, archiveMonths: [] }), []);
+    assert.deepEqual(archiveMonthsFor({ kind: 'all' }, { ...index, recentFrom: undefined }), []);
   });
 });

@@ -10,8 +10,8 @@ import { loadLeaders, loadPlayerArchive, loadPlayers, type Leaders } from '@/lib
  * Who has been recorded playing, and how often.
  *
  * The default list is everyone the payload calls a regular, which is a threshold
- * the build sets rather than this file: of 18,955 players, 9,445 appear exactly
- * once and 3,118 exactly twice, so a directory built on "two or more" would be
+ * the build sets rather than this file: of 18,960 players, 9,449 appear exactly
+ * once and 3,115 exactly twice, so a directory built on "two or more" would be
  * mostly people who turned up and left. Searching a name that is not in it loads
  * the rest, so nobody is unreachable; their own page never depended on this list.
  *

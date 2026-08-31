@@ -79,7 +79,8 @@ ingest-spoilers.mjs  leaks     -> data/spoilers.json
 ingest-banlist.mjs   Bandai    -> data/banlist.json (+ numbers-only in public/data)
 ingest-events.mjs    Bandai    -> data/events-official.json (+ public/data)
 ingest-submissions   Supabase  -> data/decks-community.json (approved only)
-build-indexes.mjs    all       -> public/data/decks-{en,jp}-{index,archive}.json,
+build-indexes.mjs    all       -> public/data/decks-{en,jp}-index.json,
+                                 public/data/decks-{en,jp}-archive/{YYYY-MM}.json,
                                  public/data/decks-{en,jp}/*.json,
                                  public/data/{events,players,deck}/*.json (256 each),
                                  public/data/{tournaments,players}-{index,archive}.json,
@@ -116,7 +117,7 @@ win rate on an archetype page is its record against *the field*. The matchup tab
 is its record against a **named** opponent, and it exists only because Limitless
 publishes `/tournaments/{id}/pairings` — round, table, both usernames, the winner.
 `ingest-matchups.mjs` joins that against the Leader each username played *at that
-tournament* — 152,401 matches from 1,019 brackets, back to March 2023. Nothing is
+tournament* — 152,529 matches from 1,020 brackets, back to March 2023. Nothing is
 inferred from standings. It follows that matchups cover **Limitless events only**:
 Top Decks publishes finishing lists and organizers are not asked for brackets, so
 the table says whose events it is drawn from — and shows nothing at all under the
@@ -568,19 +569,19 @@ The metagame page is the heaviest thing on the site. Keep it honest.
 | File | gzip | Used by |
 | --- | --- | --- |
 | `cards-index.json` | 176 KB | card search, deck builder, submission form |
-| `decks-en-index.json` | 118 KB | English table, last 90 days |
+| `decks-en-index.json` | 117 KB | English table, last 90 days |
 | `decks-jp-index.json` | 38 KB | Japanese table, last 90 days |
-| `decks-{en,jp}-archive.json` | 1.1 MB / 135 KB | only for "All" or an old era |
-| `decks-{en,jp}/{leaderId}.json` | 6–15 KB | one archetype's card lists |
-| `events/{NNN}.json` | 3 KB | one event page (256 buckets) |
-| `players/{NNN}.json` | 10 KB | one player page (256 buckets) |
-| `deck/{NNN}.json` | 12 KB | one decklist's row (256 buckets) |
-| `leaders.json` · `card-names.json` | 1.5 / 23 KB | archetype names · names and prices |
-| `tournaments-index.json` | 11 KB | /tournaments, last 90 days |
+| `decks-{en,jp}-archive/{YYYY-MM}.json` | 20 KB median, 78 KB worst | the months an older window covers |
+| `decks-{en,jp}/{leaderId}.json` | 4 KB median, 74 KB worst | one archetype's card lists |
+| `events/{NNN}.json` | 12 KB | one event page (256 buckets) |
+| `players/{NNN}.json` | 11 KB | one player page (256 buckets) |
+| `deck/{NNN}.json` | 13 KB | one decklist's row (256 buckets) |
+| `leaders.json` · `card-names.json` | 1.8 / 26 KB | archetype names · names and prices |
+| `tournaments-index.json` | 12 KB | /tournaments, last 90 days |
 | `players-index.json` | 53 KB | /players, everyone with 5+ results |
-| `tournaments-archive.json` · `players-archive.json` | 129 / 215 KB | only on "include the rest" |
+| `tournaments-archive.json` · `players-archive.json` | 128 / 215 KB | only on "include the rest" |
 | `matchups/{leaderId}.json` | 1–31 KB | one archetype's pairings |
-| `events-official.json` | 3.4 KB | the events page, whole |
+| `events-official.json` | 3.9 KB | the events page, whole |
 
 Card prices are the one figure that appears in three of these. It is in
 `cards-index.json` already (`$`), so the deck builder totals a deck for free; the
@@ -588,6 +589,18 @@ decklist and archetype pages get it from `card-names.json` instead, because they
 were fetching that anyway and pulling the card index would have cost 176 KB. The
 card page reads the *history* at build time and ships it as inline SVG — a payload
 would have been the whole file to draw one card's line.
+
+**The archive is a file per month, and it was one file until the backfill.** One
+file was right at 21,027 decks: the whole English archive was 253 KB gzipped and
+"All" was the only realistic reason to want it. Backfilling took it to 1.1 MB —
+and made old eras worth opening, which is the click it exists for, so the cost
+landed on exactly the reader the backfill was for. A month is the unit because
+every window here is a date range, so a range selects its months by arithmetic:
+`archiveMonthsFor()` in `lib/meta.ts`, tested against a fixture with two months
+deliberately missing, because a payload that is not there is answered on a static
+host with the whole of `404.html` — as JSON, which fails to parse. An era is now
+one to three requests of about 20 KB. "All" still costs the full 1.1 MB, which is
+what all costs, but in parallel and cached a month at a time.
 
 Two things were tried and are worth not repeating: **interning** repeated event and player
 names made the file *larger* (gzip already collapses that), and shipping the whole English
@@ -658,18 +671,18 @@ page: 57 to reach the end of the listing, which is 19% of a 300-request budget a
 worth paying only while there is history left to collect.
 
 **The corpus outgrew its shards, and the shard count is a payload budget in
-disguise.** 64 buckets held ~10 KB a page at 21,000 decks; at 69,644 the same
+disguise.** 64 buckets held ~10 KB a page at 21,000 decks; at 69,708 the same
 arithmetic gives ~380 KB, so every event, player and deck page would have pulled
 that to draw a handful of rows. It is 256 now, and the bucket name went from two
 digits to three — which `tests/parity.test.ts` caught the moment the count changed,
 because 256 does not fit in two. The same pressure moved `DIRECTORY_MIN_RESULTS`
-from 2 to 5: of 18,955 players, 9,445 appear once and 3,118 twice, so "two or more"
+from 2 to 5: of 18,960 players, 9,449 appear once and 3,115 twice, so "two or more"
 stopped meaning regular and trebled a payload that loads on arrival.
 
 **`decks-merged.json` carries no card lists.** It is imported by `lib/decks.ts`, so
 `resolveJsonModule` infers a literal type for every key in it — pleasant at 26 MB
 and fatal at 83, where `tsc --noEmit` dies with *Ineffective mark-compacts near heap
-limit* and takes the build with it. The fifty cards of 69,644 decks were the weight,
+limit* and takes the build with it. The fifty cards of 69,708 decks were the weight,
 and no page reads them from there: the archetype pages fetch
 `decks-{region}/{leaderId}.json` and the deck page fetches its shard. What the file
 is for is resolving *which* deck, not what is in it.
@@ -856,8 +869,8 @@ site.
 ## Current shape
 
 2,785 cards · 4,843 printings · 60 sets (22 boosters, 36 starter decks) · 2,172
-Standard-legal, 20 via the block exception · 2,651 priced · 69,644 decklists —
-English 63,750 from 2022-10, Japanese 5,894 from 2022-07 · 7,903 tournaments ·
-18,955 named players, 3,690 with five or more results · 152,401 recorded matches
-from 1,019 brackets · 44/46 release windows · 53 dated set releases · 67 announced
+Standard-legal, 20 via the block exception · 2,651 priced · 69,708 decklists —
+English 63,814 from 2022-10, Japanese 5,894 from 2022-07 · 7,904 tournaments ·
+18,960 named players, 3,691 with five or more results · 152,529 recorded matches
+from 1,020 brackets · 44/46 release windows · 53 dated set releases · 67 announced
 official events across 6 types · 121 tests.

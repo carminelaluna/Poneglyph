@@ -78,10 +78,17 @@ export type MetaIndex = {
   fieldDecks?: number;
   regionLabel?: string;
   sources?: string[];
-  /** Oldest day the first payload carries; older decks live in the archive file. */
+  /** Oldest day the first payload carries; older decks live in the archive files. */
   recentFrom?: string;
   archived?: number;
-  /** Size of the whole corpus, including the part in the archive file. */
+  /**
+   * Which months the archive has a file for, oldest first (`YYYY-MM`). A window
+   * reaching past `recentFrom` fetches the ones it covers and nothing else, and it
+   * asks only for months named here — a miss on a static host is answered with the
+   * whole 404 page, as JSON, which fails to parse and reads like a corrupt payload.
+   */
+  archiveMonths?: string[];
+  /** Size of the whole corpus, including the part in the archive files. */
   totalDecks?: number;
   window: { from: string | null; to: string | null };
   eras: Era[];
@@ -197,6 +204,49 @@ export function windowEnd(window: Window, index: MetaIndex): string | null {
     .map((e) => e.from)
     .sort();
   return later[0] ?? null;
+}
+
+/**
+ * Which archive files a window needs, and no more.
+ *
+ * The index payload holds the last 90 days; everything older is a file per month.
+ * A window is a date range, so the months it covers are arithmetic on its two
+ * ends — which is the reason the split is monthly rather than by era: an era is a
+ * range too, and one rule serves both.
+ *
+ * Three ends are handled here rather than at the call site, because each of them
+ * used to be a way of asking for the whole archive by accident:
+ *
+ * - **A window that stays inside the index needs nothing.** "Last 30 days" is
+ *   answered by the file already downloaded.
+ * - **A release this corpus never had needs nothing**, the same answer
+ *   `filterDecks` gives it. Falling through to "no start date, so every month"
+ *   would fetch the entire archive to display nothing.
+ * - **Only months that exist are named.** A miss on a static host is answered with
+ *   the whole 404 page, and asking for it as JSON fails to parse — a wrong URL
+ *   that reads like a corrupt payload.
+ */
+export function archiveMonthsFor(window: Window, index: MetaIndex): string[] {
+  const months = index.archiveMonths ?? [];
+  const recentFrom = index.recentFrom;
+  if (months.length === 0 || !recentFrom) return [];
+
+  /* The same refusal filterDecks makes, for the same reason. */
+  if (window.kind === 'era' && !eraIn(window, index)) return [];
+
+  const from = windowStart(window, index);
+  if (from && from >= recentFrom) return [];
+
+  /*
+   * The archive stops where the index starts, so the last month worth asking for
+   * is the one `recentFrom` falls in — or the window's own end, which is
+   * exclusive and so still includes its own month's earlier days.
+   */
+  const end = windowEnd(window, index);
+  const until = (end && end < recentFrom ? end : recentFrom).slice(0, 7);
+  const since = from?.slice(0, 7) ?? '';
+
+  return months.filter((m) => m >= since && m <= until);
 }
 
 export function windowLabel(window: Window, index: MetaIndex): string {

@@ -342,26 +342,62 @@ async function writeRegion(region, decks, cardsById) {
 
   /*
    * The corpus is split by recency rather than shipped whole. Every window the page
-   * offers by default — 7 to 90 days — is answered from the first file; picking
-   * "All" or an era older than that fetches the archive once. Whole, English is
-   * 324 KB gzipped for a page most people open to ask about the last month.
+   * offers by default — 7 to 90 days — is answered from the first file; anything
+   * older reaches past it into the archive.
+   *
+   * **The archive is a file per month, and it used to be one file.** That was the
+   * right shape at 21,000 decks, where the whole thing was 253 KB gzipped and
+   * "All" was the only realistic reason to want it. Backfilling the Limitless
+   * history made it 1.1 MB — and made old eras worth opening, which is the click
+   * it exists for. Paying 1.1 MB to read three months of 2024 is the cost falling
+   * on exactly the reader the backfill was for.
+   *
+   * A month is the unit because every window here is a date range, so a range
+   * selects its months by arithmetic and needs no manifest to interpret. The
+   * median month is 21 KB gzipped and the largest is 77 KB, so an era is one to
+   * three requests; "All" is still the whole 1.1 MB, which is what "all" costs,
+   * but it arrives in parallel and each piece is cached on its own.
    */
   const recentFrom = shiftDays(index.window.to, -RECENT_DAYS);
   const recent = rows.filter((r) => r.d >= recentFrom);
   const older = rows.filter((r) => r.d < recentFrom);
 
+  const byMonth = new Map();
+  for (const row of older) {
+    const month = row.d.slice(0, 7);
+    if (!byMonth.has(month)) byMonth.set(month, []);
+    byMonth.get(month).push(row);
+  }
+  const months = [...byMonth.keys()].sort();
+
   index.decks = recent;
   index.recentFrom = recentFrom;
   index.archived = older.length;
+  /*
+   * Which months exist, so the loader asks only for files that are there. Without
+   * it a window reaching before the corpus starts would 404 — and on a static host
+   * a 404 is answered with the whole of 404.html, as JSON, which fails to parse.
+   */
+  index.archiveMonths = months;
   /* The whole corpus, so summaries do not report the recent slice as the total. */
   index.totalDecks = rows.length;
 
   const json = JSON.stringify(index);
   await writeFile(path.join(PUBLIC, `${region.file}-index.json`), json);
-  await writeFile(
-    path.join(PUBLIC, `${region.file}-archive.json`),
-    JSON.stringify({ region: region.id, until: recentFrom, decks: older })
+
+  const archiveDir = path.join(PUBLIC, `${region.file}-archive`);
+  await mkdir(archiveDir, { recursive: true });
+  const stale = (await readdir(archiveDir).catch(() => [])).filter(
+    (f) => f.endsWith('.json') && !byMonth.has(f.slice(0, -5))
   );
+  await Promise.all(stale.map((f) => rm(path.join(archiveDir, f))));
+  await Promise.all(
+    [...byMonth.entries()].map(([month, decks]) =>
+      writeFile(path.join(archiveDir, `${month}.json`), JSON.stringify({ month, decks }))
+    )
+  );
+  /* The single file this replaced, removed so no checkout serves a stale copy. */
+  await rm(path.join(PUBLIC, `${region.file}-archive.json`), { force: true });
 
   const existing = await readdir(dir).catch(() => []);
   const wanted = new Set([...byLeader.keys()].map((id) => `${id}.json`));
@@ -381,7 +417,8 @@ async function writeRegion(region, decks, cardsById) {
   );
   log(
     `          index ${String(recent.length).padStart(6)} recent = ` +
-      `${(Buffer.byteLength(json) / 1024).toFixed(0)} KB · archive ${older.length} older`
+      `${(Buffer.byteLength(json) / 1024).toFixed(0)} KB · archive ${older.length} older ` +
+      `in ${months.length} months`
   );
 
   /*
@@ -615,11 +652,11 @@ async function writeMatchups() {
  * What counts as a regular, and therefore how big /players is on arrival.
  *
  * It was 2 when the corpus held 8,686 players and the list came to 45 KB gzipped.
- * Backfilling the Limitless history took it to 18,955, of whom 9,445 appear exactly
- * once and 3,118 exactly twice — so "two or more" stopped meaning regular and the
+ * Backfilling the Limitless history took it to 18,960, of whom 9,449 appear exactly
+ * once and 3,115 exactly twice — so "two or more" stopped meaning regular and the
  * payload trebled to 134 KB on a page that is not even the busiest one.
  *
- * Five puts it back to ~52 KB and to 3,690 people who genuinely turn up. Nobody is
+ * Five puts it back to ~54 KB and to 3,691 people who genuinely turn up. Nobody is
  * lost: the rest are one fetch away behind the count line, and their own page never
  * depended on this list.
  */
@@ -861,7 +898,7 @@ async function main() {
    *
    * This file is imported by lib/decks.ts, so it is read at build time by `tsc` and
    * by the bundler, and `resolveJsonModule` infers a literal type for every key in
-   * it. Carrying the fifty cards of 69,644 decks made it 83 MB, at which size
+   * it. Carrying the fifty cards of 69,708 decks made it 83 MB, at which size
    * `tsc --noEmit` dies with "Ineffective mark-compacts near heap limit" and takes
    * the build with it. Without them it is a seventh of that.
    *
