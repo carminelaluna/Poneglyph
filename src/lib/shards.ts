@@ -6,9 +6,10 @@
  * the alternative — shipping a whole region so the page can find its three rows —
  * is 362 KB gzipped to draw one small event.
  *
- * So `build-indexes.mjs` groups the corpus by entity and splits it into 64 buckets.
- * A page fetches the one bucket its id falls in, about 11-15 KB gzipped, plus a
- * shared archetype table. Everything is a static file, cached by the browser, so
+ * So `build-indexes.mjs` groups the corpus by entity and splits it into buckets —
+ * 256 of them, a count that moves with the corpus because what it really sets is
+ * how much one page downloads. A page fetches the bucket its id falls in, about
+ * 11-15 KB gzipped, plus a shared archetype table. Everything is a static file, cached by the browser, so
  * moving between events costs one request the first time and none after.
  *
  * Rows are the same terse shape the metagame index uses, with `g` for the region.
@@ -51,7 +52,7 @@ export function shardOf(key: string): string {
     hash ^= key.charCodeAt(i);
     hash = Math.imul(hash, 16777619);
   }
-  return String((hash >>> 0) % 64).padStart(2, '0');
+  return String((hash >>> 0) % 256).padStart(3, '0');
 }
 
 /* Fetched buckets, kept for the life of the page so navigation is free. */

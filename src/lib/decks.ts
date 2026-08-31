@@ -19,7 +19,6 @@ export type Deck = {
   leaderId: string;
   leaderName: string;
   colors: string[];
-  cards: DeckCard[];
   total: number;
   unresolved: { set: string; number: string; name: string; count: number }[];
   /** Which corpus this came from — shown as provenance on the deck page. */
@@ -119,6 +118,8 @@ type MergedDeck = {
   eventType?: string;
   sourceUrl?: string;
   eventId: string;
+  /* Written by build-indexes in place of the card list itself. */
+  total: number;
 };
 
 const merged = (decksMergedJson as { decks: MergedDeck[] }).decks;
@@ -136,8 +137,10 @@ export const decks: Deck[] = merged.map((d) => ({
   leaderId: d.leaderId,
   leaderName: d.leaderName,
   colors: d.colors,
-  cards: d.cards,
-  total: d.cards.reduce((n, c) => n + c.count, 0),
+  /* The corpus this comes from carries no card lists — see build-indexes.mjs.
+     Every page that shows the fifty cards fetches them instead. */
+  cards: [],
+  total: d.total,
   unresolved: [],
   region: d.region,
   source: d.source,
@@ -211,16 +214,8 @@ export const ordinal = (n: number) => {
   return n + (s[(v - 20) % 10] ?? s[v] ?? s[0]);
 };
 
-/** A deck's 50 cards grouped the way a player writes a list. */
-export function groupDeck(deck: Deck) {
-  const order = ['Character', 'Event', 'Stage'];
-  return order
-    .map((category) => ({
-      category,
-      cards: deck.cards.filter((c) => c.category === category),
-      count: deck.cards
-        .filter((c) => c.category === category)
-        .reduce((n, c) => n + c.count, 0),
-    }))
-    .filter((g) => g.cards.length > 0);
-}
+/*
+ * `groupDeck` used to live here and grouped a deck's fifty cards by category. It
+ * had no callers: the deck page is drawn in the browser and keeps its own copy,
+ * working from the shard it fetches. It went with the card lists it read.
+ */

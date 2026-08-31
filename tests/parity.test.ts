@@ -119,13 +119,25 @@ describe('shardOf', () => {
     }
   });
 
-  it('answers with a two-digit bucket inside the range', async () => {
+  /*
+   * The width and the range both matter, and they moved together: 64 buckets fitted
+   * two digits, 256 needs three. Reading the count out of the script rather than
+   * writing it here again is what keeps this test true the next time the corpus
+   * outgrows its shards.
+   */
+  it('answers with a fixed-width bucket inside the range', async () => {
+    const script = await read('scripts/build-indexes.mjs');
     const lib = await read('src/lib/shards.ts');
+    const shards = Number(constExpression(script, 'SHARDS'));
     const shardOf = compile<(key: string) => string>(functionBody(lib, 'shardOf'), 'key');
+
+    assert.ok(shards > 0, 'SHARDS is not a number any more');
+    const width = String(shards - 1).length;
+
     for (const key of await sampleKeys()) {
       const bucket = shardOf(key);
-      assert.match(bucket, /^\d{2}$/);
-      assert.ok(Number(bucket) >= 0 && Number(bucket) < 64);
+      assert.equal(bucket.length, width, `bucket ${bucket} is not ${width} characters`);
+      assert.ok(Number(bucket) >= 0 && Number(bucket) < shards);
     }
   });
 });

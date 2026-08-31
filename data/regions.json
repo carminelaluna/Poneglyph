@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-31T23:14:52.177Z",
+  "generatedAt": "2026-08-31T23:13:03.315Z",
   "releases": [
     {
       "code": "OP-17",
@@ -73,12 +73,7 @@
     },
     {
       "code": "ST-23",
-      "from": "2025-07-01",
-      "kind": "Starter deck"
-    },
-    {
-      "code": "ST-27",
-      "from": "2025-06-28",
+      "from": "2025-06-10",
       "kind": "Starter deck"
     },
     {
@@ -94,6 +89,11 @@
     {
       "code": "ST-24",
       "from": "2025-06-06",
+      "kind": "Starter deck"
+    },
+    {
+      "code": "ST-27",
+      "from": "2025-06-05",
       "kind": "Starter deck"
     },
     {
@@ -147,12 +147,12 @@
       "kind": "Starter deck"
     },
     {
-      "code": "ST-18",
+      "code": "ST-17",
       "from": "2024-07-13",
       "kind": "Starter deck"
     },
     {
-      "code": "ST-17",
+      "code": "ST-18",
       "from": "2024-07-13",
       "kind": "Starter deck"
     },
@@ -271,16 +271,16 @@
     {
       "id": "EN",
       "label": "English",
-      "decks": 15587,
-      "recent": 4502,
-      "archived": 11085,
-      "fieldDecks": 9790,
+      "decks": 63750,
+      "recent": 4438,
+      "archived": 59312,
+      "fieldDecks": 58150,
       "sampling": "mixed",
       "window": {
         "from": "2022-10-29",
         "to": "2026-08-31"
       },
-      "eras": 43,
+      "eras": 44,
       "sources": [
         "Limitless",
         "One Piece Top Decks"

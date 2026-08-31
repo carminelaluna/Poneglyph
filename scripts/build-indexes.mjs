@@ -47,10 +47,14 @@ const RECENT_DAYS = 90;
  * or write one file per entity (37,000 files, rewritten twice a day by the deck
  * workflow — an unreadable diff and a heavy repo).
  *
- * 64 buckets is the middle: about 110 events or 140 players each, so a page pulls
- * ~10 KB, and the deck ingest rewrites 192 files instead of 37,000.
+ * The bucket count has to move with the corpus, because what it really sets is how
+ * much a single page downloads. 64 was chosen at 21,000 decks and gave ~10 KB a
+ * page; backfilling the Limitless history to 2023 took the corpus to four times
+ * that, which would have made every event, player and deck page pull ~380 KB to
+ * draw a handful of rows. 256 puts it back to ~95 KB raw, ~15 KB gzipped, and the
+ * deck ingest rewrites 768 files instead of 83,000.
  */
-const SHARDS = 64;
+const SHARDS = 256;
 
 /**
  * Which bucket a key falls in — FNV-1a, chosen because it is eight lines with no
@@ -66,7 +70,9 @@ function shardOf(key) {
     hash ^= key.charCodeAt(i);
     hash = Math.imul(hash, 16777619);
   }
-  return String((hash >>> 0) % SHARDS).padStart(2, '0');
+  /* Three digits, because 256 buckets no longer fit in two: 005 and 255, never
+     "5" beside "255". The width only has to match the copy in lib/shards.ts. */
+  return String((hash >>> 0) % SHARDS).padStart(3, '0');
 }
 
 function shiftDays(day, by) {
@@ -605,7 +611,19 @@ async function writeMatchups() {
  *   event  [id, name, date, region, tier, venue, recorded, entrants, winnerLeader]
  *   player [slug, name, results, events, top8, firsts, last, mainLeader, regions]
  */
-const DIRECTORY_MIN_RESULTS = 2;
+/*
+ * What counts as a regular, and therefore how big /players is on arrival.
+ *
+ * It was 2 when the corpus held 8,686 players and the list came to 45 KB gzipped.
+ * Backfilling the Limitless history took it to 18,955, of whom 9,445 appear exactly
+ * once and 3,118 exactly twice — so "two or more" stopped meaning regular and the
+ * payload trebled to 134 KB on a page that is not even the busiest one.
+ *
+ * Five puts it back to ~52 KB and to 3,690 people who genuinely turn up. Nobody is
+ * lost: the rest are one fetch away behind the count line, and their own page never
+ * depended on this list.
+ */
+const DIRECTORY_MIN_RESULTS = 5;
 
 async function writeDirectories(events, players) {
   const eventRows = [];
@@ -837,13 +855,32 @@ async function main() {
    */
   await writeMatchups();
 
-  /* One canonical set for the pages that resolve a single deck or a player. */
+  /*
+   * One canonical set for the pages that resolve a single deck or a player —
+   * **without the card lists**.
+   *
+   * This file is imported by lib/decks.ts, so it is read at build time by `tsc` and
+   * by the bundler, and `resolveJsonModule` infers a literal type for every key in
+   * it. Carrying the fifty cards of 69,644 decks made it 83 MB, at which size
+   * `tsc --noEmit` dies with "Ineffective mark-compacts near heap limit" and takes
+   * the build with it. Without them it is a seventh of that.
+   *
+   * Nothing is lost: no page reads a card list from here. The archetype pages read
+   * public/data/decks-{region}/{leaderId}.json and the deck page reads its shard,
+   * both of which are fetched rather than bundled — which is the whole reason they
+   * exist. What this file is for is resolving *which* deck, not what is in it.
+   */
   await writeFile(
     path.join(DATA, 'decks-merged.json'),
     JSON.stringify({
       generatedAt: new Date().toISOString(),
       counts: { english: english.length, japanese: japanese.length, deduplicated: dropped },
-      decks: [...english, ...japanese].map((d) => ({ ...d, eventId: eventKey(d) })),
+      decks: [...english, ...japanese].map(({ cards, ...d }) => ({
+        ...d,
+        eventId: eventKey(d),
+        /* The one thing the card list was read for here: how many it holds. */
+        total: cards.reduce((n, c) => n + c.count, 0),
+      })),
     })
   );
 

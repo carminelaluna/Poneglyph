@@ -35,6 +35,7 @@ Moving to a domain, another CDN, or a real machine: **[MIGRATIONS.md](MIGRATIONS
 | `npm test` | `node --test` over `tests/*.test.ts` |
 | `npm run ingest` | Cards, and a price point (runs `check` first) |
 | `npm run ingest:decks` | Limitless tournaments, budgeted and resumable |
+| `npm run ingest:decks -- --backfill --since 2023-01-01` | Reach past where the archive already is |
 | `npm run ingest:matchups` | Limitless pairings — one request per tournament |
 | `npm run ingest:topdecks` | Top Decks archives, both regions |
 | `npm run ingest:spoilers` | Unreleased sets |
@@ -80,7 +81,7 @@ ingest-events.mjs    Bandai    -> data/events-official.json (+ public/data)
 ingest-submissions   Supabase  -> data/decks-community.json (approved only)
 build-indexes.mjs    all       -> public/data/decks-{en,jp}-{index,archive}.json,
                                  public/data/decks-{en,jp}/*.json,
-                                 public/data/{events,players,deck}/*.json (64 each),
+                                 public/data/{events,players,deck}/*.json (256 each),
                                  public/data/{tournaments,players}-{index,archive}.json,
                                  public/data/matchups/{leaderId}.json,
                                  public/data/{leaders,card-names}.json,
@@ -115,12 +116,12 @@ win rate on an archetype page is its record against *the field*. The matchup tab
 is its record against a **named** opponent, and it exists only because Limitless
 publishes `/tournaments/{id}/pairings` — round, table, both usernames, the winner.
 `ingest-matchups.mjs` joins that against the Leader each username played *at that
-tournament*. Nothing is inferred from standings. It follows that matchups cover
-**Limitless events only**: Top Decks publishes finishing lists and organizers are
-not asked for brackets, so the table says whose events it is drawn from — and shows
-nothing at all under the Japanese view, because Limitless is an English-corpus
-source and an English table under a Japanese heading would be real matches about a
-different metagame. Mirrors
+tournament* — 152,401 matches from 1,019 brackets, back to March 2023. Nothing is
+inferred from standings. It follows that matchups cover **Limitless events only**:
+Top Decks publishes finishing lists and organizers are not asked for brackets, so
+the table says whose events it is drawn from — and shows nothing at all under the
+Japanese view, because Limitless is an English-corpus source and an English table
+under a Japanese heading would be real matches about a different metagame. Mirrors
 are dropped (a deck beats itself half the time) and rows under five games are held
 behind a click — 67% from three games is noise wearing a percentage. A bye has no
 opponent and is dropped with the matches whose other side never submitted a list:
@@ -242,7 +243,7 @@ and reads like a corrupt payload rather than a wrong URL. Everything goes throug
 37,000 costs **5.5 GB** against GitHub Pages' 1 GB; shipping a whole region so a page
 can find its three rows costs 362 KB gzipped to draw one small event.
 
-So `build-indexes.mjs` groups the corpus by entity into **64 buckets** and a page pulls
+So `build-indexes.mjs` groups the corpus by entity into **256 buckets** and a page pulls
 the one its id falls in — 11–15 KB. `shardOf` is FNV-1a and exists **twice**, in
 `build-indexes.mjs` and `src/lib/shards.ts`; if they drift every lookup misses and every
 page reads "not found". Same for `playerSlugOf` against `playerSlug` in `lib/meta.ts` —
@@ -567,18 +568,18 @@ The metagame page is the heaviest thing on the site. Keep it honest.
 | File | gzip | Used by |
 | --- | --- | --- |
 | `cards-index.json` | 176 KB | card search, deck builder, submission form |
-| `decks-en-index.json` | 109 KB | English table, last 90 days |
-| `decks-jp-index.json` | 34 KB | Japanese table, last 90 days |
-| `decks-{en,jp}-archive.json` | 253 / 135 KB | only for "All" or an old era |
+| `decks-en-index.json` | 118 KB | English table, last 90 days |
+| `decks-jp-index.json` | 38 KB | Japanese table, last 90 days |
+| `decks-{en,jp}-archive.json` | 1.1 MB / 135 KB | only for "All" or an old era |
 | `decks-{en,jp}/{leaderId}.json` | 6–15 KB | one archetype's card lists |
-| `events/{NN}.json` | 11 KB | one event page (64 buckets) |
-| `players/{NN}.json` | 13 KB | one player page (64 buckets) |
-| `deck/{NN}.json` | 15 KB | one decklist's row (64 buckets) |
+| `events/{NNN}.json` | 3 KB | one event page (256 buckets) |
+| `players/{NNN}.json` | 10 KB | one player page (256 buckets) |
+| `deck/{NNN}.json` | 12 KB | one decklist's row (256 buckets) |
 | `leaders.json` · `card-names.json` | 1.5 / 23 KB | archetype names · names and prices |
 | `tournaments-index.json` | 11 KB | /tournaments, last 90 days |
-| `players-index.json` | 45 KB | /players, everyone with 2+ results |
-| `tournaments-archive.json` · `players-archive.json` | 106 / 88 KB | only on "include the rest" |
-| `matchups/{leaderId}.json` | 1–8 KB | one archetype's pairings |
+| `players-index.json` | 53 KB | /players, everyone with 5+ results |
+| `tournaments-archive.json` · `players-archive.json` | 129 / 215 KB | only on "include the rest" |
+| `matchups/{leaderId}.json` | 1–31 KB | one archetype's pairings |
 | `events-official.json` | 3.4 KB | the events page, whole |
 
 Card prices are the one figure that appears in three of these. It is in
@@ -647,6 +648,31 @@ writes that the date *"may vary by tournament organizer"* and the table is *"a g
 provided only for reference"*. That caveat travels with the data and is printed on the
 page. An event's own note — `*Registration begins 2nd August 9AM(CEST)` — is exact and
 wins over the table.
+
+**Discovery stops where the archive already reaches.** The tournament listing is
+read newest first and the loop breaks at the first page whose every entry has been
+seen, because new events arrive at the front. That is right for keeping up and it
+made a backfill impossible — no budget would have helped, since the loop exits
+before spending one. `--backfill` pages to the cutoff instead, at one request per
+page: 57 to reach the end of the listing, which is 19% of a 300-request budget and
+worth paying only while there is history left to collect.
+
+**The corpus outgrew its shards, and the shard count is a payload budget in
+disguise.** 64 buckets held ~10 KB a page at 21,000 decks; at 69,644 the same
+arithmetic gives ~380 KB, so every event, player and deck page would have pulled
+that to draw a handful of rows. It is 256 now, and the bucket name went from two
+digits to three — which `tests/parity.test.ts` caught the moment the count changed,
+because 256 does not fit in two. The same pressure moved `DIRECTORY_MIN_RESULTS`
+from 2 to 5: of 18,955 players, 9,445 appear once and 3,118 twice, so "two or more"
+stopped meaning regular and trebled a payload that loads on arrival.
+
+**`decks-merged.json` carries no card lists.** It is imported by `lib/decks.ts`, so
+`resolveJsonModule` infers a literal type for every key in it — pleasant at 26 MB
+and fatal at 83, where `tsc --noEmit` dies with *Ineffective mark-compacts near heap
+limit* and takes the build with it. The fifty cards of 69,644 decks were the weight,
+and no page reads them from there: the archetype pages fetch
+`decks-{region}/{leaderId}.json` and the deck page fetches its shard. What the file
+is for is resolving *which* deck, not what is in it.
 
 **Rate limit.** Limitless advertises `RateLimit: "50-in-5min"`. The ingests read that
 header and pause *before* being refused. Raising `--max` does not make a run faster,
@@ -830,7 +856,8 @@ site.
 ## Current shape
 
 2,785 cards · 4,843 printings · 60 sets (22 boosters, 36 starter decks) · 2,172
-Standard-legal, 20 via the block exception · 2,651 priced · 21,027 decklists —
-English 15,168 from 2022-10, Japanese 5,859 from 2022-07 · 7,163 tournaments · 8,686
-named players, 2,874 with more than one result · 19,419 recorded matches from 277 brackets · 43/46 release windows ·
-53 dated set releases · 67 announced official events across 6 types · 109 tests.
+Standard-legal, 20 via the block exception · 2,651 priced · 69,644 decklists —
+English 63,750 from 2022-10, Japanese 5,894 from 2022-07 · 7,903 tournaments ·
+18,955 named players, 3,690 with five or more results · 152,401 recorded matches
+from 1,019 brackets · 44/46 release windows · 53 dated set releases · 67 announced
+official events across 6 types · 121 tests.

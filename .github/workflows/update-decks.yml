@@ -4,9 +4,16 @@ name: Update decklists
 #
 # Limitless allows 50 requests per 5 minutes, so a run is bounded by a request
 # budget rather than by how many tournaments exist. The ingest is resumable: it
-# records which tournaments it has already read and continues from there, so
-# running this on a schedule backfills the archive over a few days and then just
-# keeps up with new events.
+# records which tournaments it has already read and continues from there, so a
+# scheduled run costs a handful of requests once the archive has caught up.
+#
+# It does not backfill on its own, and the comment here used to say it did.
+# Discovery reads the tournament listing newest first and stops at the first page
+# whose every entry has already been seen, because that is where new events
+# arrive — correct for keeping up, and it means no budget on earth reaches page
+# twelve. `--backfill` is the input that pages past it; it exists for a one-off
+# run, not for the schedule, which would spend 57 requests a day rediscovering
+# events it already has.
 on:
   schedule:
     # Twice daily. Most online events finish in the evening in one region or
@@ -22,6 +29,10 @@ on:
         description: 'Ignore tournaments before this date (YYYY-MM-DD)'
         type: string
         default: ''
+      backfill:
+        description: 'Page past what the archive already has, back to --since'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -51,6 +62,9 @@ jobs:
           else
             # Rolling three-month window: the current metagame, not its history.
             ARGS="$ARGS --since $(date -u -d '3 months ago' +%Y-%m-%d)"
+          fi
+          if [ "${{ inputs.backfill }}" = "true" ]; then
+            ARGS="$ARGS --backfill"
           fi
           echo "Running: node scripts/ingest-decks.mjs $ARGS"
           node scripts/ingest-decks.mjs $ARGS

@@ -3,6 +3,7 @@
  * Poneglyph — tournament and decklist ingest.
  *
  *   node scripts/ingest-decks.mjs [--max 400] [--since 2026-01-01] [--reset]
+ *   node scripts/ingest-decks.mjs --backfill --since 2023-01-01   # fill in history
  *   node scripts/ingest-decks.mjs --rebuild    # re-derive from stored decks, no network
  *
  * Pulls tournament standings from the Limitless API, resolves every card in every
@@ -42,6 +43,8 @@ const BUDGET = Number(flag('max', 400));
 const SINCE = flag('since', null);
 /** A tournament this small is a locals night, not a signal. */
 const MIN_PLAYERS = Number(flag('min-players', 8));
+/** Page the whole listing rather than stopping where the archive already reaches. */
+const BACKFILL = has('backfill');
 
 const log = (...m) => console.log('[decks]', ...m);
 
@@ -158,12 +161,22 @@ async function discoverTournaments(state) {
       });
     }
 
-    // Older pages are all in the past; once every tournament on a page is both
-    // already seen and older than the cutoff there is nothing new further back.
+    /*
+     * Older pages are all in the past, so once every tournament on a page has been
+     * read there is normally nothing new further back — new events arrive at the
+     * front. That is right for keeping up and wrong for filling in: it stops at the
+     * first fully-read page, which is page two or three, so the archive can never
+     * reach back past where it already is.
+     *
+     * `--backfill` keeps paging to the cutoff instead. It costs one request per
+     * page — 57 to reach the end of the Limitless listing — which is 19% of a 300
+     * request budget, worth paying while there is history to collect and worth
+     * dropping once there is not.
+     */
     const allSeen = batch.every((t) => state.seen[t.id]);
     const pastCutoff = SINCE && batch.every((t) => t.date < SINCE);
     if (pastCutoff) break;
-    if (allSeen && page > 1) {
+    if (allSeen && page > 1 && !BACKFILL) {
       log(`  page ${page} fully seen — stopping discovery`);
       break;
     }

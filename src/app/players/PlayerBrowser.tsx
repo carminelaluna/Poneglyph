@@ -9,11 +9,11 @@ import { loadLeaders, loadPlayerArchive, loadPlayers, type Leaders } from '@/lib
 /**
  * Who has been recorded playing, and how often.
  *
- * The default list is everyone with at least two recorded results — 2,871 of
- * 8,686, because 5,815 people appear exactly once and a directory that is two
- * thirds one-offs is a worse answer to "who plays here" than one that is not.
- * Searching a name that is not in it loads the rest, so nobody is unreachable;
- * their page never depended on this list either.
+ * The default list is everyone the payload calls a regular, which is a threshold
+ * the build sets rather than this file: of 18,955 players, 9,445 appear exactly
+ * once and 3,118 exactly twice, so a directory built on "two or more" would be
+ * mostly people who turned up and left. Searching a name that is not in it loads
+ * the rest, so nobody is unreachable; their own page never depended on this list.
  *
  * "Results" counts decklists and "Events" counts distinct days-plus-events,
  * because one tournament can put two lists on record for the same person and
@@ -45,7 +45,8 @@ export default function PlayerBrowser() {
   const [rows, setRows] = useState<PlayerRow[] | null>(null);
   const [total, setTotal] = useState(0);
   const [archived, setArchived] = useState(0);
-  const [minResults, setMinResults] = useState(2);
+  /* Replaced by whatever the payload says; see DIRECTORY_MIN_RESULTS. */
+  const [minResults, setMinResults] = useState(5);
   const [leaders, setLeaders] = useState<Leaders>({});
   const [error, setError] = useState<string | null>(null);
 
