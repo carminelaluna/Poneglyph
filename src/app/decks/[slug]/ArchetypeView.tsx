@@ -14,6 +14,7 @@ import {
   filterDecks,
   formatRecord,
   ordinal,
+  windowEnd,
   windowStart,
   type DeckCardLists,
   type MetaCard,
@@ -202,7 +203,12 @@ export default function ArchetypeView({ leaderId, glow }: { leaderId: string; gl
             everything else on the page so the two are talking about one set of
             matches.
           */}
-          <Matchups leaderId={leaderId} from={windowStart(window_, index)} region={region} />
+          <Matchups
+            leaderId={leaderId}
+            from={windowStart(window_, index)}
+            to={windowEnd(window_, index)}
+            region={region}
+          />
 
           <div className="section-head" style={{ marginTop: '2.5rem' }}>
             <h2 className="display">Decklists</h2>

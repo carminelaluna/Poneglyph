@@ -154,11 +154,46 @@ export function windowStart(window: Window, index: MetaIndex): string | null {
   return anchor.toISOString().slice(0, 10);
 }
 
+/**
+ * The day a window stops, exclusive. Only an era has one.
+ *
+ * An era used to be open-ended — "since ST-01 entered play" meant everything from
+ * December 2022 to now, which for the oldest set is the entire archive. Picking a
+ * release from 2022 and being shown decks from 2026 is not an answer to the
+ * question anyone was asking: what people mean by "the OP-05 metagame" is the
+ * period while OP-05 was the newest thing in it.
+ *
+ * So an era runs until the next **expansion** entered play. Not the next set of any
+ * kind: a starter deck arriving does not end a format, and ending on one gives
+ * answers nobody wants. Measured against the real corpus, ending on any set at all
+ * made OP-01 a window one day wide holding two decks, because three products
+ * entered play inside 48 hours at the start of the archive; ending on the next
+ * expansion makes it 98 days and 160 decks, which is the period people mean when
+ * they say "the OP-01 format". It also stops ST-30 cutting OP-16 in half.
+ *
+ * For the most recent era there is no next expansion, which leaves it open — and
+ * that is right, because that one is still going on.
+ *
+ * Sets that arrived together share a date, so the end is the earliest expansion
+ * date **strictly after** this one rather than whatever sits next in the list.
+ */
+export function windowEnd(window: Window, index: MetaIndex): string | null {
+  if (window.kind !== 'era') return null;
+  const era = index.eras.find((e) => e.set === window.set);
+  if (!era) return null;
+  const later = index.eras
+    .filter((e) => e.kind === 'Expansion' && e.from > era.from)
+    .map((e) => e.from)
+    .sort();
+  return later[0] ?? null;
+}
+
 export function windowLabel(window: Window, index: MetaIndex): string {
   if (window.kind === 'all') return 'All recorded results';
   if (window.kind === 'era') {
     const era = index.eras.find((e) => e.set === window.set);
-    return era ? `Since ${era.code} entered play` : 'Since set release';
+    if (!era) return 'One release';
+    return windowEnd(window, index) ? `While ${era.code} was current` : `Since ${era.code} entered play`;
   }
   return `Last ${window.days} days`;
 }
@@ -170,12 +205,15 @@ export function filterDecks(
   tiers: string[] = []
 ): MetaDeck[] {
   const from = windowStart(window, index);
+  const to = windowEnd(window, index);
   const byVenue = venues.length > 0 && venues.length < VENUES.length;
   const byTier = tiers.length > 0 && tiers.length < index.tiers.length;
-  if (!from && !byVenue && !byTier) return index.decks;
+  if (!from && !to && !byVenue && !byTier) return index.decks;
   return index.decks.filter(
     (d) =>
       (!from || d.d >= from) &&
+      /* Exclusive: the day the next set arrived belongs to the next era. */
+      (!to || d.d < to) &&
       (!byVenue || venues.includes(d.v)) &&
       (!byTier || tiers.includes(d.k))
   );
@@ -316,7 +354,12 @@ export function withTrend(
 
   const byVenue = venues.length > 0 && venues.length < VENUES.length;
   const byTier = tiers.length > 0 && tiers.length < index.tiers.length;
-  const span = daysBetween(from, index.window.to ?? from) + 1;
+  /*
+   * As long as the window itself, so the comparison is like for like. A bounded era
+   * ends when the next set arrived; an open one runs to the newest deck on record.
+   */
+  const until = windowEnd(window, index) ?? index.window.to ?? from;
+  const span = daysBetween(from, until) + 1;
   const previousStart = shiftDays(from, -span);
   const previous = index.decks.filter(
     (d) =>

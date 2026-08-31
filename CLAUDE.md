@@ -162,6 +162,20 @@ same day + player + Leader + *the same fifty cards*. The looser key matched 242,
 Limitless wins the tie; community submissions lose it, because an automated source can
 be re-checked.
 
+**A release window is closed at both ends.** Picking a set under *Since release*
+used to mean "from that day to now", so the oldest release answered with the entire
+archive — decks from 2026 under a heading about 2022, played with sets that did not
+exist. An era now runs until the next **expansion** entered play, and only the
+newest one is open, because that one is still going on.
+
+The next *expansion*, not the next set of any kind: a starter deck does not end a
+format. Measured against the corpus, ending on any release at all made OP-01 one day
+wide and two decks deep — three products entered play inside 48 hours at the start
+of the archive — where ending on the next expansion makes it 98 days and 160 decks.
+It also stops ST-30 cutting OP-16 in half. `windowEnd()` is exclusive, so the day a
+set arrives belongs to its own era; `withTrend` measures the previous window against
+the same length, and the matchup table takes both ends.
+
 **Windows are measured from the newest deck on record, not from today.** Results
 arrive in batches; anchoring on the clock would silently empty "last 7 days" whenever
 ingestion paused.

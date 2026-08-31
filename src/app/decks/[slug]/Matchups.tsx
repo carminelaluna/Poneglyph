@@ -47,10 +47,13 @@ type Tally = {
 export default function Matchups({
   leaderId,
   from,
+  to,
   region,
 }: {
   leaderId: string;
   from: string | null;
+  /* Exclusive, and set only for an era — see windowEnd in lib/meta.ts. */
+  to: string | null;
   region: 'en' | 'jp';
 }) {
   const [payload, setPayload] = useState<Payload | null>(null);
@@ -91,7 +94,9 @@ export default function Matchups({
        * recorded", and a row whose day is missing from the file is kept rather
        * than guessed at.
        */
-      if (from && (payload.days[day] ?? '') < from) continue;
+      const on = payload.days[day] ?? '';
+      if (from && on < from) continue;
+      if (to && on >= to) continue;
 
       let tally = byOpponent.get(opponent);
       if (!tally) {
@@ -107,7 +112,7 @@ export default function Matchups({
     return [...byOpponent.values()]
       .map((t) => ({ ...t, rate: t.games ? (t.wins / t.games) * 100 : 0 }))
       .sort((a, b) => b.games - a.games || b.rate - a.rate);
-  }, [payload, from]);
+  }, [payload, from, to]);
 
   /*
    * Limitless is an English-corpus source, so there are no Japanese pairings to

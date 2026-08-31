@@ -7,6 +7,7 @@ import {
   VENUES,
   type MetaDeck,
   windowLabel,
+  windowEnd,
   windowStart,
   type MetaIndex,
   type Venue,
@@ -219,6 +220,8 @@ export function WindowBar({
   noun?: string;
 }) {
   const from = windowStart(window_, index);
+  /* An era stops when the next set arrived; everything else runs to the newest. */
+  const to = windowEnd(window_, index);
 
   return (
     <div className="window-bar">
@@ -338,7 +341,12 @@ export function WindowBar({
       <span className="window-summary">
         <b className="mono">{count.toLocaleString('en-US')}</b> {noun} ·{' '}
         {windowLabel(window_, index)}
-        {from ? <span className="muted"> · from {from}</span> : null}
+        {from ? (
+          <span className="muted">
+            {' '}
+            · {from} to {to ?? index.window.to ?? 'now'}
+          </span>
+        ) : null}
       </span>
     </div>
   );
