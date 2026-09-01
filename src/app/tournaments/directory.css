@@ -1,11 +1,16 @@
 /*
- * The two directories — /tournaments and /players.
+ * A directory table — /tournaments, /players, and the events section on /decks.
  *
- * One stylesheet for both: they are the same table with different columns, and the
- * controls above them ask the same shape of question. The table itself is
- * `.meta-table` from decks.css, which both pages import for exactly that reason —
- * a second table style that looked almost the same would be the worse outcome. Only
- * what is particular to a directory is here.
+ * One stylesheet for all three: they are the same table with different columns, and
+ * the controls above the first two ask the same shape of question. The table itself
+ * is `.meta-table` from decks.css, which the directories import for exactly that
+ * reason — a second table style that looked almost the same would be the worse
+ * outcome, and the events section on the metagame page is that same argument read
+ * the other way round. Only what is particular to a directory is here.
+ *
+ * `.dir-controls` and the two `.dir-` inputs go unused on /decks, which has its own
+ * window bar. They cost 200 bytes and they keep one file answering "what does a
+ * directory look like".
  */
 
 .dir-controls {
@@ -63,30 +68,4 @@
 .dir-date {
   white-space: nowrap;
   font-size: 0.72rem;
-}
-
-/*
- * Kept byte-identical to the copy in browse.css, which is loaded on /cards and
- * not here — two routes, two stylesheets. Differing would be worse than repeating:
- * the same control would be a different colour depending on which page you were on.
- */
-.link-btn {
-  border: 0;
-  background: none;
-  padding: 0;
-  color: var(--glyph-dim);
-  font-size: 0.72rem;
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.link-btn:hover {
-  color: var(--rune-lit);
-}
-
-.link-btn:disabled {
-  color: var(--glyph-faint);
-  cursor: default;
-  text-decoration: none;
 }

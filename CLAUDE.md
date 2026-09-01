@@ -17,7 +17,10 @@ against entrants, spellings never merged, what a matchup is — is on `/data` un
 on `/privacy` and `/terms`. A browse page keeps at most one line of provenance
 (`.source-line`) and a link. The exception is `MetaBrowser`, whose two warnings are
 conditional: they describe the table in front of you right now, so they stay, as a
-line rather than a box.
+line rather than a box. Its events section spends the one plain line the rule
+allows, on the only thing a reader cannot work out unaided — *Decks* and *Entrants*
+disagreeing, because a 128-player Regional is four rows when the source published
+only what placed.
 
 Moving to a domain, another CDN, or a real machine: **[MIGRATIONS.md](MIGRATIONS.md)**.
 
@@ -229,6 +232,27 @@ importing from `cards.ts` would drag 4.4 MB of card JSON into the bundle.
 
 With `NEXT_PUBLIC_CDN_URL` unset the proxy answers instead, so a fresh checkout works
 with no CDN. `build:static` refuses to run without it — an export has no proxy.
+
+**The metagame page opens with ten archetypes, and shows what it counted.** A
+window holds up to 141 and the tail is decks somebody brought once, so the table
+takes the top ten and the rest are one click away — which closes again whenever a
+control above it changes, since every one of those changes what the top ten *are*.
+Below it, *Latest winners* replaced a top-eight list (eight rows of one Regional is
+a standings page, and the placing column went with the change because every row now
+reads 1st), and *Events in this window* is the section the page had been missing:
+every figure above it is an aggregate and nothing said what of. It is rebuilt from
+the deck rows already downloaded — they carry the event id, name, kind and field
+size — so it costs no request, and it is scoped to the window, region and filters
+chosen right here, which is what makes it a different question from `/tournaments`.
+
+**`.link-btn` lives in `globals.css`, and used to live in two stylesheets.** Both
+copies were byte-identical and each carried a comment arguing that repeating the
+rule beat letting one control look different on different pages. What neither
+noticed is the third case: `/decks` and `/decks/[slug]` load neither file, so on
+the metagame page and every archetype page the control rendered as a raw grey
+browser button — *Show all recorded results* and *Show 5 more with fewer than 5
+games*, both of them. A rule used on five routes belongs in the file every route
+loads.
 
 **Never `fetch('/data/…')`.** Next rewrites `<Link>` hrefs and asset URLs under a
 `basePath`; it does not touch `fetch`. On a project page that asks the account root for

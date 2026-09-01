@@ -40,21 +40,6 @@
   border-bottom: 1px solid var(--edge-strong);
 }
 
-.link-btn {
-  border: 0;
-  background: none;
-  padding: 0;
-  color: var(--glyph-dim);
-  font-size: 0.72rem;
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.link-btn:hover {
-  color: var(--rune-lit);
-}
-
 .fgroup {
   border-bottom: 1px solid var(--edge);
   padding-block: 0.9rem;

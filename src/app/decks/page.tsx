@@ -4,6 +4,8 @@ import MetaBrowser from './MetaBrowser';
 import regionsJson from '@data/regions.json';
 import { decksMeta, hasDeckData, tournaments } from '@/lib/decks';
 import '../decks.css';
+/* The events section below the table is a directory table; see directory.css. */
+import '../tournaments/directory.css';
 
 export const metadata: Metadata = {
   title: 'Metagame',

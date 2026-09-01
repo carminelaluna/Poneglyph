@@ -96,6 +96,37 @@ a {
   color: var(--rune-lit);
 }
 
+/*
+ * A button that does a link's job — "include the earlier 6,000", "show 33 more".
+ *
+ * It lives here because it is used on five routes and used to be defined on two.
+ * The two copies were byte-identical and each carried a comment explaining that
+ * repeating the rule beat letting the same control look different on different
+ * pages; what neither noticed is that /decks and /decks/[slug] load neither
+ * stylesheet, so on the metagame page and every archetype page the control
+ * rendered as a raw grey browser button. One definition, every route.
+ */
+.link-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--glyph-dim);
+  font-size: 0.72rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.link-btn:hover {
+  color: var(--rune-lit);
+}
+
+.link-btn:disabled {
+  color: var(--glyph-faint);
+  cursor: default;
+  text-decoration: none;
+}
+
 img {
   max-width: 100%;
   display: block;
