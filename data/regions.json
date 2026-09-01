@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-31T23:26:59.838Z",
+  "generatedAt": "2026-09-01T05:20:41.769Z",
   "releases": [
     {
       "code": "OP-17",
@@ -271,8 +271,8 @@
     {
       "id": "EN",
       "label": "English",
-      "decks": 63814,
-      "recent": 4502,
+      "decks": 63818,
+      "recent": 4506,
       "archived": 59312,
       "fieldDecks": 58214,
       "sampling": "mixed",
@@ -289,8 +289,8 @@
     {
       "id": "JP",
       "label": "Japanese",
-      "decks": 5894,
-      "recent": 595,
+      "decks": 5908,
+      "recent": 609,
       "archived": 5299,
       "fieldDecks": 0,
       "sampling": "winners",
