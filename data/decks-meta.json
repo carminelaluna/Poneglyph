@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-31T23:20:40.812Z",
+  "generatedAt": "2026-09-01T12:37:23.183Z",
   "source": {
     "id": "limitless",
     "label": "Limitless TCG",
@@ -13,14 +13,14 @@
     "cardsPlayed": 2316
   },
   "thisRun": {
-    "tournaments": 1,
-    "decks": 64,
+    "tournaments": 0,
+    "decks": 0,
     "empty": 0,
     "wrongSize": 0,
     "illegalCounts": 0,
     "unresolvedCards": 0,
     "unresolvedLeaders": 0,
-    "requests": 8
+    "requests": 6
   },
   "coverage": {
     "tournamentsRead": 2348,
@@ -502,5 +502,5 @@
       "decks": 58207
     }
   ],
-  "durationMs": 3596
+  "durationMs": 2215
 }
