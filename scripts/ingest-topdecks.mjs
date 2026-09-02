@@ -26,13 +26,20 @@
  * from it would be an artefact of the sampling. Every corpus therefore declares its
  * `sampling` and the interface adapts to it.
  *
- * Writes data/decks-{jp,en}.json plus browser indexes in the same shape the
- * Limitless corpus uses, so the metagame page switches region without new code.
+ * Writes data/decks-{jp,en}.json and nothing else. It used to write the browser
+ * payloads too — `public/data/decks-{jp,en}-index.json` and the per-archetype card
+ * lists — from a time before build-indexes.mjs merged the corpora. Since then
+ * build-indexes has rewritten both files seconds later on every run, so the copies
+ * here were only ever visible when build-indexes did not get that far: one
+ * scheduled run left a 0 KB index behind and the English metagame page would have
+ * reported an empty archive if the job had reached its commit. One writer per
+ * payload.
  */
 
-import { writeFile, readFile, mkdir, readdir, rm } from 'node:fs/promises';
+import { writeFile, readFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { DECK_SOURCES } from './sources.mjs';
+import { KEEP_AT_LEAST, refusesWrite } from './corpus-guard.mjs';
 
 const args = process.argv.slice(2);
 const flag = (name, fallback = null) => {
@@ -212,6 +219,7 @@ async function main() {
 
   const limit = Number(flag('limit', 0)) || Infinity;
   const summary = {};
+  const refused = [];
 
   for (const key of wantRegions) {
     const region = REGIONS[key];
@@ -307,9 +315,26 @@ async function main() {
       durationMs: Date.now() - started,
     };
 
+    /*
+     * What is already recorded, so a collapse can be recognised as one. A first
+     * run has nothing to compare against and writes whatever it found.
+     */
+    const held = await readFile(path.join(DATA, `${region.file}.json`), 'utf8')
+      .then((raw) => JSON.parse(raw).decks?.length ?? 0)
+      .catch(() => 0);
+
+    if (refusesWrite(decks.length, held, KEEP_AT_LEAST)) {
+      refused.push({ region: region.label, found: decks.length, held });
+      log(
+        `  refusing to write ${decks.length} decks over the ${held} already recorded ` +
+          `— keeping what is on disk`
+      );
+      summary[region.label] = `${held} kept`;
+      continue;
+    }
+
     await mkdir(DATA, { recursive: true });
     await writeFile(path.join(DATA, `${region.file}.json`), JSON.stringify({ ...meta, decks }));
-    await writeBrowserIndex(decks, byId, meta, region);
 
     summary[region.label] = decks.length;
     log(`  -> ${decks.length} decks, ${meta.counts.archetypes} archetypes, ${meta.window.from} to ${meta.window.to}`);
@@ -319,87 +344,25 @@ async function main() {
   log('');
   log(`done in ${((Date.now() - started) / 1000).toFixed(1)}s`);
   console.table(summary);
-}
 
-/**
- * The same two-file layout the Limitless corpus uses — a light index for the table
- * and per-archetype card lists — so the metagame page reads any region through one
- * code path and pays for card lists only on the archetype it is showing.
- */
-async function writeBrowserIndex(decks, byId, meta, region) {
-  const dir = path.resolve('public', 'data');
-  const deckDir = path.join(dir, region.file);
-  await mkdir(deckDir, { recursive: true });
-
-  const leaders = {};
-  const cardNames = {};
-  const byLeader = new Map();
-
-  for (const deck of decks) {
-    leaders[deck.leaderId] ??= { n: deck.leaderName, c: deck.colors };
-    for (const card of deck.cards) {
-      cardNames[card.id] ??= [byId.get(card.id)?.name ?? card.id, card.category];
-    }
-    if (!byLeader.has(deck.leaderId)) byLeader.set(deck.leaderId, {});
-    byLeader.get(deck.leaderId)[deck.id] = deck.cards.map((c) => [c.id, c.count]);
+  /*
+   * A refusal is not a breakage, which is the rule the spoilers ingest already
+   * follows for this same host: the corpus on disk is untouched, the site serves
+   * what it served before, and a schedule that runs every eight hours cannot be
+   * red for something outside this repository and still be read by anybody.
+   *
+   * It is loud rather than silent, though — the risk of exiting 0 is that a
+   * genuinely broken parser refuses forever and nobody notices — so every refused
+   * region is annotated on the run.
+   */
+  for (const r of refused) {
+    console.log(
+      `::warning::Top Decks returned ${r.found} decks for ${r.region}, against ` +
+        `${r.held} already recorded. Nothing was written. This host answers some ` +
+        `datacenter IPs with a challenge that parses as an empty page; if it ` +
+        `persists across several runs, read one of the pages by hand.`
+    );
   }
-
-  const index = {
-    generatedAt: meta.generatedAt,
-    region: meta.region,
-    /*
-     * These pages publish decks that *placed*. Share still answers "what is
-     * winning", but a win rate from a winners-only sample would read near 100% and
-     * mean nothing, so the sampling is declared and the interface drops the column.
-     */
-    sampling: 'winners',
-    window: meta.window,
-    /* Release eras are derived from the Limitless corpus, and each region gets its
-       sets on its own date, so none are claimed here rather than borrowing wrong ones. */
-    eras: [],
-    tiers: [
-      { id: 'finals', label: 'Finals' },
-      { id: 'championship', label: 'Championship' },
-      { id: 'regional', label: 'Regional' },
-      { id: 'store', label: 'Shop event' },
-      { id: 'local', label: 'Local' },
-    ],
-    leaders,
-    cards: cardNames,
-    decks: decks.map((d) => ({
-      i: d.id,
-      l: d.leaderId,
-      d: d.date,
-      p: d.placing,
-      w: d.record.wins ?? 0,
-      s: d.record.losses ?? 0,
-      t: d.record.ties ?? 0,
-      n: 0,
-      e: d.eventName,
-      /* Top Decks covers paper events on both sides. */
-      v: 'offline',
-      k: d.tier,
-    })),
-  };
-
-  const json = JSON.stringify(index);
-  await writeFile(path.join(dir, `${region.file}-index.json`), json);
-
-  /* Stale archetype files would silently serve last season's lists. */
-  const existing = await readdir(deckDir).catch(() => []);
-  const wanted = new Set([...byLeader.keys()].map((id) => `${id}.json`));
-  await Promise.all(
-    existing
-      .filter((f) => f.endsWith('.json') && !wanted.has(f))
-      .map((f) => rm(path.join(deckDir, f)))
-  );
-  await Promise.all(
-    [...byLeader.entries()].map(([leaderId, lists]) =>
-      writeFile(path.join(deckDir, `${leaderId}.json`), JSON.stringify(lists))
-    )
-  );
-
-  log(`     index -> public/data/${region.file}-index.json (${(Buffer.byteLength(json) / 1024).toFixed(0)} KB), ${byLeader.size} archetype files`);
 }
 
 main().catch((err) => {

@@ -250,6 +250,25 @@ function groupSameDay(eras, era) {
 /* ---------------------------------------------------------------- writing */
 
 async function writeRegion(region, decks, cardsById) {
+  /*
+   * A region with nothing in it used to fail eleven lines further down, inside
+   * `shiftDays(index.window.to, ...)`, as `Invalid time value` — a message naming
+   * neither the region nor the file that was supposed to fill it. That is what a
+   * scheduled run showed the morning Top Decks answered the runner with empty
+   * pages: the ingest wrote nothing over both of its corpora, and the first thing
+   * to notice was a date constructor.
+   *
+   * It stops here instead, and says which corpus is missing. Writing an empty
+   * index would be worse than stopping: it is a live payload, and the metagame
+   * page would report that region as having no results at all.
+   */
+  if (decks.length === 0) {
+    throw new Error(
+      `${region.label} has no decks — ${region.sources.join(' and ')} produced nothing. ` +
+        `Refusing to write an empty ${region.file}-index.json over a good one.`
+    );
+  }
+
   const leaders = {};
   const cardNames = {};
   const byLeader = new Map();

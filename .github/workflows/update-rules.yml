@@ -23,8 +23,18 @@ jobs:
         with:
           node-version: 22
 
-      # Each refuses to write a broken result, so a failure here leaves the last
+      # Each refuses to write a broken result, so a bad answer here leaves the last
       # good data in place rather than clearing the page.
+      #
+      # That was aspirational for the Top Decks ingest until it was not: this host
+      # answers some datacenter IPs with a challenge, and on 2026-09-02 it served
+      # every one of its forty pages to this runner as a clean 200 holding no
+      # decks. The ingest wrote both corpora away to nothing and build-indexes
+      # then died on a null date, which is the only reason the commit step never
+      # ran. `scripts/corpus-guard.mjs` is the check that was missing, and it
+      # warns rather than failing — a refusal upstream is not a breakage here,
+      # and a job that goes red every eight hours for someone else's filter is a
+      # job nobody reads.
       - run: node scripts/ingest-banlist.mjs
       - run: node scripts/ingest-topdecks.mjs
 

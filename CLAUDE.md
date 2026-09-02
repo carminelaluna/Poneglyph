@@ -59,9 +59,11 @@ derives release eras, shards the matchups, and writes both the browser payloads 
 `data/decks-merged.json`. A deck or matchup ingest without it leaves the site on
 stale data.
 
-The four modules above the ingests are pure and imported rather than inlined, and
-both properties are load-bearing: shared so two copies cannot drift, pure so a test
-can run them. Every one of them is a place where a number is decided.
+The modules above the ingests are pure and imported rather than inlined, and both
+properties are load-bearing: shared so two copies cannot drift, pure so a test can
+run them. Every one of them is a place where a number is decided — including
+`corpus-guard.mjs`, where the number is how much of an archive may vanish between
+two runs before the answer is refused.
 
 ---
 
@@ -69,6 +71,7 @@ can run them. Every one of them is a place where a number is decided.
 
 ```
 sources.mjs          every upstream, with its role and limits
+corpus-guard.mjs     when an answer is too small to overwrite what is recorded
 limitless.mjs        the rate limiter and request helper, shared by two ingests
 matchups.mjs         a bracket -> results, and the flip that stores both sides
 price-history.mjs    the append and the ninety-day trim, both pure
@@ -77,7 +80,7 @@ ingest.mjs           cards     -> data/cards|sets|filters|meta.json + cards-inde
                                  + data/price-history.json (one point per change)
 ingest-decks.mjs     Limitless -> data/decks|tournaments|decks-state.json
 ingest-matchups.mjs  Limitless -> data/matchups.json (pairings, resumable)
-ingest-topdecks.mjs  Top Decks -> data/decks-{en,jp}.json
+ingest-topdecks.mjs  Top Decks -> data/decks-{en,jp}.json (guarded, writes nothing else)
 ingest-spoilers.mjs  leaks     -> data/spoilers.json
 ingest-banlist.mjs   Bandai    -> data/banlist.json (+ numbers-only in public/data)
 ingest-events.mjs    Bandai    -> data/events-official.json (+ public/data)
@@ -731,10 +734,38 @@ reads it once and derives everything else, so it is the only reader.
 earlier "slimming" of the loader dropped it and a rebuild reclassified all 275 tournaments
 as `unknown`. Re-fetching cost 289 requests.
 
-**A refusal is not a breakage.** onepiecetopdecks.com sits behind a filter that
-occasionally answers a datacenter IP with a Cloudflare challenge — an HTML body
-under a **200**, so `res.ok` is true and the failure surfaces as
-`Unexpected token '<'`. It reddened `update-spoilers` four times in thirty-six hours
+**A refusal is not a breakage, and its newest disguise is an empty page.**
+onepiecetopdecks.com sits behind a filter that occasionally answers a datacenter
+IP with a Cloudflare challenge — an HTML body under a **200**, so `res.ok` is true
+and the failure surfaces as `Unexpected token '<'`. On 2026-09-02 it did something
+worse: it served every one of the forty deck-list pages to a GitHub runner as a
+200 that parsed cleanly and yielded **zero decks**, and `ingest-topdecks.mjs` wrote
+both corpora away to nothing. The same command from a home connection read 6,037
+and 5,920. Nothing between the empty answer and the write said no — the invariant
+below claimed otherwise and this ingest was the one that did not hold it.
+
+`scripts/corpus-guard.mjs` holds it now: `refusesWrite(found, held)` refuses an
+empty answer over a non-empty corpus, and any run that comes back with less than
+half of what is recorded — these are per-set archive pages, so the count only ever
+grows, and half is loose on purpose because the number to catch is zero and a
+guard that cries wolf gets removed. It is a module rather than eight lines in the
+script because it is the only thing standing between an upstream's bad morning and
+an emptied archive, and a guard nothing exercises can silently invert; a mutation
+test proved that by deleting a `Math.max` from it and passing, which is how a dead
+branch in the first version was found. A refusal warns and exits 0: the corpus on
+disk is untouched, and a job red every eight hours for someone else's filter is a
+job nobody reads.
+
+Two things followed from the same run. `build-indexes.mjs` failed on the empty
+corpus as `Invalid time value`, from `shiftDays(index.window.to, ...)` with a null
+date — a message naming neither the region nor the file that should have filled
+it; it stops earlier now and says which corpus is missing. And
+`ingest-topdecks.mjs` no longer writes any `public/data` payload. It used to write
+`decks-{en,jp}-index.json` and the per-archetype card lists, from before
+`build-indexes.mjs` merged the corpora; since then build-indexes rewrote both
+seconds later on every run, so those copies were only ever visible when
+build-indexes did not get that far — which is exactly what happened, leaving a
+0 KB index behind. One writer per payload. It reddened `update-spoilers` four times in thirty-six hours
 while the same host answered `update-rules` fine, minutes apart. Two things follow.
 The backoff is in *seconds* (3, 10, 30 across four attempts): the old 0.5s/2s put
 every attempt inside one blocked window. And a refusal — HTML where JSON was
@@ -745,7 +776,9 @@ schedule nobody reads. Everything else still exits 1.
 
 **Ingests refuse to write nonsense.** Too few cards, an empty banlist, a dead spine — each
 aborts before overwriting. An empty banlist that looks successful is worse than none. The
-submissions ingest is the exception: zero approved submissions is a real answer.
+submissions ingest is the exception: zero approved submissions is a real answer. Top Decks
+was an exception too, silently, until the day the source answered with nothing and it wrote
+that down; `scripts/corpus-guard.mjs` is what makes the sentence true of it.
 
 **The mark lives in five files, from one drawing.** `src/app/` holds `favicon.ico`,
 `icon.png` and `apple-icon.png`, which Next picks up by filename. `public/brand/` holds
