@@ -767,6 +767,16 @@ branch in the first version was found. A refusal warns and exits 0: the corpus o
 disk is untouched, and a job red every eight hours for someone else's filter is a
 job nobody reads.
 
+The guard is per region, and the run meant to prove it came back **green having
+read nothing**: the filter served the deck-list index as a 200 whose HTML carried
+no links, so forty pages became zero, both regions were skipped by a `continue`
+that said nothing, and the guard never ran. An index with no links on it is the
+same refusal one page earlier — the site publishes forty archive pages, and if it
+publishes none we were not talking to the site — so that is a refusal now too. A
+region whose own pages vanish from an index that otherwise has links is a
+different thing, a URL prefix Top Decks renamed for the third time, and it warns
+rather than refusing the run.
+
 `--limit N` now reads without writing, for the same reason and not as an
 afterthought: a spot check of two pages looks exactly like a collapse to the
 guard, so the flag makes the ingest read-only rather than unguarded — which is

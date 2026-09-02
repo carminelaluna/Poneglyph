@@ -108,6 +108,12 @@ async function get(url, { retries = 4 } = {}) {
 
 /* ------------------------------------------------------------- extraction */
 
+/** How many decks this region already has on disk; 0 on a fresh checkout. */
+const recorded = (region) =>
+  readFile(path.join(DATA, `${region.file}.json`), 'utf8')
+    .then((raw) => JSON.parse(raw).decks?.length ?? 0)
+    .catch(() => 0);
+
 /** `1nOP14-041a3nOP17-107a4nOP17-109` -> [{id, count}, …]. */
 function decodeDeck(dg) {
   const out = [];
@@ -223,6 +229,25 @@ async function main() {
 
   log(`  ${links.length} deck-list pages on the index`);
 
+  /*
+   * An index with no links on it is the same refusal one page earlier.
+   *
+   * The filter serves a challenge as a 200, so the fetch succeeds, the HTML parses
+   * and the regex simply matches nothing — forty pages become zero and every
+   * region below is skipped with a `continue` that says nothing at all. That is
+   * how a run came back green, having read nothing and reported nothing, on the
+   * very attempt that was meant to prove the guard: the guard is per region and
+   * discovery had already emptied the list before it could run.
+   *
+   * There is no legitimate reading of this. The site publishes forty archive
+   * pages; if it publishes none, we were not talking to the site.
+   */
+  if (links.length === 0) {
+    throw refusal(
+      `${SRC.indexUrl}: the deck-list index carried no links — served, but not by the archive`
+    );
+  }
+
   const chosen = flag('region', 'both');
   const wantRegions = (chosen === 'both' ? ['jp', 'en'] : [chosen]).filter((r) => REGIONS[r]);
   if (wantRegions.length === 0) throw new Error('--region must be jp, en, or both');
@@ -237,7 +262,17 @@ async function main() {
     const pages = links.filter((u) => region.match.test(u)).slice(0, limit);
     log('');
     log(`${region.label}: ${pages.length} pages`);
-    if (pages.length === 0) continue;
+    /*
+     * A region whose pages all vanished from an index that otherwise has links is
+     * a URL prefix that changed, not a refusal — Top Decks has renamed these
+     * twice. It is still not a reason to write nothing over something, and it is
+     * emphatically not a reason to say nothing.
+     */
+    if (pages.length === 0) {
+      refused.push({ region: region.label, found: 0, held: await recorded(region) });
+      log(`  no pages matched ${region.match} — has the URL prefix changed again?`);
+      continue;
+    }
 
     const collected = [];
     const stats = { pages: 0, wrongSize: 0, unresolved: 0, noDate: 0 };
@@ -330,9 +365,7 @@ async function main() {
      * What is already recorded, so a collapse can be recognised as one. A first
      * run has nothing to compare against and writes whatever it found.
      */
-    const held = await readFile(path.join(DATA, `${region.file}.json`), 'utf8')
-      .then((raw) => JSON.parse(raw).decks?.length ?? 0)
-      .catch(() => 0);
+    const held = await recorded(region);
 
     if (refusesWrite(decks.length, held, KEEP_AT_LEAST)) {
       /*
