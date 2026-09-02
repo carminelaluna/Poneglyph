@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-01T21:51:02.563Z",
+  "generatedAt": "2026-09-02T12:09:38.369Z",
   "source": {
     "id": "limitless",
     "label": "Limitless TCG",
@@ -7,38 +7,38 @@
     "docs": "https://docs.limitlesstcg.com/developer.html"
   },
   "counts": {
-    "tournaments": 1021,
-    "decks": 58278,
+    "tournaments": 1022,
+    "decks": 58295,
     "archetypes": 141,
     "cardsPlayed": 2317
   },
   "thisRun": {
-    "tournaments": 3,
-    "decks": 64,
-    "empty": 2,
+    "tournaments": 2,
+    "decks": 17,
+    "empty": 1,
     "wrongSize": 0,
     "illegalCounts": 0,
     "unresolvedCards": 0,
     "unresolvedLeaders": 0,
-    "requests": 10
+    "requests": 9
   },
   "coverage": {
-    "tournamentsRead": 2351,
+    "tournamentsRead": 2353,
     "oldest": "2023-03-23T23:15:00.000Z",
-    "newest": "2026-09-01T18:00:00.000Z"
+    "newest": "2026-09-01T22:00:00.000Z"
   },
   "filters": {
     "minPlayers": 8,
-    "since": "2026-06-01"
+    "since": "2026-06-02"
   },
   "venues": {
+    "offline": 224,
     "simulator": 411,
     "webcam": 378,
-    "offline": 223,
     "online": 9
   },
   "tiers": {
-    "local": 939,
+    "local": 940,
     "finals": 9,
     "championship": 4,
     "qualifier": 12,
@@ -52,26 +52,26 @@
       "set": "OP17",
       "from": "2026-08-17",
       "kind": "Expansion",
-      "peak": 96.9,
+      "peak": 92.4,
       "cards": 109,
       "codes": [
         "OP-17"
       ],
-      "decks": 1056
+      "decks": 1073
     },
     {
       "code": "ST-32, ST-31, ST-34",
       "set": "ST32",
       "from": "2026-07-15",
       "kind": "Starter deck",
-      "peak": 33.7,
+      "peak": 33,
       "cards": 15,
       "codes": [
         "ST-32",
         "ST-31",
         "ST-34"
       ],
-      "decks": 2350
+      "decks": 2367
     },
     {
       "code": "OP-16",
@@ -83,7 +83,7 @@
       "codes": [
         "OP-16"
       ],
-      "decks": 4247
+      "decks": 4264
     },
     {
       "code": "ST-30",
@@ -95,7 +95,7 @@
       "codes": [
         "ST-30"
       ],
-      "decks": 4247
+      "decks": 4264
     },
     {
       "code": "OP-15",
@@ -107,7 +107,7 @@
       "codes": [
         "OP-15"
       ],
-      "decks": 6958
+      "decks": 6975
     },
     {
       "code": "EB-03",
@@ -119,7 +119,7 @@
       "codes": [
         "EB-03"
       ],
-      "decks": 8485
+      "decks": 8502
     },
     {
       "code": "EB-04",
@@ -131,7 +131,7 @@
       "codes": [
         "EB-04"
       ],
-      "decks": 9854
+      "decks": 9871
     },
     {
       "code": "ST-29",
@@ -143,7 +143,7 @@
       "codes": [
         "ST-29"
       ],
-      "decks": 9854
+      "decks": 9871
     },
     {
       "code": "OP-14",
@@ -155,7 +155,7 @@
       "codes": [
         "OP-14"
       ],
-      "decks": 10141
+      "decks": 10158
     },
     {
       "code": "OP-13",
@@ -167,7 +167,7 @@
       "codes": [
         "OP-13"
       ],
-      "decks": 11941
+      "decks": 11958
     },
     {
       "code": "PRB-02",
@@ -179,7 +179,7 @@
       "codes": [
         "PRB-02"
       ],
-      "decks": 13519
+      "decks": 13536
     },
     {
       "code": "ST-22",
@@ -191,7 +191,7 @@
       "codes": [
         "ST-22"
       ],
-      "decks": 14352
+      "decks": 14369
     },
     {
       "code": "OP-12",
@@ -203,7 +203,7 @@
       "codes": [
         "OP-12"
       ],
-      "decks": 14775
+      "decks": 14792
     },
     {
       "code": "ST-23",
@@ -215,7 +215,7 @@
       "codes": [
         "ST-23"
       ],
-      "decks": 16279
+      "decks": 16296
     },
     {
       "code": "OP-11",
@@ -227,7 +227,7 @@
       "codes": [
         "OP-11"
       ],
-      "decks": 16294
+      "decks": 16311
     },
     {
       "code": "ST-25, ST-26, ST-24, ST-27",
@@ -242,7 +242,7 @@
         "ST-24",
         "ST-27"
       ],
-      "decks": 16294
+      "decks": 16311
     },
     {
       "code": "EB-02",
@@ -254,7 +254,7 @@
       "codes": [
         "EB-02"
       ],
-      "decks": 17213
+      "decks": 17230
     },
     {
       "code": "OP-10",
@@ -266,7 +266,7 @@
       "codes": [
         "OP-10"
       ],
-      "decks": 19815
+      "decks": 19832
     },
     {
       "code": "ST-21",
@@ -278,7 +278,7 @@
       "codes": [
         "ST-21"
       ],
-      "decks": 19815
+      "decks": 19832
     },
     {
       "code": "OP-09",
@@ -290,7 +290,7 @@
       "codes": [
         "OP-09"
       ],
-      "decks": 23801
+      "decks": 23818
     },
     {
       "code": "ST-15",
@@ -302,7 +302,7 @@
       "codes": [
         "ST-15"
       ],
-      "decks": 25498
+      "decks": 25515
     },
     {
       "code": "ST-16",
@@ -314,7 +314,7 @@
       "codes": [
         "ST-16"
       ],
-      "decks": 26117
+      "decks": 26134
     },
     {
       "code": "ST-17, ST-18",
@@ -327,7 +327,7 @@
         "ST-17",
         "ST-18"
       ],
-      "decks": 26165
+      "decks": 26182
     },
     {
       "code": "OP-08",
@@ -339,7 +339,7 @@
       "codes": [
         "OP-08"
       ],
-      "decks": 29532
+      "decks": 29549
     },
     {
       "code": "ST-14",
@@ -351,7 +351,7 @@
       "codes": [
         "ST-14"
       ],
-      "decks": 31218
+      "decks": 31235
     },
     {
       "code": "OP-07",
@@ -363,7 +363,7 @@
       "codes": [
         "OP-07"
       ],
-      "decks": 36804
+      "decks": 36821
     },
     {
       "code": "EB-01",
@@ -375,7 +375,7 @@
       "codes": [
         "EB-01"
       ],
-      "decks": 44931
+      "decks": 44948
     },
     {
       "code": "ST-13",
@@ -387,7 +387,7 @@
       "codes": [
         "ST-13"
       ],
-      "decks": 46364
+      "decks": 46381
     },
     {
       "code": "ST-12",
@@ -399,7 +399,7 @@
       "codes": [
         "ST-12"
       ],
-      "decks": 49264
+      "decks": 49281
     },
     {
       "code": "OP-06",
@@ -411,7 +411,7 @@
       "codes": [
         "OP-06"
       ],
-      "decks": 49598
+      "decks": 49615
     },
     {
       "code": "OP-05",
@@ -423,7 +423,7 @@
       "codes": [
         "OP-05"
       ],
-      "decks": 53072
+      "decks": 53089
     },
     {
       "code": "ST-10",
@@ -435,7 +435,7 @@
       "codes": [
         "ST-10"
       ],
-      "decks": 54513
+      "decks": 54530
     },
     {
       "code": "OP-04",
@@ -447,7 +447,7 @@
       "codes": [
         "OP-04"
       ],
-      "decks": 56464
+      "decks": 56481
     },
     {
       "code": "ST-09, ST-08",
@@ -460,7 +460,7 @@
         "ST-09",
         "ST-08"
       ],
-      "decks": 57207
+      "decks": 57224
     },
     {
       "code": "OP-03",
@@ -472,7 +472,7 @@
       "codes": [
         "OP-03"
       ],
-      "decks": 57257
+      "decks": 57274
     },
     {
       "code": "ST-07",
@@ -484,7 +484,7 @@
       "codes": [
         "ST-07"
       ],
-      "decks": 57257
+      "decks": 57274
     },
     {
       "code": "ST-06, ST-03, ST-04, ST-05",
@@ -499,8 +499,8 @@
         "ST-04",
         "ST-05"
       ],
-      "decks": 58271
+      "decks": 58288
     }
   ],
-  "durationMs": 3709
+  "durationMs": 3033
 }
