@@ -24,33 +24,12 @@
 import { writeFile, readFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { SPOILER_SOURCES } from './sources.mjs';
+import { BACKOFF, exitOnFailure, finalError, refusal, TURNED_AWAY } from './refusal.mjs';
 
 const SRC = SPOILER_SOURCES.topdecks;
 const DATA = path.resolve('data');
 
 const log = (...m) => console.log('[spoilers]', ...m);
-
-/**
- * Waits between attempts, in seconds.
- *
- * The old backoff was 0.5s and 2s, so all three attempts landed inside four
- * seconds — which is no use at all against the thing that actually goes wrong here.
- * The upstream is WordPress behind a filter that occasionally answers a datacenter
- * IP with an interstitial **200 carrying HTML**, and those are measured in tens of
- * seconds. Four attempts across a minute clears most of them; the run is a cron job
- * with nothing waiting on it, so the minute is free.
- */
-const BACKOFF = [3, 10, 30];
-
-/**
- * A refusal, as opposed to a breakage.
- *
- * `err.refused` marks "the upstream would not talk to us": an HTML body where JSON
- * was promised, or a 403/429/503. It is deliberately narrow — a 200 of real JSON
- * that fails to parse, or a shape we did not expect, is a broken assumption and
- * stays fatal.
- */
-const refusal = (message) => Object.assign(new Error(message), { refused: true });
 
 async function getJson(url, { retries = 4 } = {}) {
   for (let attempt = 1; attempt <= retries; attempt++) {
@@ -60,7 +39,7 @@ async function getJson(url, { retries = 4 } = {}) {
         signal: AbortSignal.timeout(45_000),
       });
 
-      if ([403, 429, 503].includes(res.status)) {
+      if (TURNED_AWAY.includes(res.status)) {
         throw refusal(`HTTP ${res.status} — the upstream turned us away`);
       }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -77,22 +56,7 @@ async function getJson(url, { retries = 4 } = {}) {
       }
       return JSON.parse(body);
     } catch (err) {
-      /*
-       * A connection that never completed is a refusal too — arguably a plainer one
-       * than an HTML body. `fetch failed` is what undici raises for a reset, a DNS
-       * miss or a TLS handshake that went nowhere, and AbortError is our own
-       * timeout. None of them is this repository having got something wrong.
-       */
-      const network =
-        err.name === 'TimeoutError' ||
-        err.name === 'AbortError' ||
-        /fetch failed|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN/i.test(err.message);
-
-      if (attempt === retries) {
-        throw err.refused || network
-          ? refusal(`${url}: ${err.message}`)
-          : new Error(`${url}: ${err.message}`);
-      }
+      if (attempt === retries) throw finalError(url, err);
       const wait = BACKOFF[attempt - 1] ?? 30;
       log(`  ${err.message} — retrying in ${wait}s`);
       await new Promise((r) => setTimeout(r, wait * 1000));
@@ -370,13 +334,5 @@ main().catch((err) => {
    * Anything else still exits 1: a shape that changed, a parse that broke, a file
    * that would not write.
    */
-  if (err.refused) {
-    console.error('[spoilers] upstream refused —', err.message);
-    console.error('[spoilers] nothing written; the archive keeps the reveals it had');
-    console.log(`::warning title=Spoilers upstream refused::${err.message}`);
-    process.exit(0);
-  }
-
-  console.error('[spoilers] FAILED —', err.message);
-  process.exit(1);
+  exitOnFailure('spoilers', err, 'nothing written; the archive keeps the reveals it had');
 });

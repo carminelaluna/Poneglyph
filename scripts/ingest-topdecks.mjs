@@ -4,6 +4,10 @@
  *
  *   node scripts/ingest-topdecks.mjs [--region jp|en|both] [--limit N]
  *
+ * `--limit N` reads only the first N pages of a region and never writes: a
+ * spot check of two pages is not the archive, and letting one overwrite the
+ * corpus would be the same data loss this ingest is now guarded against.
+ *
  * Limitless only goes back to 2026 and covers the Western scene almost exclusively
  * — one Japanese player in 8,500. One Piece Top Decks fills both gaps: it keeps
  * per-set deck-list pages for Japan *and* English running back to OP-01, and every
@@ -40,6 +44,7 @@ import { writeFile, readFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { DECK_SOURCES } from './sources.mjs';
 import { KEEP_AT_LEAST, refusesWrite } from './corpus-guard.mjs';
+import { BACKOFF, exitOnFailure, finalError, refusal, TURNED_AWAY } from './refusal.mjs';
 
 const args = process.argv.slice(2);
 const flag = (name, fallback = null) => {
@@ -72,25 +77,30 @@ const REGIONS = {
   },
 };
 
-async function get(url, { retries = 3 } = {}) {
+async function get(url, { retries = 4 } = {}) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const res = await fetch(url, {
         headers: { 'user-agent': 'poneglyph-topdecks/1.0' },
         signal: AbortSignal.timeout(60_000),
       });
+      /* Not now, rather than not ever — see refusal.mjs for which is which. */
+      if (TURNED_AWAY.includes(res.status)) {
+        throw refusal(`HTTP ${res.status} — the upstream turned us away`);
+      }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return res.text();
     } catch (err) {
-      if (attempt === retries) throw new Error(`${url}: ${err.message}`);
+      if (attempt === retries) throw finalError(url, err);
       /*
        * Seconds, not milliseconds. This host sits behind a filter that sometimes
        * answers a datacenter IP with a challenge, and those clear in tens of
        * seconds — a backoff of 0.7s and 2.8s put all three attempts inside the same
-       * blocked window. It is the failure that has been reddening update-spoilers,
-       * and this ingest reads the same host.
+       * blocked window.
        */
-      await new Promise((r) => setTimeout(r, [3000, 10_000, 30_000][attempt - 1] ?? 30_000));
+      const wait = BACKOFF[attempt - 1] ?? 30;
+      log(`  ${err.message} — retrying in ${wait}s`);
+      await new Promise((r) => setTimeout(r, wait * 1000));
     }
   }
   return null;
@@ -218,6 +228,7 @@ async function main() {
   if (wantRegions.length === 0) throw new Error('--region must be jp, en, or both');
 
   const limit = Number(flag('limit', 0)) || Infinity;
+  const limited = Number.isFinite(limit);
   const summary = {};
   const refused = [];
 
@@ -324,6 +335,20 @@ async function main() {
       .catch(() => 0);
 
     if (refusesWrite(decks.length, held, KEEP_AT_LEAST)) {
+      /*
+       * `--limit` narrows the read on purpose, so of course it comes back with a
+       * fraction of the archive — the guard fires on every limited run and would
+       * be nothing but noise there. It is still a refusal, and the better one:
+       * a spot-check of two pages must not replace the corpus. So the flag makes
+       * this ingest read-only rather than making it unguarded, and the run says
+       * that instead of blaming the upstream for a narrowing we asked for.
+       */
+      if (limited) {
+        log(`  --limit is set, so this is a spot check — the ${held} on disk stand`);
+        summary[region.label] = `${held} kept (--limit)`;
+        continue;
+      }
+
       refused.push({ region: region.label, found: decks.length, held });
       log(
         `  refusing to write ${decks.length} decks over the ${held} already recorded ` +
@@ -365,7 +390,13 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('[topdecks] FAILED —', err.message);
-  process.exit(1);
-});
+/*
+ * A refusal is not a breakage, and this ingest used to treat every one as one.
+ * The run that prompted this exited 1 on `fetch failed` reaching the deck-list
+ * index — the same host, the same filter, and the sibling ingest reading it had
+ * already been taught the difference. Nothing is written either way, so the
+ * archive keeps what it had.
+ */
+main().catch((err) =>
+  exitOnFailure('topdecks', err, 'nothing written; the archive keeps the decks it had')
+);

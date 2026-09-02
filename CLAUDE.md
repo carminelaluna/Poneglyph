@@ -72,6 +72,7 @@ two runs before the answer is refused.
 ```
 sources.mjs          every upstream, with its role and limits
 corpus-guard.mjs     when an answer is too small to overwrite what is recorded
+refusal.mjs          an upstream that will not talk, told apart from a bug of ours
 limitless.mjs        the rate limiter and request helper, shared by two ingests
 matchups.mjs         a bracket -> results, and the flip that stores both sides
 price-history.mjs    the append and the ninety-day trim, both pure
@@ -744,6 +745,16 @@ both corpora away to nothing. The same command from a home connection read 6,037
 and 5,920. Nothing between the empty answer and the write said no — the invariant
 below claimed otherwise and this ingest was the one that did not hold it.
 
+That was one of two shapes, and the run that proved the fix hit the other: the
+next scheduled attempt could not reach the index page at all (`fetch failed`) and
+`ingest-topdecks.mjs` exited 1, because only the spoilers ingest had been taught
+that a refusal is not a breakage — for the same host. `scripts/refusal.mjs` is
+that judgement, shared so the two cannot drift, the way `limitless.mjs` shares a
+rate limiter: 403/429/503 and a connection that never completed are the upstream's
+decision and exit 0 with a `::warning`; a parse that broke or a shape that changed
+is ours and still exits 1. What it cannot see is a refusal wearing a successful
+answer, which is the other half:
+
 `scripts/corpus-guard.mjs` holds it now: `refusesWrite(found, held)` refuses an
 empty answer over a non-empty corpus, and any run that comes back with less than
 half of what is recorded — these are per-set archive pages, so the count only ever
@@ -755,6 +766,12 @@ test proved that by deleting a `Math.max` from it and passing, which is how a de
 branch in the first version was found. A refusal warns and exits 0: the corpus on
 disk is untouched, and a job red every eight hours for someone else's filter is a
 job nobody reads.
+
+`--limit N` now reads without writing, for the same reason and not as an
+afterthought: a spot check of two pages looks exactly like a collapse to the
+guard, so the flag makes the ingest read-only rather than unguarded — which is
+also what you want from a flag whose whole purpose is reading a couple of pages
+by hand.
 
 Two things followed from the same run. `build-indexes.mjs` failed on the empty
 corpus as `Invalid time value`, from `shiftDays(index.window.to, ...)` with a null
@@ -939,4 +956,4 @@ Standard-legal, 20 via the block exception · 2,651 priced · 69,708 decklists �
 English 63,814 from 2022-10, Japanese 5,894 from 2022-07 · 7,904 tournaments ·
 18,960 named players, 3,691 with five or more results · 152,529 recorded matches
 from 1,020 brackets · 44/46 release windows · 53 dated set releases · 67 announced
-official events across 6 types · 121 tests.
+official events across 6 types · 145 tests.
