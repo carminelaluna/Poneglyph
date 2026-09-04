@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { meta } from '@/lib/cards';
 import { decksMeta, hasDeckData } from '@/lib/decks';
+import banlistJson from '@data/banlist.json';
 import matchupsJson from '@data/matchups.json';
 import priceHistory from '@data/price-history.json';
 
@@ -13,6 +14,12 @@ export const metadata: Metadata = {
 
 const matchups = matchupsJson as { counts: { matches: number; tournaments: number; pending: number } };
 const priceDays = (priceHistory as { days?: string[] }).days ?? [];
+
+/* Only the two fields this page reads; the banlist page owns the full shape. */
+const banlist = banlistJson as {
+  effectiveFrom: string | null;
+  source: { label: string; url: string };
+};
 
 export default function DataPage() {
   const built = new Date(meta.generatedAt);
@@ -109,6 +116,26 @@ export default function DataPage() {
                   </td>
                 </tr>
               ))}
+              {/*
+                The banlist's own source, which comes from a different ingest and so
+                is not in `meta.sources`. It belongs in this table all the same: the
+                page that used to name it stopped doing so.
+              */}
+              <tr>
+                <td>{banlist.source.label}</td>
+                <td className="muted">banned &amp; restricted</td>
+                <td>
+                  <a
+                    href={banlist.source.url}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="mono"
+                    style={{ fontSize: '0.76rem' }}
+                  >
+                    {banlist.source.url.replace(/^https?:\/\//, '')}
+                  </a>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -243,6 +270,33 @@ export default function DataPage() {
             that event. Only Limitless publishes pairings, so matchups cover its events and
             say so. Mirrors are left out, and a pair that has met fewer than five times is
             held back — 67% from three games is noise wearing a percentage.
+          </p>
+          {/*
+            The banlist page used to carry these two sentences itself, above the
+            cards. They are facts about the rules rather than about the page, and
+            this is where the rest of "how to read what you are looking at" lives,
+            so they moved rather than went.
+          */}
+          <p style={{ margin: 0 }}>
+            <strong>A ban applies to a card, not to a printing.</strong> Alternate arts count
+            as the same card, so a banned card is banned in every version of it. Restrictions
+            apply to both Standard and Extra unless the list says otherwise
+            {banlist.effectiveFrom ? (
+              <>
+                {' — the current one has been in effect since '}
+                <strong style={{ color: 'var(--glyph)' }}>{banlist.effectiveFrom}</strong>
+              </>
+            ) : null}
+            {'. It is read from '}
+            <a
+              href={banlist.source.url}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="inline-link"
+            >
+              {banlist.source.label}
+            </a>
+            ; where this site and Bandai disagree, Bandai is right.
           </p>
           <p style={{ margin: 0 }}>
             <strong>Time windows are measured from the newest result on record</strong>, not

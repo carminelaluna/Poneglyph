@@ -25,6 +25,16 @@ images of cards that are not out is the reason the page may show them at all, so
 attribution and *liable to change* moved into the line already at the foot of the
 page rather than being restated twice at the top.
 
+When a caveat comes off a page it has to land somewhere, and mostly it already
+had: the metagame's sampling line is `/data` under *How to read the numbers*, and
+*if we and Bandai disagree, Bandai is right* is `/legal` under *Rules and
+rulings*, both said better and at length. Two facts from the banlist header were
+the exception — that a ban applies to every printing of a card, and that
+restrictions cover Standard and Extra unless stated — because those are facts
+about the rules rather than about this site, and nothing else carried them. They
+are on `/data` now, with the effective date and the source, which that table had
+also never listed.
+
 **Caveats live on the page that exists for them, not on every page.** Ten pages each
 carried a dashed red callout, which made the treatment reserved for "look at this"
 the thing a reader met almost everywhere. How the archive is built — sampling, decks
