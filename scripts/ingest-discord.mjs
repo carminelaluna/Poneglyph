@@ -467,6 +467,20 @@ async function main() {
    * the channel and simply keeps no pictures.
    */
   if (!fixture && !has('no-images')) {
+    /*
+     * `thumb` is a claim about a file, so it is checked against the file. The
+     * first run wrote twelve thumbnails and the commit step staged none of them:
+     * the corpus said every card had a picture, the files were gone, and the next
+     * run believed the corpus and made nothing. A record of a file that is not
+     * there has to mean "make it", or one bad run is permanent.
+     */
+    const held = new Set(await readdir(THUMBS).catch(() => []));
+    for (const set of merged.values()) {
+      for (const card of set.cards) {
+        if (card.thumb && !held.has(card.thumb)) card.thumb = null;
+      }
+    }
+
     const wanted = [...merged.values()].flatMap((set) =>
       set.cards.filter((c) => c.image && !c.thumb).map((c) => c)
     );

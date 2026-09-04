@@ -93,7 +93,12 @@ jobs:
           # throws away what it actually wrote. The thumbnails were written in the
           # runner and discarded here, so the corpus said every EB-05 card had a
           # picture and the page pointed at twelve files that did not exist.
-          git add data public/data public/spoilers
+          git add data public/data
+          # Only if it exists: `git add` on a missing pathspec is fatal, and under
+          # `bash -e` that takes the whole step down — which is how the fix for the
+          # unstaged thumbnails failed on the very next run, before any had been
+          # made again.
+          if [ -d public/spoilers ]; then git add public/spoilers; fi
           # generatedAt and durationMs change on every run, so a plain diff would
           # commit, rebuild and redeploy the site to publish a new timestamp.
           if ! node scripts/substantive-change.mjs; then
