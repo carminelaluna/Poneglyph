@@ -1006,6 +1006,28 @@ button.chip-solid:hover {
 }
 
 /*
+ * The picture is a link to itself, so it has to look like one on the way to being
+ * clicked. The lift is small on purpose: a grid of these should read as a grid,
+ * not as a row of buttons.
+ */
+.spoiler-open {
+  display: block;
+  border-radius: var(--radius);
+  transition:
+    transform 0.14s var(--ease),
+    box-shadow 0.14s var(--ease);
+}
+
+.spoiler-open:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--lift);
+}
+
+.spoiler-open:active {
+  transform: translateY(0);
+}
+
+/*
  * A reveal with a number and no picture, which is most of them: the fast source
  * carries card numbers within minutes and its image links expire within hours,
  * so there is nothing to point at. The frame keeps the grid even and takes a

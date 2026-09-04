@@ -82,43 +82,66 @@ export default function SpoilersPage() {
 
             {set.cards.length > 0 ? (
               <div className="spoiler-grid">
-                {set.cards.map((card) => (
-                  <figure key={card.id} className="spoiler-card">
-                    {/*
-                      A card number with no picture is still a reveal, and most of
-                      them are: the Discord source carries the numbers within
-                      minutes but its image links are signed and expire in hours,
-                      so nothing points at one. A broken image is worse than an
-                      honest empty frame, which is what this is.
-                    */}
-                    {card.image || card.thumb ? (
-                      <img
+                {set.cards.map((card) => {
+                  /* Ours if we kept a thumbnail, the source's if we only linked one. */
+                  const source = card.thumb ? asset(`/spoilers/${card.thumb}`) : card.image;
+                  return (
+                    <figure key={card.id} className="spoiler-card">
+                      {/*
+                        A card number with no picture is still a reveal, and most of
+                        them are: the Discord source carries the numbers within
+                        minutes but its image links are signed and expire in hours,
+                        so nothing points at one. A broken image is worse than an
+                        honest empty frame, which is what this is.
+                      */}
+                      {card.image || card.thumb ? (
                         /*
-                          `asset()` and not a bare path: this site is served under
-                          a basePath, and a hand-written src is one of the two
-                          things Next does not rewrite.
+                          The picture opens itself, in a tab of its own. A reveal is
+                          drawn a few centimetres wide in this grid and the thing a
+                          reader wants next is a closer look — which for these is the
+                          file, since there is no card page to send them to until the
+                          set ships.
+
+                          A new tab rather than a navigation: leaving the page to
+                          look at one card, then coming back to find the grid where
+                          you left it, is the interaction this is instead of.
                         */
-                        src={card.thumb ? asset(`/spoilers/${card.thumb}`) : card.image!}
-                        alt={card.name ? `${card.name} (${card.id})` : card.id}
-                        loading="lazy"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      <span className="spoiler-blank" aria-hidden="true" />
-                    )}
-                    <figcaption>
-                      <b>{card.name ?? 'Name not listed'}</b>
-                      <span className="mono">{card.id}</span>
-                    </figcaption>
-                    {/*
-                      Only when there is one. A reveal that is already in English
-                      does not come with a translation, so most of these are the
-                      Japanese ones, and this is the only place on the site that
-                      says what an unreleased card does.
-                    */}
-                    {card.text ? <p className="spoiler-text">{card.text}</p> : null}
-                  </figure>
-                ))}
+                        <a
+                          href={source!}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          className="spoiler-open"
+                          aria-label={`Open the full image of ${card.name ?? card.id}`}
+                        >
+                          <img
+                            /*
+                              `asset()` and not a bare path: this site is served under
+                              a basePath, and a hand-written src is one of the two
+                              things Next does not rewrite.
+                            */
+                            src={source!}
+                            alt={card.name ? `${card.name} (${card.id})` : card.id}
+                            loading="lazy"
+                            referrerPolicy="no-referrer"
+                          />
+                        </a>
+                      ) : (
+                        <span className="spoiler-blank" aria-hidden="true" />
+                      )}
+                      <figcaption>
+                        <b>{card.name ?? 'Name not listed'}</b>
+                        <span className="mono">{card.id}</span>
+                      </figcaption>
+                      {/*
+                        Only when there is one. A reveal that is already in English
+                        does not come with a translation, so most of these are the
+                        Japanese ones, and this is the only place on the site that
+                        says what an unreleased card does.
+                      */}
+                      {card.text ? <p className="spoiler-text">{card.text}</p> : null}
+                    </figure>
+                  );
+                })}
               </div>
             ) : (
               <p className="muted">Announced, but no card images have surfaced yet.</p>

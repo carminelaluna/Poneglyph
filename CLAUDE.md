@@ -905,6 +905,13 @@ somebody's role and noise to every reader. Splitting on a colour costs a name to
 card actually called something like *Red-Haired*, where nothing sits before it,
 and that is deliberate: no name is better than a blank one.
 
+**A reveal opens itself, and only on `/spoilers`.** The picture links to the file
+it is showing — `/spoilers/EB05-036.webp` — in a tab of its own. A card is drawn a
+couple of centimetres wide in that grid and the next thing a reader wants is a
+closer look, which here is the file itself: there is no card page to send them to
+until the set ships, which is the whole condition for being on this page. A new
+tab rather than a navigation, so coming back finds the grid where it was left.
+
 **The text is the reveal, when the card is not English.** A Japanese card arrives
 as a photograph plus somebody typing out what it does, and that transcription is
 the only thing on the site that says what an unreleased card does — an English
