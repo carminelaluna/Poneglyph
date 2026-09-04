@@ -267,9 +267,9 @@ export default function DataPage() {
             <strong>Matchups come from brackets, not from records.</strong> A win rate is a
             deck&rsquo;s record against the field; a matchup is its record against a named
             opponent, joined from published pairings and the Leader each player registered at
-            that event. Only Limitless publishes pairings, so matchups cover its events and
-            say so. Mirrors are left out, and a pair that has met fewer than five times is
-            held back — 67% from three games is noise wearing a percentage.
+            that event. Only Limitless publishes pairings, so matchups cover its events rather
+            than the whole archive. Mirrors are left out, and a pair that has met fewer than
+            five times is held back — 67% from three games is noise wearing a percentage.
           </p>
           {/*
             The banlist page used to carry these two sentences itself, above the

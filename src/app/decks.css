@@ -137,6 +137,30 @@
   background: var(--slab);
 }
 
+/*
+ * The head of a page that is about an archetype without being the archetype page:
+ * the full matchup table and the full decklist table. Same furniture as
+ * `.arch-head`, a quarter of the height — those pages were reached by a reader who
+ * asked for one table, so 200px of leader art would be something to scroll past on
+ * the way to the answer.
+ */
+.arch-sub-head {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr);
+  gap: 1.1rem;
+  align-items: center;
+  padding-block: 1.6rem 1.1rem;
+}
+
+.arch-sub-head > img {
+  width: 100%;
+  border-radius: 4px;
+  aspect-ratio: 5 / 7;
+  object-fit: cover;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.07), 0 10px 24px -14px rgba(0, 0, 0, 0.95);
+  background: var(--slab);
+}
+
 /* Cards of the archetype, grouped by how reliably they appear. */
 .skeleton {
   display: grid;
@@ -296,6 +320,10 @@
 @media (max-width: 720px) {
   .arch-head {
     grid-template-columns: 1fr;
+  }
+  .arch-sub-head {
+    grid-template-columns: 46px minmax(0, 1fr);
+    gap: 0.85rem;
   }
   .arch-head > img {
     max-width: 190px;

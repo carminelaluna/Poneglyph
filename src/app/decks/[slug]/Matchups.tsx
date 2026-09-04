@@ -25,8 +25,15 @@ import { loadLeaders, type Leaders } from '@/lib/shards';
  * that ended level is a real outcome and both decks failed to win it.
  *
  * **It is Limitless only.** Top Decks publishes finishing lists and organizers are
- * not asked for brackets, so this covers part of the corpus — which the blurb says
- * rather than leaving the reader to assume it covers all of it.
+ * not asked for brackets, so this covers part of the corpus. That used to be a
+ * paragraph above the table, along with the mirror rule and the five-game rule; all
+ * three are on `/data` under *How to read the numbers*, said at more length, and
+ * three sentences of preamble on every archetype page was the reader paying for
+ * them 141 times over. The conditional notes below stay, because they are not
+ * preamble: they describe why the table in front of you is empty.
+ *
+ * `limit` is what the archetype page passes — ten rows and a way through to the
+ * rest, which is the same trade the metagame table makes with its top ten.
  */
 
 /** Below this, a percentage says more about the sample than about the matchup. */
@@ -49,12 +56,18 @@ export default function Matchups({
   from,
   to,
   region,
+  limit,
+  moreHref,
 }: {
   leaderId: string;
   from: string | null;
   /* Exclusive, and set only for an era — see windowEnd in lib/meta.ts. */
   to: string | null;
   region: 'en' | 'jp';
+  /** Rows to draw. Unset means the whole table, which is the full page. */
+  limit?: number;
+  /** Where the whole table lives, when this one is capped. */
+  moreHref?: string;
 }) {
   const [payload, setPayload] = useState<Payload | null>(null);
   const [leaders, setLeaders] = useState<Leaders>({});
@@ -149,7 +162,15 @@ export default function Matchups({
 
   const solid = tallies.filter((t) => t.games >= MIN_GAMES);
   const thin = tallies.filter((t) => t.games < MIN_GAMES);
-  const shown = showThin ? [...solid, ...thin] : solid;
+  /*
+   * Capped, this shows the ten most played matchups and nothing else: the thin
+   * rows are the tail of a list that is already a head, so offering to unfold them
+   * here would answer a question the reader did not get to ask. They are on the
+   * full page, behind the same click they always were.
+   */
+  const capped = limit !== undefined;
+  const shown = capped ? solid.slice(0, limit) : showThin ? [...solid, ...thin] : solid;
+  const hidden = tallies.length - shown.length;
   const games = tallies.reduce((n, t) => n + t.games, 0);
 
   return (
@@ -160,12 +181,6 @@ export default function Matchups({
           {games.toLocaleString('en-US')} recorded games
         </span>
       </div>
-
-      <p className="muted" style={{ fontSize: '0.76rem', margin: '0 0 0.8rem', maxWidth: '70ch' }}>
-        From published brackets, so this is a record against a named opponent rather than
-        against the field. Limitless events only — the other sources publish finishing lists,
-        not pairings — and mirrors are left out, since a deck beats itself half the time.
-      </p>
 
       {shown.length === 0 ? (
         <p className="empty">
@@ -226,7 +241,15 @@ export default function Matchups({
         </div>
       )}
 
-      {thin.length > 0 ? (
+      {capped ? (
+        hidden > 0 && moreHref ? (
+          <p style={{ marginTop: '0.7rem' }}>
+            <Link href={moreHref} className="chip">
+              All {tallies.length} matchups →
+            </Link>
+          </p>
+        ) : null
+      ) : thin.length > 0 ? (
         <p style={{ marginTop: '0.7rem' }}>
           <button type="button" className="link-btn" onClick={() => setShowThin(!showThin)}>
             {showThin

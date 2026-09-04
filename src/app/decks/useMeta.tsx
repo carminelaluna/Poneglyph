@@ -143,7 +143,44 @@ export function useMetaIndex(region: Region = 'en', window_?: Window) {
   return { index: merged, error, loadingArchive };
 }
 
-const DEFAULT: Window = { kind: 'days', days: 30 };
+/** The window a page opens on, and so the one value the query string omits. */
+const DEFAULT_DAYS = 30;
+const DEFAULT: Window = { kind: 'days', days: DEFAULT_DAYS };
+
+/**
+ * The chosen view, written as a query string.
+ *
+ * Extracted from the effect below because it now has a second caller: the links
+ * out to the full matchup and decklist tables, which are separate pages and would
+ * otherwise land there showing the last 30 days however far back you had set the
+ * window. Two copies of this encoding would be two answers to "what is this page
+ * showing", and the reader would meet the disagreement rather than the bug.
+ *
+ * `base` keeps any parameter this does not own — the five it does are cleared
+ * first, so a re-encode replaces rather than appends.
+ */
+export function windowQuery(
+  window_: Window,
+  venues: Venue[],
+  tiers: string[],
+  region: Region,
+  base?: URLSearchParams
+): string {
+  const params = new URLSearchParams(base);
+  for (const key of ['days', 'era', 'play', 'tier', 'region']) params.delete(key);
+
+  if (window_.kind === 'era') params.set('era', window_.set);
+  else if (window_.kind === 'all') params.set('days', 'all');
+  else if (window_.days !== DEFAULT_DAYS) params.set('days', String(window_.days));
+  for (const v of venues) params.append('play', v);
+  for (const t of tiers) params.append('tier', t);
+  if (region !== 'en') params.set('region', region);
+
+  return params.toString();
+}
+
+/** The same, as a suffix ready to concatenate onto a path. */
+export const windowHref = (path: string, qs: string) => (qs ? `${path}?${qs}` : path);
 
 /**
  * The chosen window, kept in the address bar so a view can be linked to and so it
@@ -160,6 +197,8 @@ export function useWindow(): {
   setTiers: (t: string[]) => void;
   region: Region;
   setRegion: (r: Region) => void;
+  /** This view as a query string, for linking to a page that shows the same one. */
+  query: string;
 } {
   const [window_, setWindow] = useState<Window>(DEFAULT);
   const [venues, setVenues] = useState<Venue[]>([]);
@@ -186,21 +225,21 @@ export function useWindow(): {
     setReady(true);
   }, []);
 
+  /*
+   * The same encoding the "see all" links carry, so following one lands on the
+   * window that was being read rather than back on the default thirty days.
+   */
+  const query = windowQuery(window_, venues, tiers, region);
+
   useEffect(() => {
     if (!ready) return;
-    const params = new URLSearchParams(globalThis.location.search);
-    params.delete('days');
-    params.delete('era');
-    params.delete('play');
-    params.delete('tier');
-    params.delete('region');
-    if (window_.kind === 'era') params.set('era', window_.set);
-    else if (window_.kind === 'all') params.set('days', 'all');
-    else if (window_.days !== 30) params.set('days', String(window_.days));
-    for (const v of venues) params.append('play', v);
-    for (const t of tiers) params.append('tier', t);
-    if (region !== 'en') params.set('region', region);
-    const qs = params.toString();
+    const qs = windowQuery(
+      window_,
+      venues,
+      tiers,
+      region,
+      new URLSearchParams(globalThis.location.search)
+    );
     globalThis.history.replaceState(null, '', qs ? `?${qs}` : globalThis.location.pathname);
   }, [ready, window_, venues, tiers, region]);
 
@@ -211,7 +250,17 @@ export function useWindow(): {
     setTiers([]);
   };
 
-  return { window: window_, setWindow, venues, setVenues, tiers, setTiers, region, setRegion: changeRegion };
+  return {
+    window: window_,
+    setWindow,
+    venues,
+    setVenues,
+    tiers,
+    setTiers,
+    region,
+    setRegion: changeRegion,
+    query,
+  };
 }
 
 export function WindowBar({

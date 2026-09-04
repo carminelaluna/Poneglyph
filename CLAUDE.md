@@ -292,6 +292,48 @@ the deck rows already downloaded — they carry the event id, name, kind and fie
 size — so it costs no request, and it is scoped to the window, region and filters
 chosen right here, which is what makes it a different question from `/tournaments`.
 
+**An archetype page shows ten of each, and the rest have their own pages.** The
+matchup table ran to every opponent on record and the decklist table to sixty rows
+with a *Show more* under it, which put the two longest things on the page between
+the cards that define the deck and the end of it. Both now take ten and link out:
+`/decks/[slug]/matchups` and `/decks/[slug]/decklists`, prerendered per archetype,
+282 pages against a build that already makes 8,698 and costing no payload — they
+read the index the page they came from has already cached.
+
+The ordering control moved with the table it orders. *Best finish* is still the
+default and is now the only order the archetype page has, because a reader asking
+for the oldest lists is asking a different question and that is what the second
+page is for; *Newest* and *Oldest* live there, along with the growing limit, which
+starts at 100 rather than 60 since a page that exists to be long may as well be.
+
+**Ten by best finish, not ten winners, and the difference is 62% of these pages.**
+The ask was the last ten first places, and sorted by finish that is exactly what
+ten rows are wherever an archetype has ten. Measured against the corpus, in the
+default thirty-day window **42 of the 68 archetypes with recorded results have no
+first place at all** — one of them with 31 decks on record — so cutting strictly to
+winners would have left the majority of these pages with an empty *Decklists*
+section under a deck that plainly has results. The same sort answers with the ten
+best finishes instead, and the reader loses nothing: where wins exist they are
+still the top of the list.
+
+**Three sentences came off the matchup table, and `/data` already had all three.**
+*From published brackets · Limitless events only · mirrors are left out* sat above
+every archetype's table, which is the same paragraph 141 times for a rule about the
+archive rather than about the deck in front of you — and `/data` under *How to read
+the numbers* says it at more length, including the five-game rule. The conditional
+notes stay: *not for the Japanese corpus* and *no recorded pairings yet* are not
+preamble, they say why the table you are looking at is empty. One line on `/data`
+lost the words *and say so*, which had stopped being true the moment the blurb went.
+
+**The window travels with the link, and `windowQuery` is why it can.** The encoding
+that `useWindow` writes into the address bar was inline in its effect; it has a
+second caller now — every *All N →* and *Back to the archetype* link — and two
+copies of "what is this page showing" would have meant a reader clicking through
+from a four-year window and landing on the last thirty days. `useWindow` returns
+`query` for it. `DeckTable` was extracted for the same reason in the other
+direction: two copies of a decklist row would drift, and the one that drifted would
+be the one nobody was reading.
+
 **One action on a panel gets `.chip-solid`.** An outlined chip reads as a label
 when it is the only thing on a panel — *Sign out* was measured as, and looked
 like, a wide empty box. The solid variant is the same shape a step louder: the

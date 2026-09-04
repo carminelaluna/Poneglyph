@@ -3,9 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { art, artSrcSet } from '@/lib/art';
 import Link from 'next/link';
-import EventLink from '../EventLink';
+import DeckTable from './DeckTable';
 import Matchups from './Matchups';
-import PlayerLink from '../PlayerLink';
 import { pigment } from '@/lib/colors';
 import { dataUrl } from '@/lib/paths';
 import {
@@ -13,13 +12,12 @@ import {
   archetypeCards,
   filterDecks,
   formatRecord,
-  ordinal,
   windowEnd,
   windowStart,
   type DeckCardLists,
   type MetaCard,
 } from '@/lib/meta';
-import { WindowBar, WinRate, useMetaIndex, useWindow } from '../useMeta';
+import { WindowBar, WinRate, useMetaIndex, useWindow, windowHref } from '../useMeta';
 
 /**
  * Everything about an archetype that depends on the chosen window: its share and
@@ -29,33 +27,41 @@ import { WindowBar, WinRate, useMetaIndex, useWindow } from '../useMeta';
  * rendered, because that part is the archetype's identity and does not move.
  */
 /**
- * How the decklist table is ordered.
+ * How many lists this page draws before handing over to `/decklists`.
  *
- * Best finish is still the default — it is what an archetype page is usually read
- * for — but it must not be the only one. Sorted by finish and capped, a four-year
- * window shows sixty first places and nothing else, so every deck older than the
- * last sixty wins is unreachable however far back you set the window.
+ * Sorted by finish, ten is the ten most recent first places wherever the archetype
+ * has ten — which is what this section is read for. Where it does not, the same
+ * sort answers with the ten best finishes instead of an empty section, and that
+ * matters more than it sounds: in the default thirty-day window, 62% of archetypes
+ * with recorded results have no first place at all, and one of them has 31 decks on
+ * record. Cutting strictly to winners would have left the majority of these pages
+ * saying nothing about results they plainly have.
  */
-const ORDERS = [
-  ['finish', 'Best finish'],
-  ['newest', 'Newest'],
-  ['oldest', 'Oldest'],
-] as const;
+const HEAD = 10;
 
-export default function ArchetypeView({ leaderId, glow }: { leaderId: string; glow: string }) {
-  const { window: window_, setWindow, venues, setVenues, tiers, setTiers, region, setRegion } = useWindow();
+export default function ArchetypeView({
+  leaderId,
+  slug,
+  glow,
+}: {
+  leaderId: string;
+  /* Passed rather than derived: the two sub-pages are addressed by it. */
+  slug: string;
+  glow: string;
+}) {
+  const {
+    window: window_,
+    setWindow,
+    venues,
+    setVenues,
+    tiers,
+    setTiers,
+    region,
+    setRegion,
+    query,
+  } = useWindow();
   const { index, error, loadingArchive } = useMetaIndex(region, window_);
   const [lists, setLists] = useState<DeckCardLists | null>(null);
-  /*
-   * How the decklists below are ordered, and how many are drawn.
-   *
-   * Both exist because of the same complaint: the table was sorted by finish and
-   * capped at sixty with no way past it, so an archetype with nine hundred results
-   * showed sixty first places — the newest sixty — however far back the window
-   * reached. "Show me the old ones" had no answer on the page.
-   */
-  const [order, setOrder] = useState<'finish' | 'newest' | 'oldest'>('finish');
-  const [limit, setLimit] = useState(60);
 
   /*
    * Card lists for this archetype only. They are a fifth of the whole corpus, so
@@ -83,14 +89,15 @@ export default function ArchetypeView({ leaderId, glow }: { leaderId: string; gl
     const windowed = filterDecks(index, window_, venues, tiers);
     const all = aggregate(windowed, index);
     const mine = all.find((a) => a.leaderId === leaderId) ?? null;
+    /*
+     * Best finish, newest first within a placing — so the head of this list is the
+     * most recent wins. A deck with no recorded placing sorts last rather than
+     * first. The other two orders live on the full page, which is where a reader
+     * asking for the oldest lists is going anyway.
+     */
     const decks = windowed
       .filter((d) => d.l === leaderId)
-      .sort((a, b) => {
-        if (order === 'newest') return b.d.localeCompare(a.d) || (a.p ?? 999) - (b.p ?? 999);
-        if (order === 'oldest') return a.d.localeCompare(b.d) || (a.p ?? 999) - (b.p ?? 999);
-        /* A deck with no recorded placing sorts last rather than first. */
-        return (a.p ?? 999) - (b.p ?? 999) || b.d.localeCompare(a.d) || b.w - a.w;
-      });
+      .sort((a, b) => (a.p ?? 999) - (b.p ?? 999) || b.d.localeCompare(a.d) || b.w - a.w);
     const built = lists
       ? archetypeCards(decks.map((d) => d.i), lists, index)
       : null;
@@ -103,7 +110,7 @@ export default function ArchetypeView({ leaderId, glow }: { leaderId: string; gl
     const span = days.length ? { from: days[0], to: days[days.length - 1] } : null;
 
     return { mine, decks, built, span };
-  }, [index, window_, venues, tiers, leaderId, lists, order]);
+  }, [index, window_, venues, tiers, leaderId, lists]);
 
   if (error) {
     return (
@@ -208,31 +215,19 @@ export default function ArchetypeView({ leaderId, glow }: { leaderId: string; gl
             from={windowStart(window_, index)}
             to={windowEnd(window_, index)}
             region={region}
+            limit={HEAD}
+            moreHref={windowHref(`/decks/${slug}/matchups`, query)}
           />
 
           <div className="section-head" style={{ marginTop: '2.5rem' }}>
             <h2 className="display">Decklists</h2>
-            <span className="chip-row">
-              {ORDERS.map(([id, label]) => (
-                <button
-                  key={id}
-                  type="button"
-                  className="chip"
-                  aria-pressed={order === id}
-                  onClick={() => {
-                    setOrder(id);
-                    setLimit(60);
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
+            <span className="muted" style={{ fontSize: '0.78rem' }}>
+              {decks.length.toLocaleString('en-US')} in this window
             </span>
           </div>
 
           <p className="muted source-line" style={{ marginTop: '0.2rem' }}>
-            {Math.min(limit, decks.length).toLocaleString('en-US')} of{' '}
-            {decks.length.toLocaleString('en-US')} in this window
+            Best finish first
             {span ? (
               <>
                 {' '}
@@ -241,70 +236,13 @@ export default function ArchetypeView({ leaderId, glow }: { leaderId: string; gl
             ) : null}
           </p>
 
-          <div className="table-scroll">
-            <table className="meta-table">
-              <thead>
-                <tr>
-                  <th style={{ textAlign: 'right' }}>Place</th>
-                  <th style={{ textAlign: 'right' }}>Record</th>
-                  <th>Player</th>
-                  <th>Tournament</th>
-                  <th style={{ textAlign: 'right' }}>Players</th>
-                  <th style={{ textAlign: 'right' }}>Date</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {decks.slice(0, limit).map((deck) => (
-                  <tr key={deck.i}>
-                    <td className="mono" style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                      {deck.p === null ? (
-                        <span className="muted">—</span>
-                      ) : deck.p === 1 ? (
-                        <b style={{ color: 'var(--rune-lit)' }}>{ordinal(deck.p)}</b>
-                      ) : (
-                        ordinal(deck.p)
-                      )}
-                    </td>
-                    <td className="mono" style={{ textAlign: 'right' }}>
-                      {deck.w + deck.s === 0 ? (
-                        <span className="muted">—</span>
-                      ) : (
-                        formatRecord(deck.w, deck.s, deck.t)
-                      )}
-                    </td>
-                    <td>
-                    <PlayerLink name={deck.a} />
-                  </td>
-                    <td style={{ maxWidth: '26ch' }}>
-                      <EventLink name={deck.e} eventId={deck.x} />
-                    </td>
-                    <td className="mono muted" style={{ textAlign: 'right' }}>
-                      {deck.n || '—'}
-                    </td>
-                    <td className="mono muted" style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                      {deck.d}
-                    </td>
-                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                      <Link href={`/deck/${deck.i}`} className="muted" style={{ fontSize: '0.78rem' }}>
-                        View →
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DeckTable decks={decks.slice(0, HEAD)} />
 
-          {decks.length > limit ? (
+          {decks.length > HEAD ? (
             <p style={{ marginTop: '1rem' }}>
-              <button
-                type="button"
-                className="chip"
-                onClick={() => setLimit(limit + 200)}
-              >
-                Show more
-              </button>
+              <Link href={windowHref(`/decks/${slug}/decklists`, query)} className="chip">
+                All {decks.length.toLocaleString('en-US')} decklists →
+              </Link>
             </p>
           ) : null}
         </>

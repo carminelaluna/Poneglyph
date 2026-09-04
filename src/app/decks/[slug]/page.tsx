@@ -67,6 +67,7 @@ export default async function ArchetypePage({ params }: Params) {
 
       <ArchetypeView
         leaderId={archetype.leaderId}
+        slug={archetype.slug}
         glow={pigment(archetype.colors[0] ?? '')}
       />
     </div>
