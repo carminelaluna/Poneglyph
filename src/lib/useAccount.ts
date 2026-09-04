@@ -14,6 +14,14 @@ import { accountsEnabled, authRedirectTo, supabase } from './supabase';
  * `checked` is separate from `session` on purpose: "nobody is signed in" and "we have
  * not looked yet" render differently, and conflating them makes a Save button flash
  * into existence a moment after the page settles.
+ *
+ * `profile` needed the same distinction and did not have it, which is the same bug
+ * one layer down. It was `null` both while the row was being read and when there
+ * was none, so the account page fell through to the name the OAuth provider sent
+ * and showed *Carmine La Luna* for a moment before settling on the display name —
+ * and `/review` and `/submit`, whose gates are `isAdmin` and `isOrganizer`, told an
+ * admin they were not one until the row landed. `undefined` is now "not looked
+ * yet", `null` is "no row", and `roleKnown` is the answer both of those want.
  */
 
 export type Role = 'user' | 'organizer' | 'admin';
@@ -21,7 +29,8 @@ export type Profile = { display_name: string | null; role: Role };
 
 export function useAccount() {
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  /* undefined until the row has been read; null once we know there is none. */
+  const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [checked, setChecked] = useState(!accountsEnabled);
 
   useEffect(() => {
@@ -45,9 +54,12 @@ export function useAccount() {
   useEffect(() => {
     const client = supabase();
     if (!client || !session) {
+      /* No session is a settled answer: there is no profile to wait for. */
       setProfile(null);
       return;
     }
+    /* A new session means a new row to read, and until it lands we know nothing. */
+    setProfile(undefined);
     let cancelled = false;
     client
       .from('profiles')
@@ -134,6 +146,12 @@ export function useAccount() {
     session,
     profile,
     checked,
+    /*
+     * Whether the role is settled. `checked` says we know about the session;
+     * this says we know about the row behind it, which is what a gate on
+     * `isAdmin` or a heading showing a name actually needs.
+     */
+    roleKnown: !session || profile !== undefined,
     signedIn: Boolean(session),
     /*
      * Exactly what the insert policy on `submissions` checks, and not a superset:

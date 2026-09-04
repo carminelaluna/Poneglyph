@@ -477,6 +477,20 @@ closes on Escape and on a pointer down anywhere else, and closing returns focus
 to the trigger so a keyboard does not lose its place; `aria-haspopup` and
 `aria-expanded` are what make it a menu rather than a button that did nothing.
 
+**`undefined` is "not looked yet" and `null` is "no row", and `profile` did not
+make that distinction.** It was `null` in both cases, so for the moment between
+the session landing and the row arriving, the account page fell through to the
+name the OAuth provider sent — somebody's real name, shown in place of the display
+name they chose, on every refresh. `/review` and `/submit` had the same bug with
+worse manners: their gates are `isAdmin` and `isOrganizer`, both `false` in that
+gap, so they told the right person they were the wrong one before settling.
+
+`roleKnown` is the answer all three wanted, and it is the same distinction
+`checked` already made one layer up for the session. Showing a name late is a
+flicker; showing the wrong one is telling a reader something untrue about
+themselves in public, so the trigger holds a placeholder sized to about where a
+name settles — three pixels of movement rather than thirty.
+
 **The account page has one title, and it is the eyebrow.** It said *Account* in an
 eyebrow and *Your account* under it in display type — the same word twice at two
 sizes. The eyebrow is the `h1` rather than a paragraph left beside a deleted one,

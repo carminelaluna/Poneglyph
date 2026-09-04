@@ -122,7 +122,15 @@ type MenuItem = {
  * and closing puts focus back on the trigger so the keyboard does not lose its
  * place.
  */
-function AccountMenu({ name, items }: { name: string; items: MenuItem[] }) {
+function AccountMenu({
+  name,
+  items,
+  loading = false,
+}: {
+  name: string | null;
+  items: MenuItem[];
+  loading?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -160,9 +168,16 @@ function AccountMenu({ name, items }: { name: string; items: MenuItem[] }) {
         className="chip who-name"
         aria-haspopup="menu"
         aria-expanded={open}
+        /*
+          Nothing to open until we know whose account this is, and nothing to say
+          either: a placeholder holds the shape so the header does not jump when
+          the name lands, without claiming a name that may not be the right one.
+        */
+        aria-busy={loading}
+        disabled={loading}
         onClick={() => setOpen(!open)}
       >
-        {name}
+        {loading ? <span className="who-waiting" aria-label="Loading your account" /> : name}
         <svg className="who-caret" viewBox="0 0 10 6" aria-hidden="true">
           <path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" />
         </svg>
@@ -455,7 +470,7 @@ function OrganizerRequest({
 }
 
 export default function AccountView() {
-  const { session, profile, checked, signedIn, signOut, rename } =
+  const { session, profile, checked, roleKnown, signedIn, signOut, rename } =
     useAccount();
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -533,11 +548,22 @@ export default function AccountView() {
   /* ------------------------------------------------------------- signed in */
 
   if (signedIn && session) {
-    const name =
-      profile?.display_name ||
-      (session.user.user_metadata?.full_name as string) ||
-      session.user.email ||
-      'Signed in';
+    /*
+     * Nothing until the profile row lands.
+     *
+     * The session arrives first and carries what the OAuth provider knows, so
+     * falling through to `full_name` here meant the page showed the name Google
+     * or Discord has on file — a real name — for a moment on every refresh,
+     * before settling on the display name somebody chose instead. Showing a name
+     * late is a flicker; showing the wrong one is telling a reader something
+     * untrue about themselves in public.
+     */
+    const name = roleKnown
+      ? profile?.display_name ||
+        (session.user.user_metadata?.full_name as string) ||
+        session.user.email ||
+        'Signed in'
+      : null;
 
     return (
       <>
@@ -564,6 +590,7 @@ export default function AccountView() {
             */
             <AccountMenu
               name={name}
+              loading={!roleKnown}
               items={[
                 { label: 'Change name', onSelect: () => setRenaming(true) },
                 ...(profile?.role === 'user'

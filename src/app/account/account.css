@@ -84,6 +84,21 @@
   text-overflow: ellipsis;
 }
 
+/*
+ * The shape of a name, before there is one. It holds the trigger's width so the
+ * header does not jump when the row lands, and says nothing while it waits — the
+ * page used to fill this gap with the name the OAuth provider had on file.
+ */
+.who-waiting {
+  display: block;
+  /* About the width a name settles at, so the jump when it lands is a pixel or
+     two rather than thirty — measured against `theripper17x`. */
+  width: 5rem;
+  height: 0.72rem;
+  border-radius: 2px;
+  background: var(--slab-lift);
+}
+
 .who-name[aria-expanded='true'] {
   background: var(--slab-hi);
   border-color: var(--edge-strong);

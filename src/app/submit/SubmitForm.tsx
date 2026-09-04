@@ -179,7 +179,7 @@ function SubmissionHistory({ reloadKey }: { reloadKey: number }) {
 }
 
 export default function SubmitForm() {
-  const { checked, signedIn, isOrganizer, userId } = useAccount();
+  const { checked, roleKnown, signedIn, isOrganizer, userId } = useAccount();
   const [rows, setRows] = useState<Row[] | null>(null);
 
   const [eventName, setEventName] = useState('');
@@ -319,7 +319,12 @@ export default function SubmitForm() {
   if (!accountsEnabled) {
     return <p className="empty">Accounts are not set up on this deployment.</p>;
   }
-  if (!checked) return <p className="muted">Checking…</p>;
+  /*
+   * `roleKnown` as well as `checked`: the session lands before the profile row
+   * does, and refusing on `isOrganizer` in that gap told the right person they
+   * were the wrong one for a moment on every refresh.
+   */
+  if (!checked || !roleKnown) return <p className="muted">Checking…</p>;
   if (!signedIn) {
     return (
       <p className="empty">

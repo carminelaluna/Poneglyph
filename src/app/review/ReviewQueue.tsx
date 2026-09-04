@@ -245,7 +245,7 @@ function OrganizerRequests() {
 }
 
 export default function ReviewQueue() {
-  const { checked, signedIn, isAdmin } = useAccount();
+  const { checked, roleKnown, signedIn, isAdmin } = useAccount();
   const [tab, setTab] = useState<SubmissionStatus | 'all'>('pending');
   const [rows, setRows] = useState<Submission[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -287,7 +287,12 @@ export default function ReviewQueue() {
   if (!accountsEnabled) {
     return <p className="empty">Accounts are not set up on this deployment.</p>;
   }
-  if (!checked) return <p className="muted">Checking…</p>;
+  /*
+   * `roleKnown` as well as `checked`: the session lands before the profile row
+   * does, and refusing on `isAdmin` in that gap told the right person they
+   * were the wrong one for a moment on every refresh.
+   */
+  if (!checked || !roleKnown) return <p className="muted">Checking…</p>;
   if (!signedIn) {
     return (
       <p className="empty">
