@@ -698,8 +698,13 @@ recency is what worked.
 ## Gotchas
 
 **Control characters in regexes.** A `\b` written through a patch became a literal `0x08`
-three separate times. Invisible in an editor and in a diff, the regex compiles, and it
-matches nothing — the last one made the block-update list read as empty, twenty legal
+three separate times, and a fourth time it was worse: inside a **template literal**
+`` *is* the backspace character, so a regex built as
+`` new RegExp(`(?:${COLOURS.join('|')})`) `` compiled and matched nothing — and
+`npm run check` cannot see that one, because the file holds a backslash and a `b`
+and only the runtime turns them into a control character. Build a regex out of a
+variable by concatenating plain strings. Invisible in an editor and in a diff, the
+regex compiles, and it matches nothing — the last one made the block-update list read as empty, twenty legal
 cards silently reported as rotated out. `npm run check` fails on this and runs before the
 card ingest. When editing a regex through a script, verify with `grep … | cat -A`. Writing
 a file through a tool can turn `\u0000` escapes into real control characters; the check
@@ -889,6 +894,16 @@ them, and looked exactly like a missing Message Content intent — which cost tw
 runs to tell apart, and was settled by asking `GET /applications/@me` whether the
 intent was on rather than inferring it. Discord caps snapshot nesting at one
 level, so one pass reads all of it.
+
+**A reveal post is `Name Colour Type Rarity`, and the colour is the hinge.** They
+arrive wrapped in a code fence with a role ping on the end. What sits before the
+colour is the card's **name** — which the articles almost never give and which
+`/spoilers` had been printing as *Name not listed* under every one of these — and
+what follows is what else is known: a cost, a power, an ability. Discord's markup
+comes out first, mentions included, because an id printed on a public page is
+somebody's role and noise to every reader. Splitting on a colour costs a name to a
+card actually called something like *Red-Haired*, where nothing sits before it,
+and that is deliberate: no name is better than a blank one.
 
 **The text is the reveal, when the card is not English.** A Japanese card arrives
 as a photograph plus somebody typing out what it does, and that transcription is
