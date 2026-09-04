@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T10:40:48.593Z",
+  "generatedAt": "2026-09-04T11:33:22.127Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -12,7 +12,7 @@
     "named": 3,
     "articles": 3
   },
-  "durationMs": 2343,
+  "durationMs": 1975,
   "sets": [
     {
       "set": "OP18",
@@ -77,13 +77,15 @@
           "id": "EB05-005",
           "name": null,
           "image": null,
-          "thumb": "EB05-005.webp"
+          "thumb": "EB05-005.webp",
+          "text": "``` Belo Betty Red Character C``` <@&1370648885474889869>"
         },
         {
           "id": "EB05-007",
           "name": null,
           "image": null,
-          "thumb": "EB05-007.webp"
+          "thumb": "EB05-007.webp",
+          "text": "``` Monet Red Character C ``` <@&1370648885474889869>"
         },
         {
           "id": "EB05-010",
@@ -94,13 +96,15 @@
           "id": "EB05-011",
           "name": null,
           "image": null,
-          "thumb": "EB05-011.webp"
+          "thumb": "EB05-011.webp",
+          "text": "``` Otohime Green Character C ``` <@&1370648885474889869>"
         },
         {
           "id": "EB05-013",
           "name": null,
           "image": null,
-          "thumb": "EB05-013.webp"
+          "thumb": "EB05-013.webp",
+          "text": "``` Shirley Green Character C ``` <@&1370648885474889869>"
         },
         {
           "id": "EB05-016",
@@ -111,49 +115,57 @@
           "id": "EB05-023",
           "name": null,
           "image": null,
-          "thumb": "EB05-023.webp"
+          "thumb": "EB05-023.webp",
+          "text": "``` Osome Blue Character ``` <@&1370648885474889869>"
         },
         {
           "id": "EB05-025",
           "name": null,
           "image": null,
-          "thumb": "EB05-025.webp"
+          "thumb": "EB05-025.webp",
+          "text": "``` Domino Blue Character C ``` <@&1370648885474889869>"
         },
         {
           "id": "EB05-035",
           "name": null,
           "image": null,
-          "thumb": "EB05-035.webp"
+          "thumb": "EB05-035.webp",
+          "text": "``` Speed Purple Character C``` <@&1370648885474889869>"
         },
         {
           "id": "EB05-036",
           "name": null,
           "image": null,
-          "thumb": "EB05-036.webp"
+          "thumb": "EB05-036.webp",
+          "text": "``` Tsuru Purple Character 4 Cost / 0 Power +1000 Counter Navy ``` <@&1370648885474889869>"
         },
         {
           "id": "EB05-042",
           "name": null,
           "image": null,
-          "thumb": "EB05-042.webp"
+          "thumb": "EB05-042.webp",
+          "text": "``` Shinobu Black Character C 4 Cost / 5000 Power (Special) Land of Wano Counter +2000 [On Play] Draw 2 cards and trash 2 cards from your hand.``` <@&1370648885474889869>"
         },
         {
           "id": "EB05-045",
           "name": null,
           "image": null,
-          "thumb": "EB05-045.webp"
+          "thumb": "EB05-045.webp",
+          "text": "``` Ms. Monday Black Character C ``` <@&1370648885474889869>"
         },
         {
           "id": "EB05-054",
           "name": null,
           "image": null,
-          "thumb": "EB05-054.webp"
+          "thumb": "EB05-054.webp",
+          "text": "``` Charlotte Brulee Yellow Character C ``` <@&1370648885474889869>"
         },
         {
           "id": "EB05-056",
           "name": null,
           "image": null,
-          "thumb": "EB05-056.webp"
+          "thumb": "EB05-056.webp",
+          "text": "``` Nico Olvia Yellow Character C ``` <@&1370648885474889869>"
         }
       ],
       "articles": [

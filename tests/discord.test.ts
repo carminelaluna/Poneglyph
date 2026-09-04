@@ -106,6 +106,8 @@ describe('one message', () => {
     assert.equal(card.id, 'EB05-018');
     assert.match(card.text, /ナミ/, 'the translation was dropped');
     assert.ok(!card.text.includes('EB05-018'), 'the number is printed beside it already');
+    /* No colour word in a Japanese line, so there is nothing to split a name off. */
+    assert.equal(card.name, null);
     assert.match(card.image, /IMG_9001/, 'the lone photo still pairs with the one card');
   });
 
@@ -171,23 +173,67 @@ describe('a batch of messages', () => {
   });
 });
 
+/*
+ * What a reveal post actually looks like, taken from the channel:
+ *
+ *   ``` Belo Betty Red Character C``` <@&1370648885474889869>
+ *
+ * A name, a colour, a type, a rarity, sometimes a cost and an ability — wrapped
+ * in a code fence with a role ping stuck on the end. The colour is the hinge:
+ * before it is the card's name, which is the half the articles almost never give
+ * and which the page had been printing as "Name not listed" under every one.
+ */
 describe('the text a reveal carries', () => {
+  it('splits the name off at the colour', () => {
+    const r = describeCard('``` Belo Betty Red Character C``` <@&137>', 'EB05-005');
+    assert.equal(r.name, 'Belo Betty');
+    assert.equal(r.text, 'Red Character C');
+  });
+
+  it('keeps a cost, a power and an ability when they are there', () => {
+    const r = describeCard(
+      '``` Shinobu Black Character C 4 Cost / 5000 Power Counter +2000 [On Play] Draw 2 cards.``` <@&137>',
+      'EB05-042'
+    );
+    assert.equal(r.name, 'Shinobu');
+    assert.match(r.text ?? '', /\[On Play\] Draw 2 cards\./);
+  });
+
+  /*
+   * Mentions especially. An id printed on a public page is somebody's role or
+   * account, and it is noise to every reader of it.
+   */
+  it('takes Discord’s markup out, mentions included', () => {
+    const r = describeCard('``` Monet Red Character C ``` <@&1370648885474889869>', 'EB05-007');
+    assert.ok(!/[`<>@&]/.test(r.text ?? ''), `markup survived: ${r.text}`);
+    assert.ok(!/\d{6,}/.test(r.text ?? ''), 'a mention id reached the page');
+  });
+
   it('takes the number out, since the page prints it alongside', () => {
-    assert.equal(describeCard('EB05-007: draw 1 card when this attacks.', 'EB05-007'),
-      'draw 1 card when this attacks.');
-    assert.equal(describeCard('— EB05-007 | draw 1 card.', 'EB05-007'), 'draw 1 card.');
+    const r = describeCard('EB05-007 Monet Red Character C', 'EB05-007');
+    assert.equal(r.name, 'Monet');
+    assert.ok(!(r.text ?? '').includes('EB05-007'));
   });
 
   it('says nothing rather than something useless', () => {
-    assert.equal(describeCard('EB05-007', 'EB05-007'), null, 'only the number was there');
-    assert.equal(describeCard('lol', 'EB05-007'), null, 'too short to be a description');
-    assert.equal(describeCard('', 'EB05-007'), null);
-    assert.equal(describeCard(null, 'EB05-007'), null);
+    assert.deepEqual(describeCard('EB05-007', 'EB05-007'), { name: null, text: null });
+    assert.deepEqual(describeCard('lol', 'EB05-007'), { name: null, text: null });
+    assert.deepEqual(describeCard('', 'EB05-007'), { name: null, text: null });
+    assert.deepEqual(describeCard(null, 'EB05-007'), { name: null, text: null });
+  });
+
+  /*
+   * A colour at the very start leaves nothing before it, which is what a card
+   * actually called something like "Red-Haired" would do. Better no name than a
+   * blank one.
+   */
+  it('claims no name when the colour is the first word', () => {
+    assert.equal(describeCard('``` Red Character C ```', 'EB05-009').name, null);
   });
 
   /* Past a point it is a conversation, not a card. */
   it('refuses an essay', () => {
-    assert.equal(describeCard('x'.repeat(900), 'EB05-007'), null);
+    assert.deepEqual(describeCard('x'.repeat(900), 'EB05-007'), { name: null, text: null });
   });
 });
 

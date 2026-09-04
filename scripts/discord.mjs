@@ -104,7 +104,7 @@ export function cardsFromMessage(message) {
   const note = (id, image) => {
     const held = found.get(id);
     /* First image wins, but an id seen first in text still takes a later file. */
-    if (!held) found.set(id, { id, image: image ?? null, text: null });
+    if (!held) found.set(id, { id, image: image ?? null, name: null, text: null });
     else if (!held.image && image) held.image = image;
   };
 
@@ -146,7 +146,10 @@ export function cardsFromMessage(message) {
   if (named.length === 1) {
     const entry = found.get(named[0]);
     const said = describe(textOf(message), named[0]);
-    if (entry && said) entry.text = said;
+    if (entry) {
+      entry.name = said.name;
+      entry.text = said.text;
+    }
   }
 
   return [...found.values()];
@@ -156,31 +159,71 @@ export function cardsFromMessage(message) {
 const MOST_TEXT = 600;
 
 /**
- * The message text as a card's description: the card number taken out, since the
- * page prints that beside it anyway, and the whitespace collapsed.
+ * The six colours this game has, which is what makes the rest parseable.
  *
- * Deliberately not parsed further. What arrives is a person's translation of a
- * card that does not exist yet, in whatever shape they typed it, and a parser
- * built for today's shape would quietly drop tomorrow's.
+ * A reveal is posted as `Name Colour Type Rarity`, so the colour is the hinge: what
+ * comes before it is the card's name and what follows is what is known about it.
+ */
+const COLOURS = ['Red', 'Green', 'Blue', 'Purple', 'Black', 'Yellow'];
+
+/**
+ * Discord's own markup, out.
+ *
+ * These posts arrive wrapped in a code fence with a role ping on the end —
+ * ```` ``` Monet Red Character C ``` <@&1370648885474889869> ```` — and none of
+ * that is about the card. Mentions especially: an id printed on a public page is
+ * somebody's role or account, and it is noise to every reader.
+ */
+export function cleanMarkup(text) {
+  return String(text ?? '')
+    .replace(/```+/g, ' ')
+    .replace(/<a?:\w+:\d+>/g, ' ')
+    .replace(/<[@#][&!]?\d+>/g, ' ')
+    .replace(/[*_~`|]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * What a reveal says about its card: a name, and whatever else was typed.
+ *
+ * The name is what sits before the colour, and it is worth pulling out on its own
+ * because the page has been printing "Name not listed" under every one of these.
+ * Everything from the colour on — `Red Character C`, sometimes a cost, a power
+ * and an ability — stays as the description.
+ *
+ * A colour at the very start leaves no name, which is what a card actually called
+ * something like "Red-Haired" would do; the whole line stays a description rather
+ * than the page inventing a blank name.
  */
 export function describe(text, id) {
-  /* The number itself, out: the page prints it beside the description anyway. */
-  /*
-   * The number itself, out: the page prints it beside the description anyway.
-   * No escaping needed — a card id is letters, digits and a dash, and a dash is
-   * only special inside a character class.
-   */
-  const number = new RegExp(id, 'gi');
-  const said = String(text ?? '')
-    .replace(number, ' ')
+  const said = cleanMarkup(text)
+    /* The number itself: the page prints it beside the description anyway. */
+    .replace(new RegExp(id, 'gi'), ' ')
     .replace(/\s+/g, ' ')
     /* Punctuation left behind where the number was: a dash, a colon, a pipe. */
     .replace(/^[\s\p{Pd}:|]+/u, '')
     .trim();
 
-  if (!said || said.length > MOST_TEXT) return null;
-  /* A couple of characters left over is not a description of anything. */
-  return said.length >= 8 ? said : null;
+  if (!said || said.length > MOST_TEXT) return { name: null, text: null };
+
+  /*
+   * Concatenation, not a template literal. In a template literal `\b` is the
+   * backspace character rather than a word boundary, so the regex compiles and
+   * matches nothing — the exact trap CLAUDE.md records, and this is the fourth
+   * time it has been walked into here. `npm run check` cannot catch this one:
+   * the file holds a backslash and a b, and only the runtime turns them into
+   * a control character.
+   */
+  const at = said.search(new RegExp('\\b(?:' + COLOURS.join('|') + ')\\b'));
+  const name = at > 0 ? said.slice(0, at).trim() : null;
+  const rest = at > 0 ? said.slice(at).trim() : said;
+
+  return {
+    name: name && name.length >= 2 ? name : null,
+    /* A couple of characters left over is not a description of anything. */
+    text: rest.length >= 8 ? rest : null,
+  };
 }
 
 
@@ -212,6 +255,7 @@ export function revealsFromMessages(messages, released = new Set()) {
         entry.cards.set(card.id, {
           id: card.id,
           image: card.image,
+          name: card.name ?? null,
           text: card.text ?? null,
           seen: message?.timestamp ?? null,
           source: message?.id ?? null,
@@ -220,6 +264,7 @@ export function revealsFromMessages(messages, released = new Set()) {
         const held = entry.cards.get(card.id);
         if (card.image && !held.image) held.image = card.image;
         /* A later post that finally explains the card fills in what was missing. */
+        if (card.name && !held.name) held.name = card.name;
         if (card.text && !held.text) held.text = card.text;
       }
 

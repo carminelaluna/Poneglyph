@@ -316,7 +316,13 @@ async function main() {
         if (entry.cards.has(card.id)) continue;
         entry.cards.set(card.id, {
           id: card.id,
-          name: null,
+          /*
+           * The name, which the articles almost never give and these posts always
+           * do: they are written `Name Colour Type Rarity`, so the colour is the
+           * hinge. Before this the page printed "Name not listed" under every card
+           * that came from here.
+           */
+          name: card.name ?? null,
           image: null,
           thumb: card.thumb ?? null,
           /*

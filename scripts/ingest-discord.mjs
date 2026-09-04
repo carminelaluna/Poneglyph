@@ -442,7 +442,14 @@ async function main() {
         if (card.image) held.image = card.image;
         if (card.thumb && !held.thumb) held.thumb = card.thumb;
         /* A later post that finally explains the card fills in what was missing. */
-        if (card.text && !held.text) held.text = card.text;
+        /*
+         * A fresh parse wins, unlike the image. `name` and `text` are derived from
+         * the message rather than observed once: re-reading the same post with a
+         * better parser has to be able to improve them, and the first version of
+         * this stored the raw text with its code fences and role ping still in it.
+         */
+        if (card.name) held.name = card.name;
+        if (card.text) held.text = card.text;
       }
     }
     merged.set(set.set, {
