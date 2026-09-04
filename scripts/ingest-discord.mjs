@@ -95,10 +95,19 @@ async function get(url, { retries = 4 } = {}) {
        * went stale for five days under a wall of green ticks.
        */
       if (res.status === 401) throw new Error('401 — DISCORD_BOT_TOKEN is missing or wrong');
+      /*
+       * Permissions, and only permissions. A missing Message Content intent does
+       * not produce a 403 — it produces a 200 whose fields are empty, which is
+       * caught further down. Saying both here sent somebody looking at the wrong
+       * checkbox, so this now says the one thing a 403 actually means.
+       */
       if (res.status === 403) {
         throw new Error(
-          '403 — the bot cannot read this channel. It needs View Channel and Read ' +
-            'Message History, and the Message Content intent must be on.'
+          '403 — the bot is authenticated but cannot read this channel. It needs ' +
+            'View Channel and Read Message History *on this channel*: a category or ' +
+            'channel-level override will deny them even when the role has them ' +
+            'server-wide. Check the bot is in the right server, then Edit Channel ' +
+            '-> Permissions and add it explicitly.'
         );
       }
       if (res.status === 404) {
@@ -193,6 +202,28 @@ async function main() {
   }
 
   log(`${messages.length} messages`);
+
+  /*
+   * The failure that looks like success, and the reason this check exists.
+   *
+   * Without the Message Content privileged intent Discord answers 200 and blanks
+   * `content`, `embeds` and `attachments`. Every message arrives, none of them
+   * says anything, and the run reports zero cards and goes green — which is
+   * indistinguishable from a quiet channel and would sit there for weeks. A
+   * channel of reveals whose every message is empty is not a quiet channel.
+   */
+  const silent = messages.filter(
+    (m) => !m?.content && (m?.attachments ?? []).length === 0 && (m?.embeds ?? []).length === 0
+  ).length;
+  if (messages.length >= 10 && silent === messages.length) {
+    throw new Error(
+      `all ${messages.length} messages came back with empty content, attachments and ` +
+        'embeds — that is what Discord returns without the Message Content privileged ' +
+        'intent. Turn it on: Developer Portal -> your app -> Bot -> Privileged Gateway ' +
+        'Intents -> MESSAGE CONTENT INTENT.'
+    );
+  }
+
   const sets = revealsFromMessages(messages, released);
   const cardCount = sets.reduce((n, s) => n + s.cards.length, 0);
 
