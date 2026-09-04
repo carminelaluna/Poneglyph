@@ -100,43 +100,14 @@ export default function EventsPage() {
       >
         Where to play
       </h1>
-      <p className="muted" style={{ maxWidth: '66ch', marginTop: '0.8rem' }}>
-        Every official event Bandai has announced, in one place instead of a page per series.
-        Filter by where you are and what you are looking for.
-      </p>
-
       {/*
-        Bandai publishes one registration date per event month and then says it is a
-        guideline organisers vary. Their caveat travels with their dates rather than
-        being dropped, because presenting the table as a firm time would invent a
-        certainty they disclaim. The rest of what this page is — no affiliation, no
-        registrations taken — is on /legal, where a statement about the site belongs.
+        Bandai's "a guideline, organisers vary" caveat used to be spelled out here in
+        a paragraph. It is not lost by the paragraph going: EventBrowser prints
+        `· guideline` beside every registration time it takes from that month table,
+        which is where the reader meets the date and so where the caveat belongs.
+        The rest — no affiliation, no registrations taken — is on /legal, and the
+        attribution is on the line at the foot of this page.
       */}
-      <p className="muted source-line">
-        Read from Bandai&rsquo;s{' '}
-        <a
-          href={events.source.index}
-          target="_blank"
-          rel="noreferrer noopener"
-          className="inline-link"
-        >
-          official event pages
-        </a>
-        ; this site takes no registrations and every link goes to theirs or the
-        organiser&rsquo;s.
-        {Object.keys(times).length > 0 ? (
-          <>
-            {' '}
-            Registration usually opens on a Sunday, at{' '}
-            {Object.entries(times)
-              .map(([region, time]) => `${time} in ${region}`)
-              .join(', ')}
-            , which they publish as a guideline that organisers vary — check the event&rsquo;s
-            own link.
-          </>
-        ) : null}
-      </p>
-
       {flat.length === 0 ? (
         <p className="empty">No events are listed right now.</p>
       ) : (

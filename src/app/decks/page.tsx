@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import MetaBrowser from './MetaBrowser';
-import regionsJson from '@data/regions.json';
 import { decksMeta, hasDeckData, tournaments } from '@/lib/decks';
 import '../decks.css';
 /* The events section below the table is a directory table; see directory.css. */
@@ -13,19 +12,6 @@ export const metadata: Metadata = {
     'ONE PIECE CARD GAME metagame: archetype share, win rates and tournament decklists over the last 7, 15, 30 or 90 days, or since a set entered play.',
 };
 
-type RegionSummary = {
-  id: string;
-  label: string;
-  decks: number;
-  fieldDecks: number;
-  window: { from: string | null; to: string | null };
-  eras: number;
-};
-const regions = (regionsJson as { regions: RegionSummary[] }).regions;
-const byId = (id: string) => regions.find((r) => r.id === id);
-const en = byId('EN');
-const jp = byId('JP');
-
 export default function DecksPage() {
   if (!hasDeckData) return <EmptyState />;
 
@@ -35,42 +21,12 @@ export default function DecksPage() {
       <h1 className="display" style={{ fontSize: 'clamp(1.7rem, 3.4vw, 2.5rem)', margin: '0.5rem 0 0' }}>
         What people are actually playing
       </h1>
-      <p className="muted" style={{ maxWidth: '68ch', marginTop: '0.8rem' }}>
-        <strong style={{ color: 'var(--glyph)' }}>
-          {(en?.decks ?? 0).toLocaleString('en-US')} English
-        </strong>{' '}
-        and{' '}
-        <strong style={{ color: 'var(--glyph)' }}>
-          {(jp?.decks ?? 0).toLocaleString('en-US')} Japanese
-        </strong>{' '}
-        decklists, back to {en?.window.from?.slice(0, 4) ?? '2022'}. The two are kept apart
-        rather than averaged — different scenes, different card pools. Pick a region, a window
-        and an event type, and every number below is recomputed for it.
-      </p>
-
-      <dl className="stats" style={{ marginTop: '1.5rem' }}>
-        <div className="stat">
-          <dt>English</dt>
-          <dd>{(en?.decks ?? 0).toLocaleString('en-US')}</dd>
-        </div>
-        <div className="stat">
-          <dt>Japanese</dt>
-          <dd>{(jp?.decks ?? 0).toLocaleString('en-US')}</dd>
-        </div>
-        <div className="stat">
-          <dt>Releases</dt>
-          <dd>{Math.max(en?.eras ?? 0, jp?.eras ?? 0)}</dd>
-        </div>
-        <div className="stat">
-          <dt>Archetypes</dt>
-          <dd>{decksMeta.counts.archetypes}</dd>
-        </div>
-        <div className="stat">
-          <dt>Cards played</dt>
-          <dd>{decksMeta.counts.cardsPlayed.toLocaleString('en-US')}</dd>
-        </div>
-      </dl>
-
+      {/*
+        The corpus sizes and the five-figure stat row used to sit here. The controls
+        below already report the count for whatever is chosen, and every figure the
+        row held is answered by the table or by /data — so it was five numbers a
+        reader had to scroll past to reach the one they came for.
+      */}
       {/*
         The two directories are not in the top bar — eight entries is already what a
         phone will hold — so they are linked from the page someone is on when the

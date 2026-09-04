@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import DeckBuilder from './DeckBuilder';
 import './deckbuilder.css';
 
@@ -19,13 +18,6 @@ export default function DeckBuilderPage() {
       >
         Fifty cards and a Leader
       </h1>
-      <p className="muted" style={{ maxWidth: '68ch', marginTop: '0.8rem' }}>
-        Pick a Leader and the pool narrows to what it can play. Copy limits, rotation and the{' '}
-        <Link href="/banlist" className="inline-link">banned list</Link> are checked while you build, and the export is
-        the same one the decklist pages use. Reloading starts over — copy the deck for the
-        simulator, or save it to an <Link href="/account" className="inline-link">account</Link> to reopen it later.
-      </p>
-
       <DeckBuilder />
     </div>
   );

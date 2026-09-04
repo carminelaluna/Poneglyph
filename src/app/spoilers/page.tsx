@@ -56,21 +56,6 @@ export default function SpoilersPage() {
       >
         What is coming next
       </h1>
-      <p className="muted" style={{ maxWidth: '64ch', marginTop: '0.8rem' }}>
-        Sets that have not reached the official card list yet, with the card numbers revealed so
-        far. A set leaves this page by itself the moment its cards appear in the archive — nothing
-        here is maintained by hand.
-      </p>
-
-      <p className="muted source-line">
-        Community reveals, not official releases: read from{' '}
-        <a href={source.home} target="_blank" rel="noreferrer noopener" className="inline-link">
-          {source.label}
-        </a>
-        &rsquo;s {source.category} coverage, shown with their images, and liable to change
-        before a set ships.
-      </p>
-
       {sets.length === 0 ? (
         <p className="empty">No unreleased sets are being covered right now.</p>
       ) : (
@@ -152,10 +137,22 @@ export default function SpoilersPage() {
         </section>
       ) : null}
 
+      {/*
+        The header used to carry two paragraphs and now carries none. What could not
+        simply go is that these are somebody else's images of cards that are not out
+        — attribution and "may change" are the reason the page is allowed to show
+        them at all — so it says that here, once, at the foot, instead of twice at
+        the top where it was the first thing in the way.
+      */}
       <p className="muted" style={{ fontSize: '0.76rem', marginTop: '2.5rem', maxWidth: '74ch' }}>
-        {counts.cards} card{counts.cards === 1 ? '' : 's'} across {counts.sets} unreleased set
-        {counts.sets === 1 ? '' : 's'}, from {counts.articles} article
-        {counts.articles === 1 ? '' : 's'}. Last checked {updated}. A set moves to{' '}
+        Community reveals, not official releases: read from{' '}
+        <a href={source.home} target="_blank" rel="noreferrer noopener" className="inline-link">
+          {source.label}
+        </a>
+        &rsquo;s {source.category} coverage, shown with their images, and liable to change
+        before a set ships. {counts.cards} card{counts.cards === 1 ? '' : 's'} across{' '}
+        {counts.sets} unreleased set{counts.sets === 1 ? '' : 's'}, from {counts.articles}{' '}
+        article{counts.articles === 1 ? '' : 's'}. Last checked {updated}. A set moves to{' '}
         <Link href="/sets">Sets</Link> with its full card data as soon as its cards reach the
         official card list — this page tracks that handover rather than requiring an edit.
       </p>

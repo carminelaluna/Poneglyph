@@ -490,7 +490,7 @@ export default function AccountView() {
               onSave={rename}
             />
           ) : (
-            <h2 className="display" style={{ margin: '0.3rem 0 0', fontSize: '1.3rem' }}>
+            <h2 className="display" style={{ margin: '0.15rem 0 0', fontSize: '1.1rem' }}>
               {name}{' '}
               <button
                 type="button"
@@ -525,9 +525,12 @@ export default function AccountView() {
           </p>
           <button
             type="button"
-            className="chip"
-            /* The panel's own grid gap spaces this; a margin here doubled it. */
-            style={{ padding: '0.5rem 0.9rem' }}
+            /*
+              Solid, because as a plain chip it read as a label rather than as the
+              one action on the panel. The panel's own grid gap spaces it; an
+              inline margin here doubled that.
+            */
+            className="chip chip-solid"
             onClick={signOut}
           >
             Sign out

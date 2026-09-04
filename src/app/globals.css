@@ -653,6 +653,26 @@ button.chip:disabled {
   color: var(--glyph-dim);
 }
 
+/*
+ * The one action on a panel, for when a chip's outline is too quiet to read as a
+ * button at all. Same shape and palette a step louder: the lifted slab, the
+ * stronger edge, the carve the slabs themselves use, and text at full strength.
+ */
+.chip-solid {
+  padding: 0.5rem 1rem;
+  background: var(--slab-lift);
+  border-color: var(--edge-strong);
+  color: var(--glyph);
+  box-shadow: var(--carve);
+  font-size: 0.76rem;
+}
+
+button.chip-solid:hover {
+  background: var(--slab-hi);
+  border-color: var(--glyph-faint);
+  color: var(--glyph);
+}
+
 .chip-row {
   display: flex;
   flex-wrap: wrap;

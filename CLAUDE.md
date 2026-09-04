@@ -9,6 +9,22 @@ submissions).
 that implies official standing.** `/legal` is the notice, `/privacy` and `/terms` are
 the two URLs the OAuth providers require.
 
+**A page opens on its content, not on a paragraph about itself.** Five pages led
+with an explanation — what the metagame page averages and why, what the deck
+builder checks while you build, that spoilers are unofficial, that Bandai's
+registration dates are a guideline — and the metagame page spent a five-figure
+stat row on top of it. A reader arrives wanting the table. Those intros are gone,
+and with them `regionsJson` from `/decks`, which nothing else on that page read.
+
+Two of them carried something that could not simply go, and neither is lost.
+Bandai's *guideline, organisers vary* is printed by `EventBrowser` as `· guideline`
+beside every registration time it takes from the month table — which is where the
+reader meets the date, and so where CLAUDE.md's rule that the caveat travels with
+the data is actually satisfied. On `/spoilers`, that these are somebody else's
+images of cards that are not out is the reason the page may show them at all, so
+attribution and *liable to change* moved into the line already at the foot of the
+page rather than being restated twice at the top.
+
 **Caveats live on the page that exists for them, not on every page.** Ten pages each
 carried a dashed red callout, which made the treatment reserved for "look at this"
 the thing a reader met almost everywhere. How the archive is built — sampling, decks
@@ -248,6 +264,12 @@ every figure above it is an aggregate and nothing said what of. It is rebuilt fr
 the deck rows already downloaded — they carry the event id, name, kind and field
 size — so it costs no request, and it is scoped to the window, region and filters
 chosen right here, which is what makes it a different question from `/tournaments`.
+
+**One action on a panel gets `.chip-solid`.** An outlined chip reads as a label
+when it is the only thing on a panel — *Sign out* was measured as, and looked
+like, a wide empty box. The solid variant is the same shape a step louder: the
+lifted slab, the stronger edge, the carve the slabs themselves use. It is not a
+new colour and not a new shape, because the site has one of each.
 
 **A chip that is a button is a control, and the selector says so.** `.chip` was
 one rule for two things: a tag you read and a button you press. So a control had

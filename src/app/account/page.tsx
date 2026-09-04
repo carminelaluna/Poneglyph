@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import AccountView from './AccountView';
 import './account.css';
 
@@ -19,17 +18,14 @@ export default function AccountPage() {
         className="display"
         style={{ fontSize: 'clamp(1.7rem, 3.4vw, 2.5rem)', margin: '0.5rem 0 0' }}
       >
-        Sign in
+        {/*
+          Not "Sign in": this is the page for your account either way, and half the
+          people reading it are already signed in. With the intro paragraph gone it
+          was the only thing left at the top, and it was telling a signed-in reader
+          to do something they had done.
+        */}
+        Your account
       </h1>
-      <p className="muted" style={{ maxWidth: '62ch', marginTop: '0.8rem' }}>
-        An account is only needed to keep decks of your own, and — for tournament
-        organizers — to submit results. Everything else here works without one. It stores an
-        account id, the name you sign in with and the decks you save, and nothing else:{' '}
-        <Link href="/privacy" className="inline-link">privacy</Link> has the detail,{' '}
-        <Link href="/terms" className="inline-link">terms</Link>{' '}
-        what is expected of you.
-      </p>
-
       <AccountView />
     </div>
   );
