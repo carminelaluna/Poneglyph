@@ -274,6 +274,52 @@ async function main() {
     }
   }
 
+  /*
+   * The Discord corpus, folded in as a second source — the same shape as
+   * build-indexes.mjs folding community decks into the deck archive.
+   *
+   * It is read rather than fetched, because `ingest-discord.mjs` needs a bot token
+   * and this ingest must keep working on a checkout that has none. A missing file
+   * is simply a site without that source configured.
+   *
+   * Discord is the fast half and the web source is the documented half: the
+   * channel had 12 EB-05 cards on the day the articles had 2, and the articles
+   * carry the release month and the card names that the channel does not. Neither
+   * is a superset, so both are merged and the first sighting of a card wins.
+   *
+   * Images are deliberately dropped. Discord's attachment URLs are signed and
+   * expire within hours, so writing one into a payload the browser reads later
+   * publishes a link that is already dead — worse than no image, because it
+   * renders as a broken one.
+   */
+  const fromDiscord = await readFile(path.join(DATA, 'spoilers-discord.json'), 'utf8')
+    .then((raw) => JSON.parse(raw))
+    .catch(() => null);
+
+  if (fromDiscord?.sets?.length) {
+    let added = 0;
+    for (const set of fromDiscord.sets) {
+      if (released.has(set.set.toUpperCase())) continue;
+
+      if (!upcoming.has(set.set)) {
+        upcoming.set(set.set, {
+          set: set.set,
+          code: set.set.replace(/^([A-Z]+)(\d+)$/, '$1-$2'),
+          release: null,
+          cards: new Map(),
+          articles: [],
+        });
+      }
+      const entry = upcoming.get(set.set);
+      for (const card of set.cards) {
+        if (entry.cards.has(card.id)) continue;
+        entry.cards.set(card.id, { id: card.id, name: null, image: null });
+        added++;
+      }
+    }
+    log(`  ${added} cards from Discord that the articles did not have`);
+  }
+
   const spoilers = [...upcoming.values()]
     .map((entry) => ({
       set: entry.set,

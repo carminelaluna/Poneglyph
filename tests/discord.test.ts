@@ -9,6 +9,7 @@
  */
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
+import os from 'node:os';
 import { readFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { describe, it } from 'node:test';
@@ -172,9 +173,15 @@ describe('where the next run starts', () => {
  */
 describe('the ingest script', () => {
   const run = promisify(execFile);
-  const out = path.join(root, 'data', 'spoilers-discord.json');
+  /*
+   * Never `data/spoilers-discord.json`. The first version of these tests wrote
+   * there and deleted it afterwards, which on a checkout that holds a real corpus
+   * is not cleanup — it is the archive gone, one `npm test` away. It deleted mine
+   * while this was being written.
+   */
+  const out = path.join(os.tmpdir(), `poneglyph-discord-${process.pid}.json`);
   const spawn = (args: string[], env: Record<string, string> = {}) =>
-    run(process.execPath, [path.join(root, 'scripts', 'ingest-discord.mjs'), ...args], {
+    run(process.execPath, [path.join(root, 'scripts', 'ingest-discord.mjs'), '--out', out, ...args], {
       cwd: root,
       /* Blank rather than absent, so a token in the shell cannot make this pass. */
       env: { ...process.env, DISCORD_BOT_TOKEN: '', DISCORD_SPOILER_CHANNEL: '', ...env },

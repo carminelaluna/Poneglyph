@@ -75,12 +75,23 @@ export default function SpoilersPage() {
               <div className="spoiler-grid">
                 {set.cards.map((card) => (
                   <figure key={card.id} className="spoiler-card">
-                    <img
-                      src={card.image}
-                      alt={card.name ? `${card.name} (${card.id})` : card.id}
-                      loading="lazy"
-                      referrerPolicy="no-referrer"
-                    />
+                    {/*
+                      A card number with no picture is still a reveal, and most of
+                      them are: the Discord source carries the numbers within
+                      minutes but its image links are signed and expire in hours,
+                      so nothing points at one. A broken image is worse than an
+                      honest empty frame, which is what this is.
+                    */}
+                    {card.image ? (
+                      <img
+                        src={card.image}
+                        alt={card.name ? `${card.name} (${card.id})` : card.id}
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <span className="spoiler-blank" aria-hidden="true" />
+                    )}
                     <figcaption>
                       <b>{card.name ?? 'Name not listed'}</b>
                       <span className="mono">{card.id}</span>

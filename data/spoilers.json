@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T07:53:02.811Z",
+  "generatedAt": "2026-09-04T10:21:23.264Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,11 +8,11 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 8,
+    "cards": 20,
     "named": 3,
     "articles": 3
   },
-  "durationMs": 1989,
+  "durationMs": 2480,
   "sets": [
     {
       "set": "OP18",
@@ -71,17 +71,77 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 2,
+      "revealed": 14,
       "cards": [
+        {
+          "id": "EB05-005",
+          "name": null,
+          "image": null
+        },
+        {
+          "id": "EB05-007",
+          "name": null,
+          "image": null
+        },
         {
           "id": "EB05-010",
           "name": null,
           "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/EB05-010.jpg"
         },
         {
+          "id": "EB05-011",
+          "name": null,
+          "image": null
+        },
+        {
+          "id": "EB05-013",
+          "name": null,
+          "image": null
+        },
+        {
           "id": "EB05-016",
           "name": null,
           "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/EB05-016_p2.jpg"
+        },
+        {
+          "id": "EB05-023",
+          "name": null,
+          "image": null
+        },
+        {
+          "id": "EB05-025",
+          "name": null,
+          "image": null
+        },
+        {
+          "id": "EB05-035",
+          "name": null,
+          "image": null
+        },
+        {
+          "id": "EB05-036",
+          "name": null,
+          "image": null
+        },
+        {
+          "id": "EB05-042",
+          "name": null,
+          "image": null
+        },
+        {
+          "id": "EB05-045",
+          "name": null,
+          "image": null
+        },
+        {
+          "id": "EB05-054",
+          "name": null,
+          "image": null
+        },
+        {
+          "id": "EB05-056",
+          "name": null,
+          "image": null
         }
       ],
       "articles": [

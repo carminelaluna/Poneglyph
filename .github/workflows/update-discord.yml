@@ -5,10 +5,15 @@ name: Update spoilers from Discord
 # the web source, whose two leak articles sat unmodified for twelve days while the
 # spoilers page quietly went stale.
 #
-# **Manual only, on purpose, until the secrets exist.** A schedule without a token
-# would be red four times a day for a configuration that has not been done yet,
-# which is precisely the kind of noise that teaches people to stop reading a run
-# list. Add the `schedule` block below once a dispatch run has come back green.
+# It was manual only until a dispatch run came back green, which is the rule this
+# repository keeps arriving at: a schedule that is red for a configuration nobody
+# has done yet teaches people to stop reading the run list. It is scheduled now.
+# `ingest-spoilers.mjs` runs straight after, because that is what builds the file
+# the page reads: without it a reveal would sit in the Discord corpus for up to six
+# hours waiting for the other schedule, which defeats the only reason this source
+# exists. It reads Top Decks and exits 0 when that host turns the runner away, so a
+# refusal there leaves this run green with the Discord corpus committed and the
+# page picking it up next time.
 #
 # What has to be true first, none of which is in this repository:
 #
@@ -36,8 +41,10 @@ on:
         description: 'Report the shape of what came back — use when a run finds no cards'
         type: boolean
         default: false
-  # schedule:
-  #   - cron: '15 */6 * * *'
+  schedule:
+    # Every two hours. This is the fast source and its whole point is minutes, not
+    # days; a page of 100 messages is one request, so the schedule costs nothing.
+    - cron: '15 */2 * * *'
 
 permissions:
   contents: write
@@ -68,6 +75,9 @@ jobs:
             ARGS="$ARGS --inspect"
           fi
           node scripts/ingest-discord.mjs $ARGS
+
+      # Rebuilds data/spoilers.json, which is what the page imports.
+      - run: node scripts/ingest-spoilers.mjs
 
       - name: Commit what moved
         run: |

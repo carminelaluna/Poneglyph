@@ -1005,6 +1005,21 @@ button.chip-solid:hover {
   box-shadow: var(--carve);
 }
 
+/*
+ * A reveal with a number and no picture, which is most of them: the fast source
+ * carries card numbers within minutes and its image links expire within hours,
+ * so there is nothing to point at. The frame keeps the grid even and takes a
+ * card's aspect ratio, so a row does not collapse around the ones that have art.
+ */
+.spoiler-blank {
+  display: block;
+  aspect-ratio: 5 / 7;
+  border-radius: var(--radius);
+  border: 1px dashed var(--edge-strong);
+  background: var(--slab);
+  box-shadow: var(--carve);
+}
+
 .spoiler-card figcaption {
   display: flex;
   align-items: baseline;

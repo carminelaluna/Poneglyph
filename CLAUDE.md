@@ -1039,6 +1039,8 @@ Pre-release art is not ours to re-host.
 `refresh-prices` (2×/day), `update-decks` (2×/day), `update-matchups` (daily at 10:20
 UTC, three hours after the morning deck ingest so the tournaments it found already
 have decklists to join pairings against), `update-rules` (8h), `update-spoilers` (6h),
+`update-discord` (2h — the fast spoiler source, and it rebuilds `spoilers.json`
+in the same run so a reveal does not wait six hours for the other schedule),
 `update-events` (daily at 10:00 UTC — noon in Italy on summer time, 11:00 in winter;
 cron has no timezone). Then `publish-site`.
 

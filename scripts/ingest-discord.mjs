@@ -56,7 +56,13 @@ const flag = (name, fallback = null) => {
 const has = (name) => args.includes(`--${name}`);
 
 const DATA = path.resolve('data');
-const OUT = path.join(DATA, 'spoilers-discord.json');
+/*
+ * `--out` exists for the tests, and it exists because they wrote to the real one.
+ * A test that spawns this script has to clean up after itself, and cleaning up
+ * meant deleting `data/spoilers-discord.json` — which on any checkout that has a
+ * corpus is not cleanup, it is data loss, one `npm test` away.
+ */
+const OUT = path.resolve(flag('out', path.join(DATA, 'spoilers-discord.json')));
 const log = (...m) => console.log('[discord]', ...m);
 
 const TOKEN = process.env.DISCORD_BOT_TOKEN ?? '';
