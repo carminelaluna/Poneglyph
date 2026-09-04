@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-30T16:37:40.126Z",
+  "generatedAt": "2026-09-04T07:53:02.811Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -12,7 +12,7 @@
     "named": 3,
     "articles": 3
   },
-  "durationMs": 2719,
+  "durationMs": 1989,
   "sets": [
     {
       "set": "OP18",
@@ -104,17 +104,9 @@
       "slug": "op-17"
     },
     {
-      "set": "OP16",
-      "code": "OP-16",
-      "lastCoverage": "2026-03-21T03:10:36",
-      "name": "The Time of Battle",
-      "cards": 119,
-      "slug": "op-16"
-    },
-    {
       "set": "ST31",
       "code": "ST-31",
-      "lastCoverage": "2026-03-16T08:28:03",
+      "lastCoverage": "2026-06-06T08:12:06",
       "name": "RED Monkey.D.Luffy",
       "cards": 5,
       "slug": "st-31"
@@ -122,7 +114,7 @@
     {
       "set": "ST36",
       "code": "ST-36",
-      "lastCoverage": "2026-03-16T08:28:03",
+      "lastCoverage": "2026-06-06T08:12:06",
       "name": "YELLOW Eustass\"Captain\"Kid",
       "cards": 5,
       "slug": "st-36"
@@ -130,7 +122,7 @@
     {
       "set": "ST32",
       "code": "ST-32",
-      "lastCoverage": "2026-03-16T08:28:03",
+      "lastCoverage": "2026-06-06T08:12:06",
       "name": "GREEN Roronoa Zoro",
       "cards": 5,
       "slug": "st-32"
@@ -138,10 +130,18 @@
     {
       "set": "ST33",
       "code": "ST-33",
-      "lastCoverage": "2026-03-16T08:28:03",
+      "lastCoverage": "2026-06-06T08:12:06",
       "name": "BLUE Kuzan",
       "cards": 5,
       "slug": "st-33"
+    },
+    {
+      "set": "ST34",
+      "code": "ST-34",
+      "lastCoverage": "2026-06-06T08:12:06",
+      "name": "PURPLE Charlotte Katakuri",
+      "cards": 5,
+      "slug": "st-34"
     }
   ]
 }
