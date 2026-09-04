@@ -100,5 +100,18 @@
         }
       }
     ]
+  },
+  {
+    "id": "1310000000000000009",
+    "type": 0,
+    "timestamp": "2026-09-02T11:00:00.000000+00:00",
+    "content": "EB05-018 ナミ 5000 【登場時】自分の手札を1枚捨てる：カードを1枚引く。",
+    "attachments": [
+      {
+        "filename": "IMG_9001.jpg",
+        "url": "https://cdn.discordapp.com/a/IMG_9001.jpg?ex=1&is=2&hm=3"
+      }
+    ],
+    "embeds": []
   }
 ]

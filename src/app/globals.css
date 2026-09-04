@@ -1020,6 +1020,18 @@ button.chip-solid:hover {
   box-shadow: var(--carve);
 }
 
+/*
+ * Somebody's translation of a card that is not out. It is set small and quiet
+ * because it is a reader's transcription rather than the printed rules text, and
+ * it wraps rather than truncating: half a card's ability is worse than none.
+ */
+.spoiler-text {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--glyph-mid);
+}
+
 .spoiler-card figcaption {
   display: flex;
   align-items: baseline;

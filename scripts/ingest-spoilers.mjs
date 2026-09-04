@@ -319,6 +319,13 @@ async function main() {
           name: null,
           image: null,
           thumb: card.thumb ?? null,
+          /*
+           * What the card does, when somebody typed it out. These posts carry a
+           * translation for a reveal that is not English — a Japanese card arrives
+           * as a photo and a person writing out its text — so this is the only
+           * thing on the page that says what an unreleased card does.
+           */
+          text: card.text ?? null,
         });
         added++;
       }

@@ -890,6 +890,16 @@ runs to tell apart, and was settled by asking `GET /applications/@me` whether th
 intent was on rather than inferring it. Discord caps snapshot nesting at one
 level, so one pass reads all of it.
 
+**The text is the reveal, when the card is not English.** A Japanese card arrives
+as a photograph plus somebody typing out what it does, and that transcription is
+the only thing on the site that says what an unreleased card does — an English
+reveal comes with none, because the picture is already readable. It is kept under
+the same rule as the image and for the same reason: a message naming one card is
+about that card, and a message naming six is about six, so text from the second
+kind is dropped rather than printed under whichever number came first. The card
+number is taken out of it, since the page prints that beside it, and anything past
+600 characters is a conversation rather than a card.
+
 Two halves of a message are read because neither is reliable alone: an attachment
 named `OP18-021.png` is the card it names, and a phone photo named `IMG_4821.jpg`
 beside a typed number is that number's card. A message naming six cards with one
@@ -1118,4 +1128,4 @@ Standard-legal, 20 via the block exception · 2,651 priced · 69,708 decklists �
 English 63,814 from 2022-10, Japanese 5,894 from 2022-07 · 7,904 tournaments ·
 18,960 named players, 3,691 with five or more results · 152,529 recorded matches
 from 1,020 brackets · 44/46 release windows · 53 dated set releases · 67 announced
-official events across 6 types · 171 tests.
+official events across 6 types · 176 tests.

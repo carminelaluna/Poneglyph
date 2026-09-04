@@ -9,6 +9,8 @@ type SpoilerCard = {
   image: string | null;
   /** A local 320px thumbnail, when the reveal came from Discord — see asset(). */
   thumb?: string | null;
+  /** What the card does, when the reveal came with somebody's translation. */
+  text?: string | null;
 };
 type SpoilerSet = {
   set: string;
@@ -108,6 +110,13 @@ export default function SpoilersPage() {
                       <b>{card.name ?? 'Name not listed'}</b>
                       <span className="mono">{card.id}</span>
                     </figcaption>
+                    {/*
+                      Only when there is one. A reveal that is already in English
+                      does not come with a translation, so most of these are the
+                      Japanese ones, and this is the only place on the site that
+                      says what an unreleased card does.
+                    */}
+                    {card.text ? <p className="spoiler-text">{card.text}</p> : null}
                   </figure>
                 ))}
               </div>

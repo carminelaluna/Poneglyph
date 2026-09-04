@@ -441,6 +441,8 @@ async function main() {
         /* A fresh link replaces an expired one; a thumbnail already made stays. */
         if (card.image) held.image = card.image;
         if (card.thumb && !held.thumb) held.thumb = card.thumb;
+        /* A later post that finally explains the card fills in what was missing. */
+        if (card.text && !held.text) held.text = card.text;
       }
     }
     merged.set(set.set, {

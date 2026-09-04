@@ -104,7 +104,7 @@ export function cardsFromMessage(message) {
   const note = (id, image) => {
     const held = found.get(id);
     /* First image wins, but an id seen first in text still takes a later file. */
-    if (!held) found.set(id, { id, image: image ?? null });
+    if (!held) found.set(id, { id, image: image ?? null, text: null });
     else if (!held.image && image) held.image = image;
   };
 
@@ -131,8 +131,58 @@ export function cardsFromMessage(message) {
     if (entry && !entry.image) entry.image = loose[0].url ?? null;
   }
 
+  /*
+   * The typed text, kept for the one card it can be about.
+   *
+   * These posts carry a translation when the reveal is not English — a Japanese
+   * card arrives as a photo plus somebody typing out what it does — and that is
+   * the only thing on the page that says what an unreleased card does at all.
+   *
+   * Same rule as the image, and for the same reason: a message naming one card is
+   * about that card, and a message naming six is about six. Attaching the text to
+   * whichever was named first would put one card's rules under another's number,
+   * which is worse than saying nothing.
+   */
+  if (named.length === 1) {
+    const entry = found.get(named[0]);
+    const said = describe(textOf(message), named[0]);
+    if (entry && said) entry.text = said;
+  }
+
   return [...found.values()];
 }
+
+/** The longest a reveal's text can be before it is somebody talking, not a card. */
+const MOST_TEXT = 600;
+
+/**
+ * The message text as a card's description: the card number taken out, since the
+ * page prints that beside it anyway, and the whitespace collapsed.
+ *
+ * Deliberately not parsed further. What arrives is a person's translation of a
+ * card that does not exist yet, in whatever shape they typed it, and a parser
+ * built for today's shape would quietly drop tomorrow's.
+ */
+export function describe(text, id) {
+  /* The number itself, out: the page prints it beside the description anyway. */
+  /*
+   * The number itself, out: the page prints it beside the description anyway.
+   * No escaping needed — a card id is letters, digits and a dash, and a dash is
+   * only special inside a character class.
+   */
+  const number = new RegExp(id, 'gi');
+  const said = String(text ?? '')
+    .replace(number, ' ')
+    .replace(/\s+/g, ' ')
+    /* Punctuation left behind where the number was: a dash, a colon, a pipe. */
+    .replace(/^[\s\p{Pd}:|]+/u, '')
+    .trim();
+
+  if (!said || said.length > MOST_TEXT) return null;
+  /* A couple of characters left over is not a description of anything. */
+  return said.length >= 8 ? said : null;
+}
+
 
 /**
  * A batch of messages -> what is revealed, by set, newest first.
@@ -162,11 +212,15 @@ export function revealsFromMessages(messages, released = new Set()) {
         entry.cards.set(card.id, {
           id: card.id,
           image: card.image,
+          text: card.text ?? null,
           seen: message?.timestamp ?? null,
           source: message?.id ?? null,
         });
-      } else if (card.image && !entry.cards.get(card.id).image) {
-        entry.cards.get(card.id).image = card.image;
+      } else {
+        const held = entry.cards.get(card.id);
+        if (card.image && !held.image) held.image = card.image;
+        /* A later post that finally explains the card fills in what was missing. */
+        if (card.text && !held.text) held.text = card.text;
       }
 
       const at = message?.timestamp ?? null;

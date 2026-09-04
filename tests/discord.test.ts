@@ -17,6 +17,7 @@ import { promisify } from 'node:util';
 import {
   cardIds,
   cardsFromMessage,
+  describe as describeCard,
   newestId,
   revealsFromMessages,
   setOf,
@@ -95,6 +96,30 @@ describe('one message', () => {
     assert.match(card.image, /OP18-077\.png/);
   });
 
+  /*
+   * The reveal that is not English. A Japanese card arrives as a photo plus a
+   * person typing out what it does, and that text is the only thing on the site
+   * that says what an unreleased card does at all.
+   */
+  it('keeps the text a reveal was posted with', () => {
+    const [card] = cardsFromMessage(messages[8]);
+    assert.equal(card.id, 'EB05-018');
+    assert.match(card.text, /ナミ/, 'the translation was dropped');
+    assert.ok(!card.text.includes('EB05-018'), 'the number is printed beside it already');
+    assert.match(card.image, /IMG_9001/, 'the lone photo still pairs with the one card');
+  });
+
+  /*
+   * Same rule as the image, and the same reason. A message naming six cards is
+   * about six, so attaching its text to whichever was named first would print one
+   * card's rules under another's number — worse than saying nothing.
+   */
+  it('will not put one card’s text under another’s number', () => {
+    const cards = cardsFromMessage(messages[3]);
+    assert.equal(cards.length, 3);
+    assert.ok(cards.every((c) => c.text === null));
+  });
+
   it('finds nothing in a message with nothing in it', () => {
     assert.deepEqual(cardsFromMessage(messages[6]), []);
     assert.deepEqual(cardsFromMessage({}), []);
@@ -136,12 +161,33 @@ describe('a batch of messages', () => {
 
   /* Newest activity first: a set being revealed right now is the one to show. */
   it('puts the set with the newest sighting first', () => {
-    assert.equal(reveals[0].set, 'OP18');
-    assert.equal(reveals[1].set, 'EB05');
+    /* The Japanese EB-05 reveal is the newest sighting in the fixture. */
+    assert.equal(reveals[0].set, 'EB05');
+    assert.equal(reveals[1].set, 'OP18');
   });
 
   it('is empty rather than throwing on an empty channel', () => {
     assert.deepEqual(revealsFromMessages([], released), []);
+  });
+});
+
+describe('the text a reveal carries', () => {
+  it('takes the number out, since the page prints it alongside', () => {
+    assert.equal(describeCard('EB05-007: draw 1 card when this attacks.', 'EB05-007'),
+      'draw 1 card when this attacks.');
+    assert.equal(describeCard('— EB05-007 | draw 1 card.', 'EB05-007'), 'draw 1 card.');
+  });
+
+  it('says nothing rather than something useless', () => {
+    assert.equal(describeCard('EB05-007', 'EB05-007'), null, 'only the number was there');
+    assert.equal(describeCard('lol', 'EB05-007'), null, 'too short to be a description');
+    assert.equal(describeCard('', 'EB05-007'), null);
+    assert.equal(describeCard(null, 'EB05-007'), null);
+  });
+
+  /* Past a point it is a conversation, not a card. */
+  it('refuses an essay', () => {
+    assert.equal(describeCard('x'.repeat(900), 'EB05-007'), null);
   });
 });
 
@@ -152,7 +198,7 @@ describe('where the next run starts', () => {
    * stops being true.
    */
   it('takes the newest id, comparing as numbers not strings', () => {
-    assert.equal(newestId(messages), '1310000000000000008');
+    assert.equal(newestId(messages), '1310000000000000009');
     assert.equal(newestId([{ id: '9999999999999999' }, { id: '10000000000000000' }]), '10000000000000000');
   });
 
@@ -207,8 +253,8 @@ describe('the ingest script', () => {
 
     const written = JSON.parse(await readFile(out, 'utf8'));
     assert.deepEqual(written.sets.map((s: { set: string }) => s.set).sort(), ['EB05', 'OP18']);
-    assert.equal(written.counts.cards, 7);
-    assert.equal(written.lastMessageId, '1310000000000000008', 'the next run must start after this');
+    assert.equal(written.counts.cards, 8);
+    assert.equal(written.lastMessageId, '1310000000000000009', 'the next run must start after this');
   });
 
   /* Running twice must not double the corpus, because a batch is a delta. */
@@ -217,7 +263,7 @@ describe('the ingest script', () => {
     await spawn(['--fixture', 'tests/fixtures/discord-messages.json']);
     await spawn(['--fixture', 'tests/fixtures/discord-messages.json']);
     const written = JSON.parse(await readFile(out, 'utf8'));
-    assert.equal(written.counts.cards, 7);
+    assert.equal(written.counts.cards, 8);
   });
 
   /*
