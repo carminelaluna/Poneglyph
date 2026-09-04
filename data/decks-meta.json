@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T12:10:32.119Z",
+  "generatedAt": "2026-09-04T21:34:35.180Z",
   "source": {
     "id": "limitless",
     "label": "Limitless TCG",
@@ -502,5 +502,5 @@
       "decks": 58392
     }
   ],
-  "durationMs": 2215
+  "durationMs": 2107
 }
