@@ -204,6 +204,49 @@ async function main() {
   log(`${messages.length} messages`);
 
   /*
+   * `--inspect` answers the two questions you cannot answer from "0 cards": is the
+   * Message Content intent actually on, and do crossposted messages keep their
+   * attachments? Both are visible in the *shape* of what came back.
+   *
+   * It deliberately prints no message text. Actions logs on a public repository
+   * are public, and this is somebody's community channel: counts, lengths,
+   * message types and attachment filenames are enough to diagnose every failure
+   * this source has, and none of them is the conversation.
+   */
+  if (has('inspect')) {
+    const kinds = new Map();
+    let withText = 0;
+    let withFiles = 0;
+    let withEmbeds = 0;
+    let webhooks = 0;
+    const files = [];
+
+    for (const m of messages) {
+      kinds.set(m?.type ?? '?', (kinds.get(m?.type ?? '?') ?? 0) + 1);
+      if (m?.content) withText++;
+      if ((m?.attachments ?? []).length) withFiles++;
+      if ((m?.embeds ?? []).length) withEmbeds++;
+      if (m?.webhook_id) webhooks++;
+      for (const a of m?.attachments ?? []) files.push(a?.filename ?? '?');
+      for (const e of m?.embeds ?? []) {
+        if (e?.image?.url) files.push(`embed:${String(e.image.url).split('/').pop()?.split('?')[0]}`);
+      }
+    }
+
+    log('');
+    log('what came back, by shape:');
+    log(`  ${withText}/${messages.length} have text`);
+    log(`  ${withFiles}/${messages.length} have attachments`);
+    log(`  ${withEmbeds}/${messages.length} have embeds`);
+    log(`  ${webhooks}/${messages.length} arrived by webhook (a follow crossposts this way)`);
+    log(`  message types: ${[...kinds].map(([k, n]) => `${k}×${n}`).join(', ')}`);
+    if (files.length) log(`  files: ${files.slice(0, 40).join(' ')}`);
+    /* Text length only — enough to tell "blank" from "we did not match it". */
+    log(`  text lengths: ${messages.map((m) => (m?.content ?? '').length).join(' ')}`);
+    log('');
+  }
+
+  /*
    * The failure that looks like success, and the reason this check exists.
    *
    * Without the Message Content privileged intent Discord answers 200 and blanks

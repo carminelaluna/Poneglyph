@@ -32,6 +32,10 @@ on:
         description: 'Re-read the channel from the start instead of from the last message'
         type: boolean
         default: false
+      inspect:
+        description: 'Report the shape of what came back — use when a run finds no cards'
+        type: boolean
+        default: false
   # schedule:
   #   - cron: '15 */6 * * *'
 
@@ -58,7 +62,10 @@ jobs:
         run: |
           ARGS=""
           if [ "${{ inputs.all }}" = "true" ]; then
-            ARGS="--all"
+            ARGS="$ARGS --all"
+          fi
+          if [ "${{ inputs.inspect }}" = "true" ]; then
+            ARGS="$ARGS --inspect"
           fi
           node scripts/ingest-discord.mjs $ARGS
 
