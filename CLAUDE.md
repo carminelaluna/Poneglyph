@@ -444,6 +444,19 @@ has_role` instead of an empty list, and row-level security is meant to say "noth
 here" rather than to error. Since neither function takes a user id — both ask about
 `auth.uid()`, null for an anonymous caller — the grant discloses nothing.
 
+**Who you are is a name with a menu behind it.** At rest the account is one line
+of text in the top right; *Change name* and *Sign out* live in a dropdown, which
+is also where anything added later goes without the page growing to hold it. It
+was a bordered card carrying a name and a button — a lot of furniture for two
+facts, and square beside a page that is mostly a list.
+
+The menu is the one place the site's 3px `--radius` is not used: 999px on the
+trigger, 12px on the panel, and `--lift` rather than `--carve`, because a thing
+floating *over* the page is the one thing here that is not carved *into* it. It
+closes on Escape and on a pointer down anywhere else, and closing returns focus
+to the trigger so a keyboard does not lose its place; `aria-haspopup` and
+`aria-expanded` are what make it a menu rather than a button that did nothing.
+
 **Who you are sits beside the heading, not under it.** `.account-page` is a grid:
 the title takes column one, `.account-who` takes column two and spans the two
 heading rows, and everything below runs `1 / -1` because a list of decks has no

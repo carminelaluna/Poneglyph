@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Pips from '@/components/Pips';
 import { art } from '@/lib/art';
 import { loadLeaders, type Leaders } from '@/lib/shards';
@@ -45,6 +45,91 @@ const PROVIDERS = [
  * it — and nothing had ever called it. An OAuth sign-in fills the name in from the
  * provider, which is a reasonable default and a poor permanent answer.
  */
+/**
+ * The name, and a menu behind it.
+ *
+ * This was a bordered card holding a name and a Sign out button, which is a lot of
+ * furniture for two facts. The name is the only thing worth seeing at rest; what
+ * you can *do* with the account belongs behind it, which is also where it can grow
+ * without the page growing with it.
+ *
+ * Everything a menu has to do and a `<div>` does not: it closes on Escape and on a
+ * click anywhere else, it says `aria-expanded` and `aria-haspopup` so a screen
+ * reader announces it as a menu rather than a button that did nothing, and closing
+ * puts focus back on the trigger so the keyboard does not lose its place.
+ */
+function AccountMenu({
+  name,
+  onRename,
+  onSignOut,
+}: {
+  name: string;
+  onRename: () => void;
+  onSignOut: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const close = () => {
+      setOpen(false);
+      trigger.current?.focus();
+    };
+
+    /* Pointer down rather than click: a menu that waits for mouseup feels stuck. */
+    const away = (event: PointerEvent) => {
+      if (!box.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const key = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') close();
+    };
+
+    document.addEventListener('pointerdown', away);
+    document.addEventListener('keydown', key);
+    return () => {
+      document.removeEventListener('pointerdown', away);
+      document.removeEventListener('keydown', key);
+    };
+  }, [open]);
+
+  const choose = (act: () => void) => () => {
+    setOpen(false);
+    act();
+  };
+
+  return (
+    <div className="who" ref={box}>
+      <button
+        type="button"
+        ref={trigger}
+        className="who-name"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+      >
+        {name}
+        <svg className="who-caret" viewBox="0 0 10 6" aria-hidden="true">
+          <path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        </svg>
+      </button>
+
+      {open ? (
+        <div className="who-menu" role="menu">
+          <button type="button" role="menuitem" className="who-item" onClick={choose(onRename)}>
+            Change name
+          </button>
+          <button type="button" role="menuitem" className="who-item" onClick={choose(onSignOut)}>
+            Sign out
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function DisplayName({
   current,
   onSave,
@@ -390,8 +475,7 @@ export default function AccountView() {
           It is one name and a way out — a row of its own made that look like the
           point of a page whose point is the decks below.
         */}
-        <div className="account account-who slab slab-pad">
-          <p className="eyebrow">Signed in</p>
+        <div className="account-who">
           {renaming ? (
             <DisplayName
               current={profile?.display_name ?? ''}
@@ -399,30 +483,8 @@ export default function AccountView() {
               onSave={rename}
             />
           ) : (
-            <h2 className="display" style={{ margin: '0.15rem 0 0', fontSize: '1.1rem' }}>
-              {name}{' '}
-              <button
-                type="button"
-                className="account-link"
-                style={{ verticalAlign: 'middle' }}
-                onClick={() => setRenaming(true)}
-              >
-                Change
-              </button>
-            </h2>
+            <AccountMenu name={name} onRename={() => setRenaming(true)} onSignOut={signOut} />
           )}
-          <button
-            type="button"
-            /*
-              Solid, because as a plain chip it read as a label rather than as the
-              one action on the panel. The panel's own grid gap spaces it; an
-              inline margin here doubled that.
-            */
-            className="chip chip-solid"
-            onClick={signOut}
-          >
-            Sign out
-          </button>
         </div>
 
         {/*
