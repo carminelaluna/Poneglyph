@@ -881,6 +881,15 @@ bot this size and is not optional: without it `content`, `embeds` and
 `attachments` all come back **empty**, so the ingest reads a channel full of
 reveals and correctly finds nothing.
 
+**A forward is empty at the top level**, and that is how this channel is fed. A
+forwarded message carries `content`, `attachments` and `embeds` blank and the real
+message in `message_snapshots[].message`, an immutable copy taken when the forward
+was made. Reading only the top level saw twelve posts, found nothing in any of
+them, and looked exactly like a missing Message Content intent — which cost two
+runs to tell apart, and was settled by asking `GET /applications/@me` whether the
+intent was on rather than inferring it. Discord caps snapshot nesting at one
+level, so one pass reads all of it.
+
 Two halves of a message are read because neither is reliable alone: an attachment
 named `OP18-021.png` is the card it names, and a phone photo named `IMG_4821.jpg`
 beside a typed number is that number's card. A message naming six cards with one
@@ -1086,4 +1095,4 @@ Standard-legal, 20 via the block exception · 2,651 priced · 69,708 decklists �
 English 63,814 from 2022-10, Japanese 5,894 from 2022-07 · 7,904 tournaments ·
 18,960 named players, 3,691 with five or more results · 152,529 recorded matches
 from 1,020 brackets · 44/46 release windows · 53 dated set releases · 67 announced
-official events across 6 types · 169 tests.
+official events across 6 types · 170 tests.

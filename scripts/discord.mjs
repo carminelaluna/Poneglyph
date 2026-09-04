@@ -51,15 +51,52 @@ export function cardIds(text) {
 export const setOf = (id) => id.split('-')[0];
 
 /**
+ * The parts of a message that can carry a reveal, flattened.
+ *
+ * A **forwarded** message is empty at the top level: `content`, `attachments` and
+ * `embeds` are all blank, and the real thing sits in `message_snapshots[].message`,
+ * which is an immutable copy taken when the forward was made. That is not an edge
+ * case here — it is how the whole channel is fed, and reading only the top level
+ * saw twelve posts and found nothing in any of them, which looked exactly like a
+ * missing Message Content intent and cost two runs to tell apart.
+ *
+ * Discord limits snapshot nesting to one level, so one pass is all of it.
+ */
+function partsOf(message) {
+  const parts = [message];
+  for (const snapshot of message?.message_snapshots ?? []) {
+    if (snapshot?.message) parts.push(snapshot.message);
+  }
+  return parts;
+}
+
+/**
+ * Everything a message says, forwarded content included, as one string.
+ *
+ * Exported because the ingest asks the same question to tell a channel that is
+ * quiet from one whose content it cannot see.
+ */
+export const textOf = (message) =>
+  partsOf(message)
+    .map((p) => p?.content ?? '')
+    .filter(Boolean)
+    .join(' ');
+
+/** Every attachment on a message, forwarded ones included. */
+export const filesOf = (message) =>
+  partsOf(message).flatMap((p) => p?.attachments ?? []);
+
+/**
  * One Discord message -> the cards it reveals.
  *
- * `content` is the typed text, `attachments` the uploaded files. A crossposted
+ * `content` is the typed text, `attachments` the uploaded files, and both are
+ * read through `partsOf` so a forward is read like anything else. A crossposted
  * message — one that arrived by following an announcement channel — has the same
  * shape with a `webhook_id` set, so nothing here needs to know which it is.
  *
- * Both come back empty unless the app has the MESSAGE_CONTENT privileged intent,
- * which is a checkbox for a bot this size but is not optional: without it this
- * function is handed nothing and correctly finds nothing.
+ * All of it comes back empty unless the app has the MESSAGE_CONTENT privileged
+ * intent, which is a checkbox for a bot this size but is not optional: without it
+ * this function is handed nothing and correctly finds nothing.
  */
 export function cardsFromMessage(message) {
   const found = new Map();
@@ -71,9 +108,9 @@ export function cardsFromMessage(message) {
     else if (!held.image && image) held.image = image;
   };
 
-  for (const id of cardIds(message?.content)) note(id, null);
+  for (const id of cardIds(textOf(message))) note(id, null);
 
-  for (const attachment of message?.attachments ?? []) {
+  for (const attachment of filesOf(message)) {
     const name = attachment?.filename ?? '';
     const ids = [...cardIds(name)];
     /*
@@ -87,8 +124,8 @@ export function cardsFromMessage(message) {
     }
   }
 
-  const named = [...cardIds(message?.content)];
-  const loose = (message?.attachments ?? []).filter((a) => cardIds(a?.filename ?? '').size === 0);
+  const named = [...cardIds(textOf(message))];
+  const loose = filesOf(message).filter((a) => cardIds(a?.filename ?? '').size === 0);
   if (named.length === 1 && loose.length === 1) {
     const entry = found.get(named[0]);
     if (entry && !entry.image) entry.image = loose[0].url ?? null;

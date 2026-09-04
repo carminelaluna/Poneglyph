@@ -45,7 +45,7 @@
 
 import { writeFile, readFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
-import { newestId, revealsFromMessages } from './discord.mjs';
+import { filesOf, newestId, revealsFromMessages, textOf } from './discord.mjs';
 import { BACKOFF, exitOnFailure, finalError, refusal, TURNED_AWAY, writtenAt } from './refusal.mjs';
 
 const args = process.argv.slice(2);
@@ -266,15 +266,17 @@ async function main() {
     let withFiles = 0;
     let withEmbeds = 0;
     let webhooks = 0;
+    let forwards = 0;
     const files = [];
 
     for (const m of messages) {
       kinds.set(m?.type ?? '?', (kinds.get(m?.type ?? '?') ?? 0) + 1);
-      if (m?.content) withText++;
-      if ((m?.attachments ?? []).length) withFiles++;
+      if (textOf(m)) withText++;
+      if (filesOf(m).length) withFiles++;
       if ((m?.embeds ?? []).length) withEmbeds++;
       if (m?.webhook_id) webhooks++;
-      for (const a of m?.attachments ?? []) files.push(a?.filename ?? '?');
+      if ((m?.message_snapshots ?? []).length) forwards++;
+      for (const a of filesOf(m)) files.push(a?.filename ?? '?');
       for (const e of m?.embeds ?? []) {
         if (e?.image?.url) files.push(`embed:${String(e.image.url).split('/').pop()?.split('?')[0]}`);
       }
@@ -286,6 +288,7 @@ async function main() {
     log(`  ${withFiles}/${messages.length} have attachments`);
     log(`  ${withEmbeds}/${messages.length} have embeds`);
     log(`  ${webhooks}/${messages.length} arrived by webhook (a follow crossposts this way)`);
+    log(`  ${forwards}/${messages.length} are forwards (content lives in message_snapshots)`);
     log(`  message types: ${[...kinds].map(([k, n]) => `${k}×${n}`).join(', ')}`);
     /*
      * Field names only, never values. A message whose content lives somewhere
@@ -301,7 +304,7 @@ async function main() {
     for (const [keys, n] of shapes) log(`  ${n} message(s) carry: ${keys}`);
     if (files.length) log(`  files: ${files.slice(0, 40).join(' ')}`);
     /* Text length only — enough to tell "blank" from "we did not match it". */
-    log(`  text lengths: ${messages.map((m) => (m?.content ?? '').length).join(' ')}`);
+    log(`  text lengths: ${messages.map((m) => textOf(m).length).join(' ')}`);
     log('');
   }
 
@@ -316,7 +319,7 @@ async function main() {
    */
   const written = messages.filter((m) => WRITTEN_BY_A_PERSON.has(m?.type ?? 0));
   const silent = written.filter(
-    (m) => !m?.content && (m?.attachments ?? []).length === 0 && (m?.embeds ?? []).length === 0
+    (m) => !textOf(m) && filesOf(m).length === 0 && (m?.embeds ?? []).length === 0
   ).length;
   if (written.length >= 10 && silent === written.length) {
     throw new Error(

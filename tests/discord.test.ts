@@ -81,6 +81,19 @@ describe('one message', () => {
     );
   });
 
+  /*
+   * A forward is empty at the top level and carries the real message in
+   * `message_snapshots`. It is not an edge case: it is how the channel this reads
+   * is actually fed, and reading only the top level saw twelve posts, found
+   * nothing in any of them, and looked exactly like a missing Message Content
+   * intent — which cost two runs to tell apart.
+   */
+  it('reads a forwarded message, whose content is in the snapshot', () => {
+    const [card] = cardsFromMessage(messages[7]);
+    assert.equal(card.id, 'OP18-077');
+    assert.match(card.image, /OP18-077\.png/);
+  });
+
   it('finds nothing in a message with nothing in it', () => {
     assert.deepEqual(cardsFromMessage(messages[6]), []);
     assert.deepEqual(cardsFromMessage({}), []);
@@ -106,6 +119,7 @@ describe('a batch of messages', () => {
     assert.deepEqual(op18.cards.map((c) => c.id), [
       'OP18-021',
       'OP18-060',
+      'OP18-077',
       'OP18-101',
       'OP18-102',
       'OP18-103',
@@ -115,12 +129,14 @@ describe('a batch of messages', () => {
   it('keeps the day each set was first and last seen', () => {
     const op18 = reveals.find((r) => r.set === 'OP18')!;
     assert.match(op18.first, /^2026-09-01T09:14/);
-    assert.match(op18.last, /^2026-09-01T12:00/);
+    /* The forward, which is the newest sighting of this set. */
+    assert.match(op18.last, /^2026-09-02T10:00/);
   });
 
   /* Newest activity first: a set being revealed right now is the one to show. */
   it('puts the set with the newest sighting first', () => {
-    assert.equal(reveals[0].set, 'EB05');
+    assert.equal(reveals[0].set, 'OP18');
+    assert.equal(reveals[1].set, 'EB05');
   });
 
   it('is empty rather than throwing on an empty channel', () => {
@@ -135,7 +151,7 @@ describe('where the next run starts', () => {
    * stops being true.
    */
   it('takes the newest id, comparing as numbers not strings', () => {
-    assert.equal(newestId(messages), '1310000000000000007');
+    assert.equal(newestId(messages), '1310000000000000008');
     assert.equal(newestId([{ id: '9999999999999999' }, { id: '10000000000000000' }]), '10000000000000000');
   });
 
@@ -171,8 +187,8 @@ describe('the ingest script', () => {
 
     const written = JSON.parse(await readFile(out, 'utf8'));
     assert.deepEqual(written.sets.map((s: { set: string }) => s.set).sort(), ['EB05', 'OP18']);
-    assert.equal(written.counts.cards, 6);
-    assert.equal(written.lastMessageId, '1310000000000000007', 'the next run must start after this');
+    assert.equal(written.counts.cards, 7);
+    assert.equal(written.lastMessageId, '1310000000000000008', 'the next run must start after this');
   });
 
   /* Running twice must not double the corpus, because a batch is a delta. */
@@ -181,7 +197,7 @@ describe('the ingest script', () => {
     await spawn(['--fixture', 'tests/fixtures/discord-messages.json']);
     await spawn(['--fixture', 'tests/fixtures/discord-messages.json']);
     const written = JSON.parse(await readFile(out, 'utf8'));
-    assert.equal(written.counts.cards, 6);
+    assert.equal(written.counts.cards, 7);
   });
 
   /*
