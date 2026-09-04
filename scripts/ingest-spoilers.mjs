@@ -287,10 +287,11 @@ async function main() {
    * carry the release month and the card names that the channel does not. Neither
    * is a superset, so both are merged and the first sighting of a card wins.
    *
-   * Images are deliberately dropped. Discord's attachment URLs are signed and
-   * expire within hours, so writing one into a payload the browser reads later
-   * publishes a link that is already dead — worse than no image, because it
-   * renders as a broken one.
+   * The Discord link itself is never carried over: it is signed and expires within
+   * hours, so writing one into a payload the browser reads later publishes a dead
+   * link, which renders as a broken image and is worse than none. What is carried
+   * is `thumb` — a 320px WebP the Discord ingest saved under `public/spoilers`
+   * while the link still worked. It lives there only until the set ships.
    */
   const fromDiscord = await readFile(path.join(DATA, 'spoilers-discord.json'), 'utf8')
     .then((raw) => JSON.parse(raw))
@@ -313,7 +314,12 @@ async function main() {
       const entry = upcoming.get(set.set);
       for (const card of set.cards) {
         if (entry.cards.has(card.id)) continue;
-        entry.cards.set(card.id, { id: card.id, name: null, image: null });
+        entry.cards.set(card.id, {
+          id: card.id,
+          name: null,
+          image: null,
+          thumb: card.thumb ?? null,
+        });
         added++;
       }
     }

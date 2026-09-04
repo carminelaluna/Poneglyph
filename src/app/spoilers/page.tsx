@@ -1,8 +1,15 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import spoilersJson from '@data/spoilers.json';
+import { asset } from '@/lib/paths';
 
-type SpoilerCard = { id: string; name: string | null; image: string };
+type SpoilerCard = {
+  id: string;
+  name: string | null;
+  image: string | null;
+  /** A local 320px thumbnail, when the reveal came from Discord — see asset(). */
+  thumb?: string | null;
+};
 type SpoilerSet = {
   set: string;
   code: string;
@@ -82,9 +89,14 @@ export default function SpoilersPage() {
                       so nothing points at one. A broken image is worse than an
                       honest empty frame, which is what this is.
                     */}
-                    {card.image ? (
+                    {card.image || card.thumb ? (
                       <img
-                        src={card.image}
+                        /*
+                          `asset()` and not a bare path: this site is served under
+                          a basePath, and a hand-written src is one of the two
+                          things Next does not rewrite.
+                        */
+                        src={card.thumb ? asset(`/spoilers/${card.thumb}`) : card.image!}
                         alt={card.name ? `${card.name} (${card.id})` : card.id}
                         loading="lazy"
                         referrerPolicy="no-referrer"

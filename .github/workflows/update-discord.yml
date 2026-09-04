@@ -61,6 +61,11 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
+          cache: npm
+
+      # The only ingest that needs an install: `sharp` turns a phone photo into a
+      # 320px WebP, and it is a devDependency rather than something to hand-roll.
+      - run: npm ci
 
       - name: Read the spoiler channel
         env:

@@ -43,7 +43,7 @@
  * the link it saw and leaves the choice to the step that would act on it.
  */
 
-import { writeFile, readFile, mkdir } from 'node:fs/promises';
+import { writeFile, readFile, mkdir, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { filesOf, newestId, revealsFromMessages, textOf } from './discord.mjs';
 import { BACKOFF, exitOnFailure, finalError, refusal, TURNED_AWAY, writtenAt } from './refusal.mjs';
@@ -56,6 +56,28 @@ const flag = (name, fallback = null) => {
 const has = (name) => args.includes(`--${name}`);
 
 const DATA = path.resolve('data');
+
+/*
+ * Where the thumbnails live, and why they live here rather than on the CDN.
+ *
+ * Discord's attachment URLs are signed and expire in hours, so the only moment a
+ * reveal can be kept is the moment it is read. These are photographs of cards
+ * that are not out, so the CDN — which serves official art and is meant to — is
+ * the wrong home for them, and they are temporary by construction: the moment a
+ * set reaches the card archive its thumbnails are deleted and the page serves the
+ * official images instead.
+ *
+ * They are downscaled hard, and that is not only about weight. Git never forgets:
+ * deleting a file removes it from what is served, never from history, and this
+ * repository is public. 320px WebP is about 30 KB, so ~120 spoilers is under 4 MB
+ * even counting a history that keeps every one of them forever — and at that size
+ * they are thumbnails rather than usable scans, which for somebody else's photo
+ * of an unreleased card is the right thing to be storing anyway.
+ */
+const THUMBS = path.resolve('public', 'spoilers');
+const THUMB_WIDTH = 320;
+/* Nothing a phone produces is near this; anything that is, is not a card photo. */
+const MAX_DOWNLOAD = 25 * 1024 * 1024;
 /*
  * `--out` exists for the tests, and it exists because they wrote to the real one.
  * A test that spawns this script has to clean up after itself, and cleaning up
@@ -158,6 +180,39 @@ async function get(url, { retries = 4 } = {}) {
     }
   }
   return null;
+}
+
+/**
+ * One attachment -> a thumbnail on disk, or null if it could not be made.
+ *
+ * A reveal we cannot picture is still a reveal, so every failure here is a
+ * shrug rather than an error: the card keeps its number and the page draws an
+ * empty frame. The one thing this must not do is take the run down over an
+ * image, which is why nothing in it throws.
+ */
+async function thumbnail(id, url, sharp) {
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
+    if (!res.ok) return null;
+
+    const length = Number(res.headers.get('content-length') ?? 0);
+    if (length > MAX_DOWNLOAD) return null;
+
+    const body = Buffer.from(await res.arrayBuffer());
+    if (body.byteLength > MAX_DOWNLOAD) return null;
+
+    const out = await sharp(body)
+      .rotate() /* Phone photos carry EXIF orientation; honour it before resizing. */
+      .resize({ width: THUMB_WIDTH, withoutEnlargement: true })
+      .webp({ quality: 78 })
+      .toBuffer();
+
+    await mkdir(THUMBS, { recursive: true });
+    await writeFile(path.join(THUMBS, `${id}.webp`), out);
+    return { file: `${id}.webp`, bytes: out.byteLength };
+  } catch {
+    return null;
+  }
 }
 
 /** What the last run reached, so this one reads forward rather than again. */
@@ -372,7 +427,12 @@ async function main() {
     const byId = new Map(held.cards.map((c) => [c.id, c]));
     for (const card of set.cards) {
       if (!byId.has(card.id)) byId.set(card.id, card);
-      else if (card.image && !byId.get(card.id).image) byId.get(card.id).image = card.image;
+      else {
+        const held = byId.get(card.id);
+        /* A fresh link replaces an expired one; a thumbnail already made stays. */
+        if (card.image) held.image = card.image;
+        if (card.thumb && !held.thumb) held.thumb = card.thumb;
+      }
     }
     merged.set(set.set, {
       set: set.set,
@@ -382,11 +442,67 @@ async function main() {
     });
   }
 
-  /* A set that shipped since the last run stops being a spoiler. */
+  /*
+   * A set that shipped since the last run stops being a spoiler, and its
+   * thumbnails go with it — that is the whole bargain. They exist because the
+   * official art does not yet; the moment it does, the page serves that instead
+   * and these have no reason to be here.
+   */
   for (const set of [...merged.keys()]) {
-    if (released.has(set.toUpperCase())) {
-      log(`  ${set} has shipped — dropping it from the spoiler corpus`);
-      merged.delete(set);
+    if (!released.has(set.toUpperCase())) continue;
+    log(`  ${set} has shipped — dropping it and its thumbnails`);
+    for (const card of merged.get(set).cards) {
+      if (card.thumb) await rm(path.join(THUMBS, card.thumb), { force: true });
+    }
+    merged.delete(set);
+  }
+
+  /*
+   * Thumbnails, fetched now because now is the only time the link works: an
+   * attachment URL is signed and expires within hours, so a run that records the
+   * link and comes back for it later finds nothing.
+   *
+   * `sharp` is a devDependency and is imported here rather than at the top, so a
+   * checkout without it — or a fixture run, which has no real URLs — still reads
+   * the channel and simply keeps no pictures.
+   */
+  if (!fixture && !has('no-images')) {
+    const wanted = [...merged.values()].flatMap((set) =>
+      set.cards.filter((c) => c.image && !c.thumb).map((c) => c)
+    );
+
+    if (wanted.length > 0) {
+      const sharp = await import('sharp').then((m) => m.default).catch(() => null);
+      if (!sharp) {
+        log('  sharp is not installed — keeping the numbers and no pictures');
+      } else {
+        let made = 0;
+        let bytes = 0;
+        for (const card of wanted) {
+          const thumb = await thumbnail(card.id, card.image, sharp);
+          if (!thumb) continue;
+          card.thumb = thumb.file;
+          made++;
+          bytes += thumb.bytes;
+        }
+        log(
+          `  ${made}/${wanted.length} thumbnails written` +
+            (made ? ` (${(bytes / made / 1024).toFixed(0)} KB each, ${(bytes / 1024).toFixed(0)} KB total)` : '')
+        );
+      }
+    }
+  }
+
+  /*
+   * A thumbnail whose card is gone from the corpus is a file nothing points at.
+   * They are small, but a directory that only ever grows is a directory nobody
+   * ever looks at again.
+   */
+  const keep = new Set([...merged.values()].flatMap((s) => s.cards.map((c) => c.thumb).filter(Boolean)));
+  for (const file of await readdir(THUMBS).catch(() => [])) {
+    if (file.endsWith('.webp') && !keep.has(file)) {
+      await rm(path.join(THUMBS, file), { force: true });
+      log(`  removed an orphaned thumbnail: ${file}`);
     }
   }
 
