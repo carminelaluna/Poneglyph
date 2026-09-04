@@ -395,19 +395,6 @@
 }
 
 /*
- * Collapsed, this is the whole feature: one button whose label is the status.
- * Sits apart from the account block above it so it reads as a thing you can do
- * rather than as another line of what you are.
- */
-.account-ask-line {
-  margin: 0;
-}
-
-.account-ask-line .chip {
-  padding: 0.5rem 0.9rem;
-}
-
-/*
  * What was sent, once it has been. Read-only by construction — there is nothing on
  * this panel that changes the request, because the database has nothing that would
  * accept the change.

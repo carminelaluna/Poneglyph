@@ -93,28 +93,36 @@ function ProviderMark({ id }: { id: 'discord' | 'google' }) {
   );
 }
 
+/** One line in the account menu: somewhere to go, or something to do. */
+type MenuItem = {
+  label: string;
+  href?: string;
+  onSelect?: () => void;
+};
+
 /**
  * The name, and a menu behind it.
  *
  * This was a bordered card holding a name and a Sign out button, which is a lot of
  * furniture for two facts. The name is the only thing worth seeing at rest; what
- * you can *do* with the account belongs behind it, which is also where it can grow
- * without the page growing with it.
+ * you can *do* with the account belongs behind it, which is also where it grows
+ * without the page growing with it — asking to become an organizer, submitting a
+ * tournament once you are one, and reviewing what others send all arrived here
+ * afterwards without moving anything.
  *
- * Everything a menu has to do and a `<div>` does not: it closes on Escape and on a
- * click anywhere else, it says `aria-expanded` and `aria-haspopup` so a screen
- * reader announces it as a menu rather than a button that did nothing, and closing
- * puts focus back on the trigger so the keyboard does not lose its place.
+ * Items are given rather than written in, because what belongs in the menu depends
+ * on the role: a player can ask, an organizer can submit, an admin can review, and
+ * offering somebody the thing they already have is a page not paying attention.
+ *
+ * An item that goes somewhere is a link and not a button, so it can be
+ * middle-clicked and opened in a tab like any other; one that does something here
+ * is a button. Everything a menu has to do and a `<div>` does not: it closes on
+ * Escape and on a click anywhere else, it says `aria-expanded` and `aria-haspopup`
+ * so a screen reader announces it as a menu rather than a button that did nothing,
+ * and closing puts focus back on the trigger so the keyboard does not lose its
+ * place.
  */
-function AccountMenu({
-  name,
-  onRename,
-  onSignOut,
-}: {
-  name: string;
-  onRename: () => void;
-  onSignOut: () => void;
-}) {
+function AccountMenu({ name, items }: { name: string; items: MenuItem[] }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -143,11 +151,6 @@ function AccountMenu({
     };
   }, [open]);
 
-  const choose = (act: () => void) => () => {
-    setOpen(false);
-    act();
-  };
-
   return (
     <div className="who" ref={box}>
       <button
@@ -167,12 +170,32 @@ function AccountMenu({
 
       {open ? (
         <div className="who-menu" role="menu">
-          <button type="button" role="menuitem" className="who-item" onClick={choose(onRename)}>
-            Change name
-          </button>
-          <button type="button" role="menuitem" className="who-item" onClick={choose(onSignOut)}>
-            Sign out
-          </button>
+          {items.map((item) =>
+            item.href ? (
+              <Link
+                key={item.label}
+                href={item.href}
+                role="menuitem"
+                className="who-item"
+                onClick={() => setOpen(false)}
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <button
+                key={item.label}
+                type="button"
+                role="menuitem"
+                className="who-item"
+                onClick={() => {
+                  setOpen(false);
+                  item.onSelect?.();
+                }}
+              >
+                {item.label}
+              </button>
+            )
+          )}
         </div>
       ) : null}
     </div>
@@ -246,9 +269,16 @@ function DisplayName({
  *
  * Nothing here changes a role. It records a question; `/review` records the answer.
  */
-function OrganizerRequest({ userId }: { userId: string }) {
+function OrganizerRequest({
+  userId,
+  open,
+  onClose,
+}: {
+  userId: string;
+  open: boolean;
+  onClose: () => void;
+}) {
   const [request, setRequest] = useState<OrganizerRequestRow | null | undefined>(undefined);
-  const [open, setOpen] = useState(false);
   const [organizerName, setOrganizerName] = useState('');
   const [events, setEvents] = useState('');
   const [link, setLink] = useState('');
@@ -287,22 +317,15 @@ function OrganizerRequest({ userId }: { userId: string }) {
 
   const status = request?.status;
 
-  if (!open) {
-    return (
-      <p className="account-ask-line">
-        <button type="button" className="chip" onClick={() => setOpen(true)}>
-          {status === 'pending'
-            ? 'Organizer role — waiting for review'
-            : status === 'rejected'
-              ? 'Organizer role — not granted'
-              : 'Ask for the organizer role'}
-        </button>
-      </p>
-    );
-  }
+  /*
+   * Closed is nothing at all now. This used to render its own chip, whose label
+   * was the status — the menu opens it instead, so a page nobody is asking about
+   * the organizer role on shows nothing about it.
+   */
+  if (!open) return null;
 
   const close = (
-    <button type="button" className="account-link" onClick={() => setOpen(false)}>
+    <button type="button" className="account-link" onClick={onClose}>
       Close
     </button>
   );
@@ -437,6 +460,7 @@ export default function AccountView() {
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [renaming, setRenaming] = useState(false);
+  const [asking, setAsking] = useState(false);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -532,7 +556,28 @@ export default function AccountView() {
               onSave={rename}
             />
           ) : (
-            <AccountMenu name={name} onRename={() => setRenaming(true)} onSignOut={signOut} />
+            /*
+              What is in the menu is what this account can actually do. A player
+              can ask to become an organizer; an organizer can submit a tournament
+              and no longer needs to ask; an admin can review what others sent, and
+              that link lives here now rather than in a sentence beside the name.
+            */
+            <AccountMenu
+              name={name}
+              items={[
+                { label: 'Change name', onSelect: () => setRenaming(true) },
+                ...(profile?.role === 'user'
+                  ? [{ label: 'Organizer role', onSelect: () => setAsking(true) }]
+                  : []),
+                ...(profile?.role === 'organizer' || profile?.role === 'admin'
+                  ? [{ label: 'Submit a tournament', href: '/submit' }]
+                  : []),
+                ...(profile?.role === 'admin'
+                  ? [{ label: 'Review submissions', href: '/review' }]
+                  : []),
+                { label: 'Sign out', onSelect: signOut },
+              ]}
+            />
           )}
         </div>
 
@@ -548,7 +593,11 @@ export default function AccountView() {
             hand out themselves, would be a page not paying attention.
           */}
           {profile && profile.role === 'user' ? (
-            <OrganizerRequest userId={session.user.id} />
+            <OrganizerRequest
+              userId={session.user.id}
+              open={asking}
+              onClose={() => setAsking(false)}
+            />
           ) : null}
 
           <SavedDecks />

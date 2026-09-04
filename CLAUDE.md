@@ -510,6 +510,17 @@ small control wants; the provider buttons sit one level deeper, so
 `.account > .chip { justify-self: start }` reaches only the one that was wrong.
 And its inline `margin-top` doubled the grid's own gap, so it went.
 
+**The menu is what the account can do, and the role decides what is in it.** A
+player can ask to become an organizer; an organizer can submit a tournament and no
+longer needs to ask; an admin can review what others sent. Offering somebody the
+thing they already have is a page not paying attention, which is why the items are
+passed in rather than written into `AccountMenu`. An item that goes somewhere is a
+`Link` and not a button, so it middle-clicks and opens in a tab like anything else.
+
+That is also where `/review` came back. It had been reachable from exactly one
+sentence beside the name, and removing that sentence left it reachable only by
+typing the path.
+
 **Asking for the organizer role is a row, not an email.** The site used to answer
 "how do I submit results" with the contact address on `/legal` — off the record, easy
 to lose, visible to nobody but whoever received it. A plain account now asks from its
