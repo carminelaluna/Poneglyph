@@ -67,6 +67,18 @@ const API = 'https://discord.com/api/v10';
 const PAGE = 100;
 
 /**
+ * Application flags that say the Message Content intent is on.
+ *
+ * `GATEWAY_MESSAGE_CONTENT` (1 << 18) is the approved one, for apps in 100 or
+ * more servers; `GATEWAY_MESSAGE_CONTENT_LIMITED` (1 << 19) is the self-serve one
+ * a small app switches on for itself. Either means content will arrive, so either
+ * answers the question, and asking `GET /applications/@me` answers it about the
+ * token we are actually holding rather than about whichever app somebody was
+ * looking at in the portal.
+ */
+const MESSAGE_CONTENT_FLAGS = { approved: 1 << 18, limited: 1 << 19 };
+
+/**
  * Message types a person actually wrote: DEFAULT, REPLY, and the two command
  * kinds. Everything else — joins, pins, boosts, and the `CHANNEL_FOLLOW_ADD` that
  * Discord posts when a channel is followed into this one — is written by Discord.
@@ -227,6 +239,28 @@ async function main() {
    * this source has, and none of them is the conversation.
    */
   if (has('inspect')) {
+    /*
+     * The definitive answer, from Discord, about this token. Two runs were spent
+     * inferring the intent from the shape of what came back; the application
+     * object simply says. It also names the app, which is the other thing that
+     * goes wrong: toggling the intent on one application and putting a different
+     * one's token in the secret looks exactly the same from the outside.
+     */
+    if (!fixture) {
+      const app = await get(`${API}/applications/@me`).catch(() => null);
+      if (app) {
+        const flags = Number(app.flags ?? 0);
+        const on = Object.entries(MESSAGE_CONTENT_FLAGS).filter(([, bit]) => flags & bit);
+        log('');
+        log(`this token belongs to: ${app.name} (${app.id})`);
+        log(
+          on.length
+            ? `  Message Content intent: ON (${on.map(([k]) => k).join(', ')})`
+            : '  Message Content intent: OFF — content and attachments will be blank'
+        );
+      }
+    }
+
     const kinds = new Map();
     let withText = 0;
     let withFiles = 0;
@@ -253,6 +287,18 @@ async function main() {
     log(`  ${withEmbeds}/${messages.length} have embeds`);
     log(`  ${webhooks}/${messages.length} arrived by webhook (a follow crossposts this way)`);
     log(`  message types: ${[...kinds].map(([k, n]) => `${k}×${n}`).join(', ')}`);
+    /*
+     * Field names only, never values. A message whose content lives somewhere
+     * unexpected — a forward puts it in `message_snapshots`, a sticker in
+     * `sticker_items` — is indistinguishable from a blank one until you can see
+     * which keys are actually present.
+     */
+    const shapes = new Map();
+    for (const m of messages) {
+      const keys = Object.keys(m ?? {}).sort().join(',');
+      shapes.set(keys, (shapes.get(keys) ?? 0) + 1);
+    }
+    for (const [keys, n] of shapes) log(`  ${n} message(s) carry: ${keys}`);
     if (files.length) log(`  files: ${files.slice(0, 40).join(' ')}`);
     /* Text length only — enough to tell "blank" from "we did not match it". */
     log(`  text lengths: ${messages.map((m) => (m?.content ?? '').length).join(' ')}`);
