@@ -421,6 +421,16 @@ to `public/data/banlist.json` for that; the `/banlist` page imports the build-ti
 decks only they can see. An **organizer** can also submit a tournament, which after
 review joins the metagame corpus.
 
+**The role is a single column, not a set**, and that has one consequence worth
+knowing before you go looking for the setting: an account is a `user`, an
+`organizer` or an `admin`, never two. So the person who runs the site cannot also
+hold the organizer role, and asking for it from an admin account cannot work — the
+grant policy refuses to touch an admin's row on purpose. `0006-admins-may-submit`
+widens the insert on `submissions` instead, so an admin submits as themselves the
+way an organizer does. It lets an admin approve their own submission, which is not
+a hole it opens: an admin can already approve anything. The separation being
+protected is that an *organizer* cannot, and `edit while pending` still says so.
+
 **No client can mint an admin, and that is the line the whole model rests on.**
 There are three roles — `user`, `organizer`, `admin`. Nothing lets an account change
 its own `role` or a submission's `status`. The update policy on `profiles` re-reads the

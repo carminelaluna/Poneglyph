@@ -42,9 +42,15 @@
 /*
  * Everything below the two of them runs the full width. The heading shares its
  * row with the card; a list of decks has no reason to be narrowed by it.
+ *
+ * The margin is the menu's business. The title is one short line and the trigger
+ * beside it is twice as tall, so the first row leaves almost nothing between the
+ * chip and whatever the stack begins with — and an open menu, which floats rather
+ * than pushing, then lands on top of it. This is the room for both.
  */
 .account-page > .account-stack {
   grid-column: 1 / -1;
+  margin-top: 1.75rem;
 }
 
 /*

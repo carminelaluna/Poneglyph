@@ -158,7 +158,12 @@ export function useAccount() {
      * an admin is not implicitly an organizer there, so offering them the form
      * would be the page promising something the database then refuses.
      */
-    isOrganizer: profile?.role === 'organizer',
+    /*
+     * An admin may submit too, matching the insert policy on `submissions`. The
+     * role is a single column rather than a set, so without this the person who
+     * runs the site could review submissions or send them and never both.
+     */
+    isOrganizer: profile?.role === 'organizer' || profile?.role === 'admin',
     isAdmin: profile?.role === 'admin',
     userId: session?.user.id ?? null,
     /* Which providers can currently open this account. */

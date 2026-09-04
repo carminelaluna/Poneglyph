@@ -267,10 +267,24 @@ create index submissions_status_idx on public.submissions (status);
 
 alter table public.submissions enable row level security;
 
--- Only an organizer may submit, and only as themselves.
-create policy "organizers submit"
+-- Only an organizer or an admin may submit, and only as themselves.
+--
+-- The admin half is there because the role is a single column rather than a set:
+-- an account cannot be both, so without this the person who runs the site could
+-- review submissions or send them and never both. Asking for the organizer role
+-- from an admin account does not work either — the grant policy below refuses to
+-- touch an admin's row, on purpose.
+--
+-- `auth.uid() = organizer_id` still stands, so either of them submits only as
+-- themselves. It does let an admin approve their own submission, which is not a
+-- hole this opens: an admin can already approve anything. The separation being
+-- protected is that an *organizer* cannot, and `edit while pending` still says so.
+create policy "organizers and admins submit"
   on public.submissions for insert
-  with check (auth.uid() = organizer_id and public.has_role('organizer'));
+  with check (
+    auth.uid() = organizer_id
+    and (public.has_role('organizer') or public.has_role('admin'))
+  );
 
 create policy "read own submissions"
   on public.submissions for select
