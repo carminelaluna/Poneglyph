@@ -74,7 +74,16 @@ const DATA = path.resolve('data');
  * they are thumbnails rather than usable scans, which for somebody else's photo
  * of an unreleased card is the right thing to be storing anyway.
  */
-const THUMBS = path.resolve('public', 'spoilers');
+/*
+ * `--thumbs`, like `--out`, exists because the tests need somewhere else to write.
+ * A spawned run prunes thumbnails no card points at, and a fixture corpus points
+ * at none — so with this hardcoded, `npm test` deleted every real thumbnail in
+ * `public/spoilers`. That is not hypothetical: `npm run verify` runs before
+ * `build:static` in the publish workflow, so the deploy exported a site whose
+ * twelve reveal images had been removed minutes earlier by the test suite, and
+ * the only symptom was twelve 404s on the live page.
+ */
+const THUMBS = path.resolve(flag('thumbs', path.join('public', 'spoilers')));
 const THUMB_WIDTH = 320;
 /* Nothing a phone produces is near this; anything that is, is not a card photo. */
 const MAX_DOWNLOAD = 25 * 1024 * 1024;

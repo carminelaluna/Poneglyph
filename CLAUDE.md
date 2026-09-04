@@ -898,6 +898,17 @@ a card. `discord.mjs` is where that lives, pure and import-free, because
 everything else about this source needs a token and a server and so cannot be
 exercised in CI; `ingest-discord.mjs` takes `--fixture` for the same reason.
 
+**A test that writes where the site keeps its files will delete them.** The
+Discord ingest prunes thumbnails no card points at, and a fixture corpus points at
+none — so `npm test`, which spawns the script, removed every real thumbnail in
+`public/spoilers`. Because `npm run verify` runs *before* `build:static` in
+`publish-site.yml`, the deploy then exported a site whose twelve reveal images had
+been deleted minutes earlier by its own test suite, and the only symptom was
+twelve 404s on the live page. The script takes `--out` and `--thumbs`, the tests
+point both at the temp directory, and one test asserts that `public/spoilers` is
+untouched by a run. This is the second time here: the same tests deleted
+`data/spoilers-discord.json` before that.
+
 **Discord's image links expire and that decides the whole image question.**
 Attachment URLs are signed — `?ex=&is=&hm=` — and Discord refreshes them only
 inside its own payloads. A link saved into a static JSON file is dead within
@@ -1107,4 +1118,4 @@ Standard-legal, 20 via the block exception · 2,651 priced · 69,708 decklists �
 English 63,814 from 2022-10, Japanese 5,894 from 2022-07 · 7,904 tournaments ·
 18,960 named players, 3,691 with five or more results · 152,529 recorded matches
 from 1,020 brackets · 44/46 release windows · 53 dated set releases · 67 announced
-official events across 6 types · 170 tests.
+official events across 6 types · 171 tests.

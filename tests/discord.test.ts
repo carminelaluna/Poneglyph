@@ -10,7 +10,7 @@
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import os from 'node:os';
-import { readFile, rm } from 'node:fs/promises';
+import { readdir, readFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { describe, it } from 'node:test';
 import { promisify } from 'node:util';
@@ -180,12 +180,25 @@ describe('the ingest script', () => {
    * while this was being written.
    */
   const out = path.join(os.tmpdir(), `poneglyph-discord-${process.pid}.json`);
+  /* Same reason as `out`: a spawned run prunes thumbnails, and a fixture keeps none. */
+  const thumbs = path.join(os.tmpdir(), `poneglyph-thumbs-${process.pid}`);
   const spawn = (args: string[], env: Record<string, string> = {}) =>
-    run(process.execPath, [path.join(root, 'scripts', 'ingest-discord.mjs'), '--out', out, ...args], {
-      cwd: root,
-      /* Blank rather than absent, so a token in the shell cannot make this pass. */
-      env: { ...process.env, DISCORD_BOT_TOKEN: '', DISCORD_SPOILER_CHANNEL: '', ...env },
-    });
+    run(
+      process.execPath,
+      [
+        path.join(root, 'scripts', 'ingest-discord.mjs'),
+        '--out',
+        out,
+        '--thumbs',
+        thumbs,
+        ...args,
+      ],
+      {
+        cwd: root,
+        /* Blank rather than absent, so a token in the shell cannot make this pass. */
+        env: { ...process.env, DISCORD_BOT_TOKEN: '', DISCORD_SPOILER_CHANNEL: '', ...env },
+      }
+    );
 
   it('reads a fixture end to end and writes a corpus', async (t) => {
     t.after(() => rm(out, { force: true }));
@@ -205,6 +218,24 @@ describe('the ingest script', () => {
     await spawn(['--fixture', 'tests/fixtures/discord-messages.json']);
     const written = JSON.parse(await readFile(out, 'utf8'));
     assert.equal(written.counts.cards, 7);
+  });
+
+  /*
+   * The regression that took twelve images off the live site.
+   *
+   * A spawned run prunes thumbnails no card points at, and a fixture corpus points
+   * at none. With the directory hardcoded, `npm test` deleted every real one in
+   * public/spoilers — and because `npm run verify` runs before `build:static` in
+   * the publish workflow, the deploy exported a site whose reveal images had been
+   * removed minutes earlier by its own test suite.
+   */
+  it('leaves the real thumbnails alone', async (t) => {
+    t.after(() => rm(out, { force: true }));
+    const real = path.join(root, 'public', 'spoilers');
+    const before = await readdir(real).catch(() => []);
+    await spawn(['--fixture', 'tests/fixtures/discord-messages.json']);
+    const after = await readdir(real).catch(() => []);
+    assert.deepEqual(after, before, 'the test suite deleted thumbnails the site serves');
   });
 
   /*
