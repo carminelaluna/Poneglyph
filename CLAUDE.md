@@ -1070,10 +1070,14 @@ The original arrangement had the first half without the second, which is how a U
 read from a secret that did not exist ran red for a day under a green tick: what was
 missing was not the failing, it was the looking.
 
-**Always `git add data public/data`.** Two workflows did not — one staged only `data/`, the
+**Always `git add data public/data`, and `public/spoilers` where it applies.**
+`update-discord` wrote twelve thumbnails in the runner and staged neither, so the
+corpus recorded that every EB-05 card had a picture while the page pointed at
+twelve files that had never left the machine — the third time this has happened
+here. Three workflows did not — one staged only `data/`, the
 other named individual files, a list that went stale the moment the per-entity shards
-appeared. Both run `build-indexes.mjs`, which writes every payload the browser fetches into
-`public/data`, so the archive refreshed and the site kept serving the previous ingest.
+appeared. They run `build-indexes.mjs` or an ingest that writes into `public/`, so the
+archive refreshed and the site kept serving what it had.
 Nothing fails when a payload is missing; the page just reads "not found".
 
 `publish-site` runs on `workflow_run`, not `on: push`, because **a commit made with

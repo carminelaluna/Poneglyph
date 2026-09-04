@@ -88,7 +88,12 @@ jobs:
         run: |
           git config user.name 'poneglyph-bot'
           git config user.email 'poneglyph-bot@users.noreply.github.com'
-          git add data public/data
+          # public/spoilers too, and this is the third time this repository has
+          # learned it: a workflow that stages only what it expects to change
+          # throws away what it actually wrote. The thumbnails were written in the
+          # runner and discarded here, so the corpus said every EB-05 card had a
+          # picture and the page pointed at twelve files that did not exist.
+          git add data public/data public/spoilers
           # generatedAt and durationMs change on every run, so a plain diff would
           # commit, rebuild and redeploy the site to publish a new timestamp.
           if ! node scripts/substantive-change.mjs; then
