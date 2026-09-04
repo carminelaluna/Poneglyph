@@ -63,7 +63,8 @@
  */
 .account-who {
   grid-column: 2;
-  grid-row: 1 / span 2;
+  /* One row to sit beside now that the title is one line rather than two. */
+  grid-row: 1;
   justify-self: end;
   position: relative;
   margin-top: 0;

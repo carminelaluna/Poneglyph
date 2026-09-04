@@ -477,6 +477,12 @@ closes on Escape and on a pointer down anywhere else, and closing returns focus
 to the trigger so a keyboard does not lose its place; `aria-haspopup` and
 `aria-expanded` are what make it a menu rather than a button that did nothing.
 
+**The account page has one title, and it is the eyebrow.** It said *Account* in an
+eyebrow and *Your account* under it in display type — the same word twice at two
+sizes. The eyebrow is the `h1` rather than a paragraph left beside a deleted one,
+because a page with no heading is a structural hole and not a tidier page: it is
+what a screen reader announces the page as.
+
 **Who you are sits beside the heading, not under it.** `.account-page` is a grid:
 the title takes column one, `.account-who` takes column two and spans the two
 heading rows, and everything below runs `1 / -1` because a list of decks has no
