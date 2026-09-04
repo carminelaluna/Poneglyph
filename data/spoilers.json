@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T11:33:22.127Z",
+  "generatedAt": "2026-09-04T11:38:54.792Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -9,10 +9,10 @@
   "counts": {
     "sets": 2,
     "cards": 20,
-    "named": 3,
+    "named": 15,
     "articles": 3
   },
-  "durationMs": 1975,
+  "durationMs": 2096,
   "sets": [
     {
       "set": "OP18",
@@ -75,17 +75,17 @@
       "cards": [
         {
           "id": "EB05-005",
-          "name": null,
+          "name": "Belo Betty",
           "image": null,
           "thumb": "EB05-005.webp",
-          "text": "``` Belo Betty Red Character C``` <@&1370648885474889869>"
+          "text": "Red Character C"
         },
         {
           "id": "EB05-007",
-          "name": null,
+          "name": "Monet",
           "image": null,
           "thumb": "EB05-007.webp",
-          "text": "``` Monet Red Character C ``` <@&1370648885474889869>"
+          "text": "Red Character C"
         },
         {
           "id": "EB05-010",
@@ -94,17 +94,17 @@
         },
         {
           "id": "EB05-011",
-          "name": null,
+          "name": "Otohime",
           "image": null,
           "thumb": "EB05-011.webp",
-          "text": "``` Otohime Green Character C ``` <@&1370648885474889869>"
+          "text": "Green Character C"
         },
         {
           "id": "EB05-013",
-          "name": null,
+          "name": "Shirley",
           "image": null,
           "thumb": "EB05-013.webp",
-          "text": "``` Shirley Green Character C ``` <@&1370648885474889869>"
+          "text": "Green Character C"
         },
         {
           "id": "EB05-016",
@@ -113,59 +113,59 @@
         },
         {
           "id": "EB05-023",
-          "name": null,
+          "name": "Osome",
           "image": null,
           "thumb": "EB05-023.webp",
-          "text": "``` Osome Blue Character ``` <@&1370648885474889869>"
+          "text": "Blue Character"
         },
         {
           "id": "EB05-025",
-          "name": null,
+          "name": "Domino",
           "image": null,
           "thumb": "EB05-025.webp",
-          "text": "``` Domino Blue Character C ``` <@&1370648885474889869>"
+          "text": "Blue Character C"
         },
         {
           "id": "EB05-035",
-          "name": null,
+          "name": "Speed",
           "image": null,
           "thumb": "EB05-035.webp",
-          "text": "``` Speed Purple Character C``` <@&1370648885474889869>"
+          "text": "Purple Character C"
         },
         {
           "id": "EB05-036",
-          "name": null,
+          "name": "Tsuru",
           "image": null,
           "thumb": "EB05-036.webp",
-          "text": "``` Tsuru Purple Character 4 Cost / 0 Power +1000 Counter Navy ``` <@&1370648885474889869>"
+          "text": "Purple Character 4 Cost / 0 Power +1000 Counter Navy"
         },
         {
           "id": "EB05-042",
-          "name": null,
+          "name": "Shinobu",
           "image": null,
           "thumb": "EB05-042.webp",
-          "text": "``` Shinobu Black Character C 4 Cost / 5000 Power (Special) Land of Wano Counter +2000 [On Play] Draw 2 cards and trash 2 cards from your hand.``` <@&1370648885474889869>"
+          "text": "Black Character C 4 Cost / 5000 Power (Special) Land of Wano Counter +2000 [On Play] Draw 2 cards and trash 2 cards from your hand."
         },
         {
           "id": "EB05-045",
-          "name": null,
+          "name": "Ms. Monday",
           "image": null,
           "thumb": "EB05-045.webp",
-          "text": "``` Ms. Monday Black Character C ``` <@&1370648885474889869>"
+          "text": "Black Character C"
         },
         {
           "id": "EB05-054",
-          "name": null,
+          "name": "Charlotte Brulee",
           "image": null,
           "thumb": "EB05-054.webp",
-          "text": "``` Charlotte Brulee Yellow Character C ``` <@&1370648885474889869>"
+          "text": "Yellow Character C"
         },
         {
           "id": "EB05-056",
-          "name": null,
+          "name": "Nico Olvia",
           "image": null,
           "thumb": "EB05-056.webp",
-          "text": "``` Nico Olvia Yellow Character C ``` <@&1370648885474889869>"
+          "text": "Yellow Character C"
         }
       ],
       "articles": [
