@@ -1132,35 +1132,6 @@ button.chip-solid:hover {
   flex-shrink: 0;
 }
 
-.spoiler-sources {
-  margin: 0 0 0.6rem;
-  font-family: var(--font-display), 'Arial Narrow', sans-serif;
-  font-size: 0.62rem;
-  font-weight: 600;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--glyph-dim);
-}
-
-.spoiler-links {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 0.4rem;
-  font-size: 0.84rem;
-}
-
-.spoiler-links a {
-  color: var(--glyph-mid);
-  border-bottom: 1px solid var(--edge-strong);
-}
-
-.spoiler-links a:hover {
-  color: var(--glyph);
-  border-bottom-color: var(--rune);
-}
-
 /* ---------------------------------------------------------------- banlist */
 
 /* A banned pair is one rule about two cards, so it is drawn as one object. */

@@ -25,6 +25,11 @@ registration dates are a guideline — and the metagame page spent a five-figure
 stat row on top of it. A reader arrives wanting the table. Those intros are gone,
 and with them `regionsJson` from `/decks`, which nothing else on that page read.
 
+`/submit` and `/review` were the last two and have gone the same way, along with
+the per-set *Reveals from* list on `/spoilers`: where the reveals come from is on
+`/legal` and `/data`, and the page still carries the attribution once, at its
+foot. Four CSS rules nothing rendered any more went with it.
+
 Two of them carried something that could not simply go, and neither is lost.
 Bandai's *guideline, organisers vary* is printed by `EventBrowser` as `· guideline`
 beside every registration time it takes from the month table — which is where the

@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import ReviewQueue from './ReviewQueue';
 import '../submit/submit.css';
 import './review.css';
@@ -21,14 +20,6 @@ export default function ReviewPage() {
       >
         Submissions waiting
       </h1>
-      <p className="muted" style={{ maxWidth: '66ch', marginTop: '0.8rem' }}>
-        Approving does not publish anything by itself. The next{' '}
-        <Link href="/data" className="inline-link">ingest</Link> reads approved rows and folds them into the corpus
-        with the rest, so what happens here is a decision rather than a deployment — and a
-        field uploaded as though it were the whole Swiss when it was the top cut does not look
-        wrong once it is in. It just moves the numbers.
-      </p>
-
       <ReviewQueue />
     </div>
   );

@@ -146,20 +146,6 @@ export default function SpoilersPage() {
             ) : (
               <p className="muted">Announced, but no card images have surfaced yet.</p>
             )}
-
-            <div className="meta-block">
-              <h3 className="spoiler-sources">Reveals from</h3>
-              <ul className="spoiler-links">
-                {set.articles.map((article) => (
-                  <li key={article.url}>
-                    <a href={article.url} target="_blank" rel="noreferrer noopener">
-                      {article.title}
-                    </a>{' '}
-                    <span className="muted mono">{article.date.slice(0, 10)}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
           </section>
         ))
       )}

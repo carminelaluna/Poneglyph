@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import SubmitForm from './SubmitForm';
 import './submit.css';
 
@@ -21,15 +20,6 @@ export default function SubmitPage() {
       >
         Submit an event
       </h1>
-      <p className="muted" style={{ maxWidth: '66ch', marginTop: '0.8rem' }}>
-        What you send joins the numbers other people read — alongside Limitless and One Piece
-        Top Decks, and counted the same way. Everything is reviewed before it appears, and
-        nothing here is refused for being incomplete: a 49-card list, or one naming a card the
-        archive has not ingested yet, can still be sent. Paste the lists in the format the
-        simulator reads, which is what the <Link href="/deckbuilder" className="inline-link">deck builder</Link>{' '}
-        exports.
-      </p>
-
       <SubmitForm />
     </div>
   );
