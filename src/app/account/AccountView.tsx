@@ -526,7 +526,8 @@ export default function AccountView() {
           <button
             type="button"
             className="chip"
-            style={{ marginTop: '1.2rem', padding: '0.5rem 0.9rem' }}
+            /* The panel's own grid gap spaces this; a margin here doubled it. */
+            style={{ padding: '0.5rem 0.9rem' }}
             onClick={signOut}
           >
             Sign out

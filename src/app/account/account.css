@@ -19,11 +19,33 @@
   padding-block: 0.6rem 0;
 }
 
+/*
+ * One width for the stack. `.account-ask` caps itself at 34rem from when it was a
+ * block on its own; in the stack that made the panels 750, 510 and 750 pixels
+ * wide down the page, with right edges that did not line up. Prose inside them
+ * is still held to a readable measure by `.account-ask-note`, which is where a
+ * line length belongs — on the text, not on the panel around it.
+ */
+.account-stack > .account-ask {
+  max-width: none;
+}
+
 .account {
   margin-top: 1.5rem;
   display: grid;
   gap: 1.2rem;
   max-width: 26rem;
+}
+
+/*
+ * The panel is a grid, so a direct child stretches to the column — which is what
+ * the signed-out provider buttons want and the opposite of what Sign out wants.
+ * It was rendering as a full-width bar across the whole panel. The provider
+ * buttons sit inside `.account-providers`, so they are grandchildren and keep
+ * their width.
+ */
+.account > .chip {
+  justify-self: start;
 }
 
 .account-providers {

@@ -415,7 +415,18 @@ rendered as siblings with nothing between them — 0px, measured twice — so th
 edge to edge and read as one panel with rules drawn across it. `.account-stack`
 holds the gap in one place rather than a margin on each, so a fifth section cannot
 arrive without it, and it overrides `.section`'s generous `padding-block` so the
-deck list sits the same distance down as everything else.
+deck list sits the same distance down as everything else. It also gives them one
+width: `.account-ask` capped itself at 34rem from when it was a block on its own,
+which made the panels 750, 510 and 750 pixels wide with right edges that did not
+line up. Prose is held to a measure by `.account-ask-note`, which is where a line
+length belongs — on the text, not on the panel around it.
+
+Two more came out of rendering that view rather than reading it. **Sign out was a
+full-width bar**: `.account` is a grid, so a direct child stretches to the column,
+which is what the signed-out provider buttons want and the opposite of what a
+small control wants; the provider buttons sit one level deeper, so
+`.account > .chip { justify-self: start }` reaches only the one that was wrong.
+And its inline `margin-top` doubled the grid's own gap, so it went.
 
 **Asking for the organizer role is a row, not an email.** The site used to answer
 "how do I submit results" with the contact address on `/legal` — off the record, easy
