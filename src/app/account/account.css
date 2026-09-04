@@ -55,9 +55,11 @@
  * rest this is now one line of text; what you can do with the account lives in the
  * menu, which is also where it can grow without the page growing with it.
  *
- * The corners are softer than the site's 3px `--radius`, deliberately and only
- * here. A menu that floats over the page is the one thing on the site that is not
- * carved into it, and reading as a separate object is the whole job.
+ * It is shaped like the rest of the site and not like a phone app: the trigger is
+ * a `.chip`, which is already what a small control looks like here, and the panel
+ * takes the same `--radius` and the same edges as every slab. Only the shadow is
+ * different, because a menu floating *over* the page is the one thing that is not
+ * carved *into* it — and that is a lighting difference, not a shape one.
  */
 .account-who {
   grid-column: 2;
@@ -71,28 +73,16 @@
   position: relative;
 }
 
+/* A `.chip` in the markup, so this only adds what a chip does not already say. */
 .who-name {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
   max-width: 16rem;
   padding: 0.4rem 0.7rem;
-  border: 1px solid var(--edge);
-  border-radius: 999px;
-  background: var(--slab);
+  font-size: 0.8rem;
   color: var(--glyph);
-  font: inherit;
-  font-size: 0.82rem;
-  cursor: pointer;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition:
-    background-color 0.14s var(--ease),
-    border-color 0.14s var(--ease);
 }
 
-.who-name:hover,
 .who-name[aria-expanded='true'] {
   background: var(--slab-hi);
   border-color: var(--edge-strong);
@@ -120,9 +110,9 @@
   display: grid;
   gap: 0.1rem;
   border: 1px solid var(--edge-strong);
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: var(--slab-hi);
-  /* Floating, so it casts rather than being carved. */
+  /* Floating, so it casts rather than being carved. The one difference. */
   box-shadow: var(--lift);
 }
 
@@ -130,7 +120,7 @@
   width: 100%;
   padding: 0.5rem 0.65rem;
   border: 0;
-  border-radius: 8px;
+  border-radius: 2px;
   background: none;
   color: var(--glyph-mid);
   font: inherit;

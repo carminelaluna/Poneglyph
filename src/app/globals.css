@@ -761,6 +761,61 @@ button.chip-solid:hover {
 }
 
 /* The Bandai notice is a permanent fixture, not a dismissible banner. */
+/*
+ * The first-visit notice: the Bandai text, once, to somebody who has not read it.
+ *
+ * Fixed to the bottom rather than covering the page, because it is a notice and
+ * not a decision — nothing behind it is blocked, nothing is being asked, and a
+ * reader who ignores it entirely has lost nothing. That is also why there is one
+ * button and no overlay: the pattern it borrows from a cookie banner is the
+ * placement, not the interruption.
+ */
+.notice-bar {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 60;
+  border-top: 1px solid var(--edge-strong);
+  background: var(--slab);
+  box-shadow: var(--lift);
+}
+
+.notice-inner {
+  max-width: var(--shell);
+  margin: 0 auto;
+  padding: 1rem var(--gutter) 1.15rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+/* The full notice, which elsewhere sits under a rule at the foot of a page. */
+.notice-bar .disclaimer {
+  margin: 0;
+  padding: 0;
+  border-top: 0;
+  max-width: 96ch;
+  color: var(--glyph-mid);
+}
+
+.notice-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.notice-more {
+  font-size: 0.78rem;
+}
+
+/* Room to breathe on a phone, where the text is several lines taller. */
+@media (max-width: 40rem) {
+  .notice-inner {
+    padding-block: 0.85rem 1rem;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+}
+
 .disclaimer {
   margin-top: 2.25rem;
   padding-top: 1.5rem;

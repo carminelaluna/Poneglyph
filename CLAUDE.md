@@ -6,7 +6,13 @@ it, and accounts are the one exception (Supabase, for saved decks and organizer
 submissions).
 
 **Every page carries a Bandai disclaimer. Do not remove it, and do not add anything
-that implies official standing.** `/legal` is the notice, `/privacy` and `/terms` are
+that implies official standing.** It is one line in the footer now, with the full
+notice on `/legal` and shown once in a first-visit banner — the wall of text was at
+the foot of all 4,700 pages, which is the surest way to teach a reader to scroll
+past it. The banner does not replace the line and must not: it is dismissible and
+per-browser, and somebody landing on a card page from a search engine has to be
+able to answer *is this official* there, not only in a bar they clicked away on a
+different day. `/legal` is the notice, `/privacy` and `/terms` are
 the two URLs the OAuth providers require.
 
 **A page opens on its content, not on a paragraph about itself.** Five pages led
@@ -444,7 +450,13 @@ has_role` instead of an empty list, and row-level security is meant to say "noth
 here" rather than to error. Since neither function takes a user id — both ask about
 `auth.uid()`, null for an anonymous caller — the grant discloses nothing.
 
-**Who you are is a name with a menu behind it.** At rest the account is one line
+**Who you are is a name with a menu behind it, in the site's own geometry.** The
+trigger is a `.chip`, which is already what a small control looks like here, and
+the panel takes `--radius` and the same edges as every slab. An earlier version
+answered "too big" with 999px and 12px corners, which fixed the size and broke the
+shape — the only thing the menu keeps of its own is `--lift` instead of `--carve`,
+because a panel floating *over* the page is the one thing not carved *into* it,
+and that is a lighting difference rather than a shape one. At rest the account is one line
 of text in the top right; *Change name* and *Sign out* live in a dropdown, which
 is also where anything added later goes without the page growing to hold it. It
 was a bordered card carrying a name and a button — a lot of furniture for two

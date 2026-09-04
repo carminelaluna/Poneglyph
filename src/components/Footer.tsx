@@ -2,8 +2,12 @@ import Link from 'next/link';
 import { meta } from '@/lib/cards';
 
 /**
- * The Bandai notice. It is a permanent fixture of every page rather than a
- * dismissible banner, and it is repeated in full on /legal.
+ * The Bandai notice in full.
+ *
+ * Used twice: by `FirstVisitNotice`, which shows it once to somebody who has not
+ * read it, and by `/legal`, which is the page it belongs to. The footer of every
+ * page carries the short form below instead — the wall of text was on all 4,700
+ * of them, which is the surest way to teach a reader to scroll past it.
  */
 export function Disclaimer() {
   return (
@@ -91,7 +95,21 @@ export default function Footer() {
             </ul>
           </div>
         </div>
-        <Disclaimer />
+        {/*
+          One line on every page, and the full notice a click away. CLAUDE.md's
+          rule is that every page carries a Bandai disclaimer, and it still does:
+          a banner somebody dismissed on a different day is not a disclaimer for
+          the reader who lands on a card page from a search engine.
+        */}
+        <p className="disclaimer">
+          <strong>Poneglyph is an unofficial fan project</strong>, not affiliated with or
+          endorsed by Bandai. Card images, names and rules text are their copyright and
+          trademark, reproduced for reference —{' '}
+          <Link href="/legal" className="inline-link">
+            the full notice
+          </Link>
+          .
+        </p>
       </div>
     </footer>
   );

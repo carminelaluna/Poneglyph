@@ -3,6 +3,7 @@ import { Big_Shoulders, Archivo, JetBrains_Mono } from 'next/font/google';
 import BackToTop from '@/components/BackToTop';
 import { Masthead } from '@/components/Chrome';
 import Footer from '@/components/Footer';
+import FirstVisitNotice from '@/components/FirstVisitNotice';
 import { meta } from '@/lib/cards';
 import './globals.css';
 
@@ -79,6 +80,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Masthead />
         <main>{children}</main>
         <Footer />
+        {/* Once, to a reader who has not read it. See the component. */}
+        <FirstVisitNotice />
         <BackToTop />
       </body>
     </html>

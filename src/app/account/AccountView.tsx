@@ -105,7 +105,8 @@ function AccountMenu({
       <button
         type="button"
         ref={trigger}
-        className="who-name"
+        /* A chip, because that is what a small control looks like on this site. */
+        className="chip who-name"
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen(!open)}
