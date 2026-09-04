@@ -1086,4 +1086,4 @@ Standard-legal, 20 via the block exception · 2,651 priced · 69,708 decklists �
 English 63,814 from 2022-10, Japanese 5,894 from 2022-07 · 7,904 tournaments ·
 18,960 named players, 3,691 with five or more results · 152,529 recorded matches
 from 1,020 brackets · 44/46 release windows · 53 dated set releases · 67 announced
-official events across 6 types · 168 tests.
+official events across 6 types · 169 tests.

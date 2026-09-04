@@ -67,6 +67,19 @@ const API = 'https://discord.com/api/v10';
 const PAGE = 100;
 
 /**
+ * Message types a person actually wrote: DEFAULT, REPLY, and the two command
+ * kinds. Everything else — joins, pins, boosts, and the `CHANNEL_FOLLOW_ADD` that
+ * Discord posts when a channel is followed into this one — is written by Discord.
+ *
+ * The distinction is load-bearing, not tidiness. The check below asks whether the
+ * messages came back blank, which is the signature of a missing Message Content
+ * intent, and system messages carry text of their own that is not gated by it. A
+ * single follow-add notice among twelve blank posts was enough to hide exactly
+ * that failure on the first real run.
+ */
+const WRITTEN_BY_A_PERSON = new Set([0, 19, 20, 23]);
+
+/**
  * How far back a first run reads.
  *
  * A channel that has been running for years is not worth walking to the start:
@@ -255,15 +268,16 @@ async function main() {
    * indistinguishable from a quiet channel and would sit there for weeks. A
    * channel of reveals whose every message is empty is not a quiet channel.
    */
-  const silent = messages.filter(
+  const written = messages.filter((m) => WRITTEN_BY_A_PERSON.has(m?.type ?? 0));
+  const silent = written.filter(
     (m) => !m?.content && (m?.attachments ?? []).length === 0 && (m?.embeds ?? []).length === 0
   ).length;
-  if (messages.length >= 10 && silent === messages.length) {
+  if (written.length >= 10 && silent === written.length) {
     throw new Error(
-      `all ${messages.length} messages came back with empty content, attachments and ` +
-        'embeds — that is what Discord returns without the Message Content privileged ' +
-        'intent. Turn it on: Developer Portal -> your app -> Bot -> Privileged Gateway ' +
-        'Intents -> MESSAGE CONTENT INTENT.'
+      `all ${written.length} messages written by a person came back with empty content, ` +
+        'attachments and embeds — that is what Discord returns without the Message ' +
+        'Content privileged intent. Turn it on: Developer Portal -> your app -> Bot -> ' +
+        'Privileged Gateway Intents -> MESSAGE CONTENT INTENT.'
     );
   }
 

@@ -185,6 +185,29 @@ describe('the ingest script', () => {
   });
 
   /*
+   * The first real run, reproduced. Discord answered 200 with thirteen messages:
+   * one CHANNEL_FOLLOW_ADD notice carrying its own text, and twelve posts from
+   * people with content, attachments and embeds all blank — which is what a
+   * missing Message Content intent looks like from the outside.
+   *
+   * The first version of this check asked whether *every* message was blank, and
+   * that single system message defeated it: the run reported zero cards and went
+   * green. System messages are written by Discord and their text is not gated by
+   * the intent, so they cannot be part of the question.
+   */
+  it('names the missing intent when the messages come back blank', async () => {
+    await assert.rejects(
+      spawn(['--fixture', 'tests/fixtures/discord-gated.json']),
+      (err: NodeJS.ErrnoException & { code?: number; stderr?: string }) => {
+        assert.equal(err.code, 1);
+        assert.match(err.stderr ?? '', /12 messages written by a person/);
+        assert.match(err.stderr ?? '', /MESSAGE CONTENT INTENT/);
+        return true;
+      }
+    );
+  });
+
+  /*
    * Missing configuration is ours, not Discord's, so it fails rather than warning
    * — the whole point of the refusal split is that a green run means something.
    */
