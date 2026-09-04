@@ -547,6 +547,13 @@ the merge were tested before any database existed.
 compiled into the browser bundle. The anon key ships in that bundle by design, and it is
 safe to because the policies stand behind it.
 
+**The provider marks are inline SVG, in their own colours.** Hotlinking Google's
+or Discord's CDN would be their bandwidth and their uptime for 1 KB of path data,
+on the one page a reader is waiting on — the same argument that mirrors card art.
+They are each provider's own mark because that is what both ask for on a button
+that signs you into them, and a wrong-coloured Google G is a worse answer than
+none; `aria-hidden`, since the button already says which service it is.
+
 **Sign-in is OAuth first, and that is a constraint rather than a preference.** Supabase's
 built-in mail sends **two messages an hour** to pre-authorized addresses and is documented
 as non-production. Discord and Google send no mail at all. Email and password needs

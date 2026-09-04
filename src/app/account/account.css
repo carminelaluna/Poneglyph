@@ -218,8 +218,25 @@
 /* Full width and plainly labelled: this is the decision the page exists for. */
 .account-provider {
   justify-content: center;
+  gap: 0.6rem;
   padding: 0.7rem 1rem;
   font-size: 0.86rem;
+}
+
+/*
+ * Each provider's own mark, at the size of the text beside it. Not a decoration:
+ * a row of two identical buttons is read by its words, and the mark is what makes
+ * one of them findable at a glance.
+ */
+.provider-mark {
+  width: 1.05em;
+  height: 1.05em;
+  flex-shrink: 0;
+}
+
+/* Dimmed with the label when the button is waiting on a redirect. */
+.account-provider:disabled .provider-mark {
+  opacity: 0.6;
 }
 
 .account-email {
