@@ -1080,6 +1080,12 @@ appeared. They run `build-indexes.mjs` or an ingest that writes into `public/`, 
 archive refreshed and the site kept serving what it had.
 Nothing fails when a payload is missing; the page just reads "not found".
 
+**A new ingest workflow has to be added to `publish-site.yml`'s `workflows:` list**,
+or its commits are never deployed. `update-discord` wrote twelve thumbnails,
+committed them, and the site went on serving a build that predated them — no run
+failed, because nothing ran. That list is the deploy trigger, and it is the third
+thing a new ingest needs after the schedule and the `git add` paths.
+
 `publish-site` runs on `workflow_run`, not `on: push`, because **a commit made with
 `GITHUB_TOKEN` does not trigger another workflow** — GitHub's own loop protection. Six
 schedules add up to twelve triggers a day and most find nothing, so it compares the tip of

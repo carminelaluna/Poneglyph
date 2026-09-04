@@ -38,6 +38,7 @@ on:
       - Update card archive
       - Update rules data
       - Update spoilers
+      - Update spoilers from Discord
       - Refresh prices
       - Update events
       - Update matchups
