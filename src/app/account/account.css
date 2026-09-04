@@ -8,6 +8,8 @@
  */
 .account-stack {
   display: grid;
+  /* Start of the row, so a small card stays small instead of filling the width. */
+  justify-items: start;
   gap: 1.1rem;
   /*
    * Narrower than the 52rem shell. These panels hold a name, two provider rows
@@ -15,6 +17,24 @@
    * bigger than what is in them.
    */
   max-width: 42rem;
+}
+
+/*
+ * Who you are: a small card in the corner, not a panel across the page. It holds
+ * one name, one line about the account and one way out — at full width that read
+ * as the point of the page, when what a reader came for is the decks below it.
+ */
+.account-who {
+  width: fit-content;
+  min-width: 15rem;
+  max-width: 24rem;
+  margin-top: 0;
+}
+
+/* Everything that is a list still wants the room. */
+.account-stack > .section,
+.account-stack > .account-ask {
+  justify-self: stretch;
 }
 
 /* Less air than a content slab: every one of these is a handful of short rows. */

@@ -106,16 +106,6 @@ export default function MetaBrowser() {
           </Link>
           .
         </p>
-      ) : index.sampling === 'mixed' ? (
-        <p className="muted source-line" style={{ marginBottom: '1.1rem' }}>
-          Mixed sources: share counts every recorded deck, win rate only the{' '}
-          {index.fieldDecks?.toLocaleString('en-US')} from whole fields, and each row shows the
-          sample it came from —{' '}
-          <Link href="/data" className="inline-link">
-            why
-          </Link>
-          .
-        </p>
       ) : null}
 
       {loadingArchive ? (

@@ -45,27 +45,8 @@ export default function BanlistPage() {
       >
         Banned &amp; restricted
       </h1>
-      <p className="muted" style={{ maxWidth: '64ch', marginTop: '0.8rem' }}>
-        {effectiveFrom ? (
-          <>
-            In effect since <strong style={{ color: 'var(--glyph)' }}>{effectiveFrom}</strong>.{' '}
-          </>
-        ) : null}
-        Alternate arts count as the same card — a ban applies to every printing of it.
-      </p>
-
-      <p className="muted source-line">
-        Read from{' '}
-        <a href={source.url} target="_blank" rel="noreferrer noopener" className="inline-link">
-          the official rules page
-        </a>
-        . Restrictions apply to both Standard and Extra unless stated otherwise, and if this
-        page and Bandai disagree, <a href="/legal" className="inline-link">Bandai is right</a>.
-      </p>
-
       <Section
         title="Banned"
-        blurb="Cannot be included in any deck."
         count={banned.length}
         empty="No cards are banned right now."
       >
@@ -78,7 +59,6 @@ export default function BanlistPage() {
 
       <Section
         title="Restricted"
-        blurb="Limited to a reduced number of copies."
         count={restricted.length}
         empty="No cards are restricted right now."
       >
@@ -91,7 +71,6 @@ export default function BanlistPage() {
 
       <Section
         title="Banned pairs"
-        blurb="Each pair cannot appear in the same deck. Either card alone is fine."
         count={pairs.length}
         empty="No banned pairs right now."
       >
@@ -117,15 +96,19 @@ export default function BanlistPage() {
   );
 }
 
+/*
+ * The heading stays and the sentence under it does not. Three grids of cards
+ * follow, and they mean different things — cannot be played at all, may be played
+ * in fewer copies, may not be played together — so the title is the label that
+ * tells them apart rather than an explanation of the page.
+ */
 function Section({
   title,
-  blurb,
   count,
   empty,
   children,
 }: {
   title: string;
-  blurb: string;
   count: number;
   empty: string;
   children: React.ReactNode;
@@ -136,9 +119,6 @@ function Section({
         <h2 className="display">
           {title} <span className="muted">— {count}</span>
         </h2>
-        <span className="muted" style={{ fontSize: '0.78rem' }}>
-          {blurb}
-        </span>
       </div>
       {count === 0 ? <p className="muted">{empty}</p> : children}
     </section>

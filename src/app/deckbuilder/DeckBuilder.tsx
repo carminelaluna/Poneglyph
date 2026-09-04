@@ -545,7 +545,14 @@ export default function DeckBuilder() {
           )}
         </div>
 
-        {errors.length > 0 || warnings.length > 0 ? (
+        {/*
+          Nothing until a Leader is chosen. `validate()` says "Pick a Leader to
+          start" and it is right to — the submission form needs that refusal — but
+          the panel directly above already says "No Leader yet. Pick one on the
+          left." in plain words, so repeating it in a red box tells a reader who
+          has just arrived that they have done something wrong.
+        */}
+        {leader && (errors.length > 0 || warnings.length > 0) ? (
           <ul className="build-problems">
             {errors.map((p, i) => (
               <li key={`e${i}`} className="build-error">

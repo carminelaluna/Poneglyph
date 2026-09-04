@@ -434,6 +434,12 @@ has_role` instead of an empty list, and row-level security is meant to say "noth
 here" rather than to error. Since neither function takes a user id — both ask about
 `auth.uid()`, null for an anonymous caller — the grant discloses nothing.
 
+**Who you are is a small card, not a panel.** `.account-who` is `width: fit-content`
+in a stack that is `justify-items: start`, so it holds a name, a line about the
+account and a way out, and stops there. At full width those three things read as
+the point of the page, when what a reader came for is the decks under them — which
+still stretch, because a list wants the room.
+
 **The signed-in account page is a stack, and was four touching slabs.** Who you
 are, the ways in, the organizer request and your decks are each a bordered panel,
 rendered as siblings with nothing between them — 0px, measured twice — so they met
@@ -507,6 +513,13 @@ that is what makes this work on GitHub Pages with nothing behind it. Every value
 `authRedirectTo()` can produce must be in Supabase's redirect allowlist, **with the
 trailing slash**, and it is built from `location.origin` so localhost and the live site
 both work.
+
+**Linking a second provider is no longer offered on the page.** The *Ways in*
+panel is gone — with it the only route to `linkIdentity`, so an account keeps
+whichever provider opened it. `useAccount` still exports `linkProvider` and
+`unlinkProvider`, unused, because the reasoning below is still true and the panel
+is a component away if it comes back. What follows describes why it worked the
+way it did.
 
 **Two providers are two accounts until somebody links them.** Supabase gives a
 Discord sign-in and a Google sign-in different users even on one address, and that
