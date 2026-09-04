@@ -206,6 +206,16 @@ export const SPOILER_SOURCES = {
     home: 'https://onepiecetopdecks.com/',
     leaksCategory: 169,
     leaksCategoryName: 'Card Leaks',
+    /*
+     * Both categories this site files leak posts in. It has five categories and
+     * uses two of them for reveals — "Card Leaks" (15 posts) and "Uncategorized",
+     * which is where the ST-31..36, OP-15, EB-04 and ST-29 coverage went. Reading
+     * only the one named for the job missed those until the sets shipped.
+     */
+    leakCategories: [
+      [169, 'Card Leaks'],
+      [1, 'Uncategorized'],
+    ],
     postsUrl: (category, perPage = 40) =>
       `https://onepiecetopdecks.com/wp-json/wp/v2/posts?categories=${category}&per_page=${perPage}&_fields=id,date,link,title,content`,
   },

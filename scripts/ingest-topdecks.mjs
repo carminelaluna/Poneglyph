@@ -44,7 +44,7 @@ import { writeFile, readFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { DECK_SOURCES } from './sources.mjs';
 import { KEEP_AT_LEAST, refusesWrite } from './corpus-guard.mjs';
-import { BACKOFF, exitOnFailure, finalError, refusal, TURNED_AWAY } from './refusal.mjs';
+import { BACKOFF, exitOnFailure, finalError, refusal, TURNED_AWAY, writtenAt } from './refusal.mjs';
 
 const args = process.argv.slice(2);
 const flag = (name, fallback = null) => {
@@ -430,6 +430,9 @@ async function main() {
  * already been taught the difference. Nothing is written either way, so the
  * archive keeps what it had.
  */
-main().catch((err) =>
-  exitOnFailure('topdecks', err, 'nothing written; the archive keeps the decks it had')
+main().catch(async (err) =>
+  exitOnFailure('topdecks', err, 'nothing written; the archive keeps the decks it had', {
+    /* Either corpus dating from long ago means the same thing: we are not reading. */
+    since: await writtenAt(path.join(DATA, 'decks-en.json')),
+  })
 );

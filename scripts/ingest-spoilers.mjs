@@ -24,7 +24,7 @@
 import { writeFile, readFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { SPOILER_SOURCES } from './sources.mjs';
-import { BACKOFF, exitOnFailure, finalError, refusal, TURNED_AWAY } from './refusal.mjs';
+import { BACKOFF, exitOnFailure, finalError, refusal, TURNED_AWAY, writtenAt } from './refusal.mjs';
 
 const SRC = SPOILER_SOURCES.topdecks;
 const DATA = path.resolve('data');
@@ -96,10 +96,21 @@ function setsFromTitle(title) {
   return [...found];
 }
 
-/** Card scans are uploaded under their own card number, which is the useful part. */
+/**
+ * Card scans are uploaded under their own card number, which is the useful part.
+ *
+ * The lookahead is not decoration. WordPress writes a resized copy of every upload
+ * as `name-{width}x{height}`, so `prb22-1024x461.jpeg` reads as set `PRB22`, card
+ * `102` — a set that does not exist, holding one card that does not exist, which
+ * this page would then announce as an unreleased set. Card numbers are three
+ * digits and nothing follows them but a separator, so refusing a fourth digit
+ * throws the resize suffixes out and keeps `-aa`, `_p1` and `_p2`.
+ */
 function cardsFromHtml(html) {
   const cards = new Map();
-  for (const m of html.matchAll(/(?:src|data-src)="([^"]*?\/([A-Z]{2,3}\d{2})-(\d{3})[^/"]*\.(?:jpe?g|png|webp))"/gi)) {
+  for (const m of html.matchAll(
+    /(?:src|data-src)="([^"]*?\/([A-Z]{2,3}\d{2})-(\d{3})(?![\dx])[^/"]*\.(?:jpe?g|png|webp))"/gi
+  )) {
     const id = `${m[2].toUpperCase()}-${m[3]}`;
     if (!cards.has(id)) cards.set(id, { id, image: m[1] });
   }
@@ -162,10 +173,31 @@ async function main() {
   const released = new Set(cards.map((c) => c.id.split('-')[0].toUpperCase()));
   log(`${released.size} set prefixes already in the card archive`);
 
-  log('reading Card Leaks…');
-  const posts = await getJson(SRC.postsUrl(SRC.leaksCategory));
-  if (!Array.isArray(posts)) throw new Error('unexpected response from the posts API');
-  log(`  ${posts.length} posts`);
+  /*
+   * Two categories, because this site files the same kind of post in both. "Card
+   * Leaks" holds 15 posts; "Uncategorized" holds the leak coverage for ST-31..36,
+   * OP-15, EB-04, ST-29 and the P-122 promos, none of which are in Card Leaks.
+   * Reading only the one named for the job missed those until each set shipped.
+   *
+   * It adds no cards today — both categories top out at the same two articles —
+   * which is worth stating plainly: this is coverage for the next time, not a fix
+   * for a set we are currently missing.
+   */
+  const posts = [];
+  const seenPosts = new Set();
+  for (const [category, label] of SRC.leakCategories) {
+    log(`reading ${label}…`);
+    const batch = await getJson(SRC.postsUrl(category));
+    if (!Array.isArray(batch)) throw new Error(`unexpected response from the posts API (${label})`);
+    let added = 0;
+    for (const post of batch) {
+      if (seenPosts.has(post.id)) continue;
+      seenPosts.add(post.id);
+      posts.push(post);
+      added++;
+    }
+    log(`  ${batch.length} posts, ${added} new to this run`);
+  }
 
   /** setCode -> everything known about it */
   const upcoming = new Map();
@@ -321,7 +353,7 @@ async function main() {
   }
 }
 
-main().catch((err) => {
+main().catch(async (err) => {
   /*
    * An upstream that will not talk to us is not a broken ingest.
    *
@@ -331,8 +363,16 @@ main().catch((err) => {
    * entirely outside this repository, and a workflow that is red half the time is a
    * workflow nobody reads. It says so in the run summary instead.
    *
+   * Up to a point. `since` is when the reveals on disk were written, and past
+   * three days of being turned away the run goes red after all: at that point the
+   * page is out of date and the green run is the thing hiding it. That is not a
+   * hypothesis — it ran green for five days while the page showed twelve-day-old
+   * reveals, and what surfaced it was somebody looking at the page.
+   *
    * Anything else still exits 1: a shape that changed, a parse that broke, a file
    * that would not write.
    */
-  exitOnFailure('spoilers', err, 'nothing written; the archive keeps the reveals it had');
+  exitOnFailure('spoilers', err, 'nothing written; the archive keeps the reveals it had', {
+    since: await writtenAt(path.join(DATA, 'spoilers.json')),
+  });
 });

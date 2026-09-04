@@ -20,9 +20,11 @@ import { promisify } from 'node:util';
 import {
   BACKOFF,
   finalError,
+  hoursSince,
   isNetworkRefusal,
   isRefusal,
   refusal,
+  STALE_AFTER_HOURS,
   TURNED_AWAY,
 } from '../scripts/refusal.mjs';
 
@@ -130,5 +132,77 @@ describe('the exit code a refusal produces', () => {
         return true;
       }
     );
+  });
+});
+
+/*
+ * How long a refusal may last before it is a problem of ours after all.
+ *
+ * Exiting 0 on a refusal is right for one run and wrong for twenty, and it was
+ * wrong for twenty: update-spoilers runs four times a day and spent five days
+ * green while the host turned the runner away, so the page showed twelve-day-old
+ * reveals and the run list said everything was fine. What surfaced it was a person
+ * looking at the page, which is the one thing a schedule exists to avoid.
+ */
+describe('a refusal that has gone on too long', () => {
+  const hour = 3_600_000;
+  const now = Date.parse('2026-09-04T00:00:00Z');
+  const ago = (hours: number) => new Date(now - hours * hour).toISOString();
+
+  it('measures the age of what is on disk', () => {
+    assert.equal(hoursSince(ago(0), now), 0);
+    assert.equal(hoursSince(ago(6), now), 6);
+    assert.equal(Math.round(hoursSince(ago(120), now)!), 120);
+  });
+
+  /* A first run, or a file with no timestamp, has nothing to be stale about. */
+  it('has no opinion when there is no timestamp', () => {
+    assert.equal(hoursSince(null, now), null);
+    assert.equal(hoursSince(undefined, now), null);
+    assert.equal(hoursSince('not a date', now), null);
+  });
+
+  it('is generous enough to sit through a bad weekend', () => {
+    assert.ok(STALE_AFTER_HOURS >= 48, 'a blocked weekend must not redden the schedule');
+    assert.ok(STALE_AFTER_HOURS <= 96, 'a week of silence is too long to go unreported');
+  });
+
+  const spawn = (script: string) =>
+    run(process.execPath, ['--input-type=module', '-e', script], { cwd: root });
+
+  it('stays green while the data on disk is still fresh', async () => {
+    const { stdout } = await spawn(`
+      import { exitOnFailure } from './scripts/refusal.mjs';
+      exitOnFailure('spoilers', new Error('fetch failed'), 'nothing written', {
+        since: new Date(Date.now() - 6 * 3600e3).toISOString(),
+      });
+    `);
+    assert.match(stdout, /::warning title=spoilers upstream refused/);
+  });
+
+  it('goes red once the archive has been frozen for days', async () => {
+    await assert.rejects(
+      spawn(`
+        import { exitOnFailure } from './scripts/refusal.mjs';
+        exitOnFailure('spoilers', new Error('fetch failed'), 'nothing written', {
+          since: new Date(Date.now() - 120 * 3600e3).toISOString(),
+        });
+      `),
+      (err: NodeJS.ErrnoException & { code?: number; stdout?: string; stderr?: string }) => {
+        assert.equal(err.code, 1);
+        assert.match(err.stdout ?? '', /::error title=spoilers has been refused for days/);
+        assert.match(err.stderr ?? '', /5d 0h old/);
+        return true;
+      }
+    );
+  });
+
+  /* Without a timestamp it must behave exactly as it did before any of this. */
+  it('stays green when it cannot tell how old the data is', async () => {
+    const { stdout } = await spawn(`
+      import { exitOnFailure } from './scripts/refusal.mjs';
+      exitOnFailure('topdecks', new Error('fetch failed'), 'nothing written');
+    `);
+    assert.match(stdout, /::warning title=topdecks upstream refused/);
   });
 });

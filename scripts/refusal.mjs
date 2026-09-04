@@ -64,17 +64,77 @@ export const finalError = (url, err) =>
   isRefusal(err) ? refusal(`${url}: ${err.message}`) : new Error(`${url}: ${err.message}`);
 
 /**
+ * How long a refusal may go on before it stops being someone else's bad morning.
+ *
+ * Exiting 0 on a refusal is right for one run and wrong for twenty. It was wrong
+ * for twenty: `update-spoilers` runs every six hours and spent five days green
+ * while the host turned the runner away, so the reveals on the site were twelve
+ * days old and the run list said everything was fine. Nobody found out from the
+ * schedule — somebody noticed the page looked stale and asked.
+ *
+ * Three days is deliberately generous. A blocked afternoon, a weekend of it, an
+ * upstream migration — none of those should redden anything. Past that the data
+ * is silently wrong, and a red run is the only thing that says so.
+ */
+export const STALE_AFTER_HOURS = 72;
+
+/**
+ * When a data file was last written, from its own `generatedAt`, or null if it is
+ * missing or unreadable — a first run has nothing to be stale about.
+ */
+export async function writtenAt(file) {
+  try {
+    const { readFile } = await import('node:fs/promises');
+    return JSON.parse(await readFile(file, 'utf8')).generatedAt ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Hours since `iso`, or null when there is no timestamp to go on. */
+export function hoursSince(iso, now = Date.now()) {
+  const then = Date.parse(iso ?? '');
+  if (Number.isNaN(then)) return null;
+  return (now - then) / 3_600_000;
+}
+
+/**
  * The `main().catch` every one of these ingests ends with.
  *
  * `kept` is the sentence saying what the archive still holds, which is the part a
  * reader of a green-with-warning run actually needs: that nothing was lost.
+ *
+ * `since` is when the data on disk was last written. Pass it and a refusal stays
+ * green only while the archive is still fresh enough to serve.
  */
-export function exitOnFailure(tag, err, kept) {
+export function exitOnFailure(tag, err, kept, { since = null, staleAfterHours = STALE_AFTER_HOURS } = {}) {
   if (isRefusal(err)) {
+    const age = hoursSince(since);
+    const stale = age !== null && age > staleAfterHours;
+
     console.error(`[${tag}] upstream refused —`, err.message);
     if (kept) console.error(`[${tag}] ${kept}`);
-    console.log(`::warning title=${tag} upstream refused::${err.message}`);
-    process.exit(0);
+    if (age !== null) {
+      console.error(`[${tag}] the data on disk is ${Math.floor(age / 24)}d ${Math.floor(age % 24)}h old`);
+    }
+
+    if (!stale) {
+      console.log(`::warning title=${tag} upstream refused::${err.message}`);
+      process.exit(0);
+    }
+
+    /*
+     * Still a refusal, and still nothing written — but it has gone on long enough
+     * that the archive is out of date and the green run is what was hiding it.
+     */
+    console.error(
+      `[${tag}] refused for longer than ${staleAfterHours}h of staleness — failing so it is seen`
+    );
+    console.log(
+      `::error title=${tag} has been refused for days::` +
+        `Nothing written since ${since}; the upstream has been turning us away. ${err.message}`
+    );
+    process.exit(1);
   }
 
   console.error(`[${tag}] FAILED —`, err.message);

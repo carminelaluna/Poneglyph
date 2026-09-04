@@ -98,7 +98,7 @@ ingest.mjs           cards     -> data/cards|sets|filters|meta.json + cards-inde
 ingest-decks.mjs     Limitless -> data/decks|tournaments|decks-state.json
 ingest-matchups.mjs  Limitless -> data/matchups.json (pairings, resumable)
 ingest-topdecks.mjs  Top Decks -> data/decks-{en,jp}.json (guarded, writes nothing else)
-ingest-spoilers.mjs  leaks     -> data/spoilers.json
+ingest-spoilers.mjs  leaks     -> data/spoilers.json (two categories, see below)
 ingest-banlist.mjs   Bandai    -> data/banlist.json (+ numbers-only in public/data)
 ingest-events.mjs    Bandai    -> data/events-official.json (+ public/data)
 ingest-submissions   Supabase  -> data/decks-community.json (approved only)
@@ -822,6 +822,17 @@ branch in the first version was found. A refusal warns and exits 0: the corpus o
 disk is untouched, and a job red every eight hours for someone else's filter is a
 job nobody reads.
 
+**Up to a point, and that point is three days.** Exiting 0 on a refusal is right
+for one run and wrong for twenty. It was wrong for twenty: `update-spoilers` runs
+four times a day and spent five days green while this host turned the runner
+away, so `/spoilers` served twelve-day-old reveals under a wall of green ticks.
+Nothing in the schedule said so — what surfaced it was somebody looking at the
+page and asking. `exitOnFailure` now takes `since`, the `generatedAt` of the file
+on disk, and past `STALE_AFTER_HOURS` a refusal goes red after all: still nothing
+written, but the archive is out of date and the green run was what hid it.
+Seventy-two hours is deliberately generous — a blocked afternoon, a weekend of
+one, an upstream migration should redden nothing.
+
 The guard is per region, and the run meant to prove it came back **green having
 read nothing**: the filter served the deck-list index as a 200 whose HTML carried
 no links, so forty pages became zero, both regions were skipped by a `continue`
@@ -855,6 +866,29 @@ promised, a 403/429/503, or a connection that never completed (`fetch failed`, a
 timeout, a reset) — logs a `::warning`, writes nothing and exits **0**, since
 a schedule that is red every few hours for something outside this repository is a
 schedule nobody reads. Everything else still exits 1.
+
+**Reveals are filed in two categories, and one of them is called nothing.**
+onepiecetopdecks.com has five categories and puts leak coverage in two: *Card
+Leaks*, which has 15 posts, and *Uncategorized*, which is where ST-31..36, OP-15,
+EB-04, ST-29 and the P-122 promos went. Reading only the one named for the job
+missed those until each set shipped. Both are read now — which adds no cards
+today, since both top out at the same two articles, and is coverage for the next
+time rather than a fix for a set currently missing.
+
+Widening it needed one other thing first. WordPress writes a resized copy of every
+upload as `name-{width}x{height}`, so `prb22-1024x461.jpeg` read as set `PRB22`,
+card `102` — a set that does not exist holding a card that does not exist, which
+`/spoilers` would have announced as an unreleased set. Three of them, all from
+*Uncategorized*, which is why the bug was latent. Card numbers are three digits
+with nothing but a separator after them, so `cardsFromHtml` refuses a fourth digit
+and the resize suffixes fall out while `-aa`, `_p1` and `_p2` stay.
+
+**What the source publishes is not what it reveals.** The OP-18 article carries 11
+distinct images and 6 identifiable cards: two are named for the character rather
+than the card (`Saint-Shamrock.jpg`), and one is an alt art of an already-released
+set. EB-05 carries 10 images and 2 cards, the rest being `_p3` reprints of cards
+that shipped years ago. So a count that looks low against the images on the page
+is usually right, and the way to check is the image filenames, not the prose.
 
 **Ingests refuse to write nonsense.** Too few cards, an empty banlist, a dead spine — each
 aborts before overwriting. An empty banlist that looks successful is worse than none. The
@@ -1021,4 +1055,4 @@ Standard-legal, 20 via the block exception · 2,651 priced · 69,708 decklists �
 English 63,814 from 2022-10, Japanese 5,894 from 2022-07 · 7,904 tournaments ·
 18,960 named players, 3,691 with five or more results · 152,529 recorded matches
 from 1,020 brackets · 44/46 release windows · 53 dated set releases · 67 announced
-official events across 6 types · 145 tests.
+official events across 6 types · 151 tests.
