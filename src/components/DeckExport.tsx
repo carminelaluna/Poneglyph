@@ -69,7 +69,7 @@ export default function DeckExport({
 
   return (
     <div className="deck-export">
-      <button type="button" className="chip chip-link deck-export-button" onClick={copy}>
+      <button type="button" className="chip deck-export-button" onClick={copy}>
         {state === 'copied' ? 'Copied' : state === 'failed' ? 'Could not copy' : 'Copy for simulator'}
       </button>
       <span className="muted">

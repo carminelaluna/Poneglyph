@@ -278,7 +278,7 @@ export default function DataPage() {
       </div>
 
       <p style={{ marginTop: '2rem' }}>
-        <Link href="/legal" className="chip chip-link" style={{ padding: '0.5rem 0.9rem' }}>
+        <Link href="/legal" className="chip" style={{ padding: '0.5rem 0.9rem' }}>
           Read the legal notice
         </Link>
       </p>

@@ -358,7 +358,7 @@ export default function DeckBuilder() {
             ))}
           </div>
 
-          <button type="button" className="chip chip-link build-import-open" onClick={openImport}>
+          <button type="button" className="chip build-import-open" onClick={openImport}>
             Import a list
           </button>
         </div>
@@ -377,7 +377,7 @@ export default function DeckBuilder() {
               onChange={(e) => setImportText(e.target.value)}
             />
             <div className="build-import-actions">
-              <button type="button" className="chip chip-link" onClick={applyImport}>
+              <button type="button" className="chip" onClick={applyImport}>
                 Load it
               </button>
               <button
@@ -621,7 +621,7 @@ export default function DeckBuilder() {
                 />
                 <button
                   type="button"
-                  className="chip chip-link"
+                  className="chip"
                   onClick={save}
                   disabled={saveState === 'saving'}
                 >

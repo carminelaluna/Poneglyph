@@ -217,7 +217,7 @@ function OrganizerRequests() {
               />
               <button
                 type="button"
-                className="chip chip-link"
+                className="chip"
                 disabled={busy === row.id}
                 onClick={() => decide(row, 'approved')}
               >
@@ -380,7 +380,7 @@ export default function ReviewQueue() {
                 />
                 <button
                   type="button"
-                  className="chip chip-link"
+                  className="chip"
                   disabled={busy === row.id}
                   onClick={() => decide(row.id, 'approved')}
                 >

@@ -59,10 +59,10 @@ export default function NotFound() {
         instead — partial matches work.
       </p>
       <p style={{ marginTop: '1.75rem', display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
-        <Link href="/cards" className="chip chip-link" style={{ padding: '0.55rem 1rem' }}>
+        <Link href="/cards" className="chip" style={{ padding: '0.55rem 1rem' }}>
           Search the archive
         </Link>
-        <Link href="/sets" className="chip chip-link" style={{ padding: '0.55rem 1rem' }}>
+        <Link href="/sets" className="chip" style={{ padding: '0.55rem 1rem' }}>
           Browse sets
         </Link>
       </p>

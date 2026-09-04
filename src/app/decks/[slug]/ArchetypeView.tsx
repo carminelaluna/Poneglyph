@@ -300,7 +300,7 @@ export default function ArchetypeView({ leaderId, glow }: { leaderId: string; gl
             <p style={{ marginTop: '1rem' }}>
               <button
                 type="button"
-                className="chip chip-link"
+                className="chip"
                 onClick={() => setLimit(limit + 200)}
               >
                 Show more

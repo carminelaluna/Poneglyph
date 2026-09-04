@@ -228,7 +228,7 @@ export default function TournamentBrowser() {
 
       {filtered.length > limit ? (
         <p style={{ marginTop: '1rem' }}>
-          <button type="button" className="chip chip-link" onClick={() => setLimit(limit + 200)}>
+          <button type="button" className="chip" onClick={() => setLimit(limit + 200)}>
             Show more
           </button>
         </p>

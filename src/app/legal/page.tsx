@@ -87,7 +87,7 @@ export default function LegalPage() {
             href="https://en.onepiece-cardgame.com/"
             target="_blank"
             rel="noreferrer noopener"
-            className="chip chip-link"
+            className="chip"
             style={{ padding: '0.5rem 0.9rem', marginTop: '0.5rem' }}
           >
             Official ONE PIECE CARD GAME site

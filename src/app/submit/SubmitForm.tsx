@@ -350,7 +350,7 @@ export default function SubmitForm() {
           <p style={{ marginTop: '1.2rem' }}>
             <button
               type="button"
-              className="chip chip-link"
+              className="chip"
               onClick={() => globalThis.location.reload()}
             >
               Submit another
@@ -549,7 +549,7 @@ export default function SubmitForm() {
 
         <button
           type="button"
-          className="chip chip-link"
+          className="chip"
           onClick={() => setDecks((prev) => [...prev, blankDeck(Date.now())])}
         >
           Add another deck
@@ -559,7 +559,7 @@ export default function SubmitForm() {
       <div className="submit-send">
         <button
           type="button"
-          className="chip chip-link submit-button"
+          className="chip submit-button"
           disabled={!ready || state === 'sending'}
           onClick={submit}
         >

@@ -594,6 +594,65 @@ select {
   white-space: nowrap;
 }
 
+/*
+ * A chip is a label. A chip that is a button or a link is a control, and the two
+ * were identical: no pointer, no focus ring, no pressed state, and a disabled
+ * Send that looked exactly like a live one. The selector is the element rather
+ * than a class so every control gets this and every label is left alone, with no
+ * markup to change — `span.chip` is a tag, `button.chip` is something you press.
+ */
+button.chip,
+a.chip {
+  cursor: pointer;
+  transition:
+    background-color 0.14s var(--ease),
+    border-color 0.14s var(--ease),
+    color 0.14s var(--ease),
+    transform 0.08s var(--ease);
+}
+
+button.chip:hover,
+a.chip:hover {
+  border-color: var(--edge-strong);
+  background: var(--slab-hi);
+  color: var(--glyph);
+}
+
+/* One pixel is enough to feel on a control this small. */
+button.chip:active,
+a.chip:active {
+  transform: translateY(1px);
+  background: var(--groove);
+}
+
+/*
+ * Which one is selected, and it used not to say. The region toggle on
+ * /tournaments and /players rendered "Both", "English" and "Japanese" with the
+ * same background, border and colour whichever was chosen — measured, not
+ * guessed — so the one filter those pages have could not be read off them.
+ *
+ * The underline in the accent is not a new idea: `.window-chip[aria-pressed]` on
+ * the metagame page already means "this one" that way. Two controls that answer
+ * the same question should look the same doing it, which is the argument
+ * `.link-btn` lost by living in two stylesheets.
+ */
+button.chip[aria-pressed='true'] {
+  background: var(--slab-lift);
+  border-color: var(--edge-strong);
+  color: var(--glyph);
+  box-shadow: inset 0 -2px 0 var(--rune);
+}
+
+/* Busy or unavailable, and now visibly so — Send, Save and Sign out all use it. */
+button.chip:disabled {
+  cursor: default;
+  opacity: 0.45;
+  transform: none;
+  background: var(--slab);
+  border-color: var(--edge);
+  color: var(--glyph-dim);
+}
+
 .chip-row {
   display: flex;
   flex-wrap: wrap;
@@ -880,11 +939,6 @@ select {
   letter-spacing: 0.24em;
   text-transform: uppercase;
   color: var(--glyph-dim);
-}
-
-.chip-link:hover {
-  border-color: var(--edge-strong);
-  color: var(--glyph);
 }
 
 /* ==================================================================== 

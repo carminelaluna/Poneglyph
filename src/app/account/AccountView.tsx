@@ -82,7 +82,7 @@ function DisplayName({
         aria-label="Display name"
         autoFocus
       />
-      <button type="submit" className="chip chip-link" disabled={saving}>
+      <button type="submit" className="chip" disabled={saving}>
         {saving ? 'Saving…' : 'Save'}
       </button>
       <button type="button" className="account-link" onClick={onDone}>
@@ -156,7 +156,7 @@ function OrganizerRequest({ userId }: { userId: string }) {
   if (!open) {
     return (
       <p className="account-ask-line">
-        <button type="button" className="chip chip-link" onClick={() => setOpen(true)}>
+        <button type="button" className="chip" onClick={() => setOpen(true)}>
           {status === 'pending'
             ? 'Organizer role — waiting for review'
             : status === 'rejected'
@@ -288,7 +288,7 @@ function OrganizerRequest({ userId }: { userId: string }) {
       {failed ? <p className="build-error">{failed}</p> : null}
 
       <div className="account-actions">
-        <button type="submit" className="chip chip-link" disabled={busy}>
+        <button type="submit" className="chip" disabled={busy}>
           {busy ? 'Sending…' : 'Ask for the role'}
         </button>
         {close}
@@ -373,7 +373,7 @@ function SignInMethods({
               ) : (
                 <button
                   type="button"
-                  className="chip chip-link"
+                  className="chip"
                   disabled={busy === p.id}
                   onClick={() => act(p.id, () => onLink(p.id))}
                 >
@@ -475,7 +475,12 @@ export default function AccountView() {
       'Signed in';
 
     return (
-      <>
+      /*
+        A stack, not four siblings. Each of these is a bordered slab and nothing
+        between them set a margin, so they met edge to edge and read as one panel
+        with rules drawn across it — measured at 0px, twice over.
+      */
+      <div className="account-stack">
         <div className="account slab slab-pad" style={{ maxWidth: 'none' }}>
           <p className="eyebrow">Signed in</p>
           {renaming ? (
@@ -520,7 +525,7 @@ export default function AccountView() {
           </p>
           <button
             type="button"
-            className="chip chip-link"
+            className="chip"
             style={{ marginTop: '1.2rem', padding: '0.5rem 0.9rem' }}
             onClick={signOut}
           >
@@ -538,7 +543,7 @@ export default function AccountView() {
         {profile && profile.role === 'user' ? <OrganizerRequest userId={session.user.id} /> : null}
 
         <SavedDecks />
-      </>
+      </div>
     );
   }
 
@@ -551,7 +556,7 @@ export default function AccountView() {
           <button
             key={p.id}
             type="button"
-            className="chip chip-link account-provider"
+            className="chip account-provider"
             disabled={busy}
             onClick={() => withProvider(p.id)}
           >
@@ -586,7 +591,7 @@ export default function AccountView() {
             required
           />
           <div className="account-actions">
-            <button type="submit" className="chip chip-link" disabled={busy}>
+            <button type="submit" className="chip" disabled={busy}>
               {mode === 'up' ? 'Create account' : 'Sign in'}
             </button>
             <button

@@ -249,6 +249,20 @@ the deck rows already downloaded — they carry the event id, name, kind and fie
 size — so it costs no request, and it is scoped to the window, region and filters
 chosen right here, which is what makes it a different question from `/tournaments`.
 
+**A chip that is a button is a control, and the selector says so.** `.chip` was
+one rule for two things: a tag you read and a button you press. So a control had
+no pointer, no pressed state and no disabled state — the region toggle on
+`/tournaments` and `/players` drew *Both*, *English* and *Japanese* with the same
+background, border and colour whichever was selected, measured rather than
+guessed, which left those pages unable to say what they were filtered to. The
+states hang off `button.chip` and `a.chip` rather than a class, so every control
+gets them and every `span.chip` label is untouched with no markup to change; that
+also retired `.chip-link`, which had become a class resolving to nothing across
+fourteen files. Selected reuses the accent underline `.window-chip` already means
+it with, because two controls answering the same question should look the same
+doing it. Focus is left to the one `:focus-visible` rule in `globals.css` — a
+chip-specific ring would have been the same mistake in a different colour.
+
 **`.link-btn` lives in `globals.css`, and used to live in two stylesheets.** Both
 copies were byte-identical and each carried a comment arguing that repeating the
 rule beat letting one control look different on different pages. What neither
@@ -394,6 +408,14 @@ policy too; revoked from `anon`, that answers `42501 permission denied for funct
 has_role` instead of an empty list, and row-level security is meant to say "nothing
 here" rather than to error. Since neither function takes a user id — both ask about
 `auth.uid()`, null for an anonymous caller — the grant discloses nothing.
+
+**The signed-in account page is a stack, and was four touching slabs.** Who you
+are, the ways in, the organizer request and your decks are each a bordered panel,
+rendered as siblings with nothing between them — 0px, measured twice — so they met
+edge to edge and read as one panel with rules drawn across it. `.account-stack`
+holds the gap in one place rather than a margin on each, so a fifth section cannot
+arrive without it, and it overrides `.section`'s generous `padding-block` so the
+deck list sits the same distance down as everything else.
 
 **Asking for the organizer role is a row, not an email.** The site used to answer
 "how do I submit results" with the contact address on `/legal` — off the record, easy

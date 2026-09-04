@@ -264,7 +264,7 @@ export default function EventBrowser({
                           href={event.link}
                           target="_blank"
                           rel="noreferrer noopener"
-                          className="chip chip-link"
+                          className="chip"
                         >
                           Register →
                         </a>

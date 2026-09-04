@@ -221,7 +221,7 @@ export default function MetaBrowser() {
 
       {rows.length > HEAD ? (
         <p style={{ marginTop: '1rem' }}>
-          <button type="button" className="chip chip-link" onClick={() => setAll(!all)}>
+          <button type="button" className="chip" onClick={() => setAll(!all)}>
             {all
               ? `Show only the top ${HEAD}`
               : `Show the other ${(rows.length - HEAD).toLocaleString('en-US')} archetypes`}
@@ -479,7 +479,7 @@ function EventsInWindow({
 
       {events.length > RECENT ? (
         <p style={{ marginTop: '1rem' }}>
-          <button type="button" className="chip chip-link" onClick={() => setAll(!all)}>
+          <button type="button" className="chip" onClick={() => setAll(!all)}>
             {all
               ? `Show only the latest ${RECENT}`
               : `Show the other ${(events.length - RECENT).toLocaleString('en-US')} events`}

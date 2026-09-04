@@ -255,7 +255,7 @@ export default async function CardPage({ params }: Params) {
               <h2>Traits</h2>
               <div className="chip-row">
                 {card.types.map((t) => (
-                  <Link key={t} href={`/cards?trait=${encodeURIComponent(t)}`} className="chip chip-link">
+                  <Link key={t} href={`/cards?trait=${encodeURIComponent(t)}`} className="chip">
                     {t}
                   </Link>
                 ))}
@@ -321,7 +321,7 @@ export default async function CardPage({ params }: Params) {
                   <Link
                     key={k}
                     href={`/cards?keyword=${encodeURIComponent(k)}`}
-                    className="chip chip-link"
+                    className="chip"
                   >
                     {k}
                   </Link>

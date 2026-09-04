@@ -1,5 +1,24 @@
 /* Account — see page.tsx and AccountView.tsx. */
 
+/*
+ * The signed-in page is four bordered slabs — who you are, the ways in, the
+ * organizer request, your decks — and none of them carried a margin, so they sat
+ * edge to edge and read as one panel with lines drawn across it. A stack rather
+ * than a margin on each, so a fifth section cannot arrive without the spacing.
+ */
+.account-stack {
+  display: grid;
+  gap: 1.4rem;
+}
+
+/*
+ * `.section` brings its own generous padding-block, so the saved-deck list would
+ * otherwise sit twice as far down as the gap it shares with the slabs above it.
+ */
+.account-stack > .section {
+  padding-block: 0.6rem 0;
+}
+
 .account {
   margin-top: 1.5rem;
   display: grid;
