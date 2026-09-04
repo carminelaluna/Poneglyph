@@ -699,8 +699,8 @@ recency is what worked.
 
 **Control characters in regexes.** A `\b` written through a patch became a literal `0x08`
 three separate times, and a fourth time it was worse: inside a **template literal**
-`` *is* the backspace character, so a regex built as
-`` new RegExp(`(?:${COLOURS.join('|')})`) `` compiled and matched nothing — and
+`\b` *is* the backspace character, so a regex built as
+`` new RegExp(`\b(?:${COLOURS.join('|')})\b`) `` compiled and matched nothing — and
 `npm run check` cannot see that one, because the file holds a backslash and a `b`
 and only the runtime turns them into a control character. Build a regex out of a
 variable by concatenating plain strings. Invisible in an editor and in a diff, the
