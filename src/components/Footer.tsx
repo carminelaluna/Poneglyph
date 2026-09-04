@@ -5,9 +5,10 @@ import { meta } from '@/lib/cards';
  * The Bandai notice in full.
  *
  * Used twice: by `FirstVisitNotice`, which shows it once to somebody who has not
- * read it, and by `/legal`, which is the page it belongs to. The footer of every
- * page carries the short form below instead — the wall of text was on all 4,700
- * of them, which is the surest way to teach a reader to scroll past it.
+ * read it, and by `/legal`, which is the page it belongs to. The footer carries
+ * neither — only the *Disclaimer* link under Legal, which is on every page. The
+ * full text used to sit at the foot of all 4,700 of them, which is the surest way
+ * to teach a reader to scroll past it.
  */
 export function Disclaimer() {
   return (
@@ -49,12 +50,9 @@ export default function Footer() {
           <div>
             <h3>Browse</h3>
             <ul>
-              <li><Link href="/cards">All cards</Link></li>
-              <li><Link href="/decks">Metagame</Link></li>
               <li><Link href="/tournaments">Tournaments</Link></li>
               <li><Link href="/players">Players</Link></li>
               <li><Link href="/sets">Sets</Link></li>
-              <li><Link href="/cards?category=Leader">Leaders</Link></li>
               <li><Link href="/cards?sort=price-desc">Most valuable</Link></li>
             </ul>
           </div>
@@ -95,21 +93,6 @@ export default function Footer() {
             </ul>
           </div>
         </div>
-        {/*
-          One line on every page, and the full notice a click away. CLAUDE.md's
-          rule is that every page carries a Bandai disclaimer, and it still does:
-          a banner somebody dismissed on a different day is not a disclaimer for
-          the reader who lands on a card page from a search engine.
-        */}
-        <p className="disclaimer">
-          <strong>Poneglyph is an unofficial fan project</strong>, not affiliated with or
-          endorsed by Bandai. Card images, names and rules text are their copyright and
-          trademark, reproduced for reference —{' '}
-          <Link href="/legal" className="inline-link">
-            the full notice
-          </Link>
-          .
-        </p>
       </div>
     </footer>
   );

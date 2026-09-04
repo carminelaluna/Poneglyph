@@ -5,14 +5,17 @@ Router), TypeScript, no database — ingest scripts write JSON, the site is buil
 it, and accounts are the one exception (Supabase, for saved decks and organizer
 submissions).
 
-**Every page carries a Bandai disclaimer. Do not remove it, and do not add anything
-that implies official standing.** It is one line in the footer now, with the full
-notice on `/legal` and shown once in a first-visit banner — the wall of text was at
-the foot of all 4,700 pages, which is the surest way to teach a reader to scroll
-past it. The banner does not replace the line and must not: it is dismissible and
-per-browser, and somebody landing on a card page from a search engine has to be
-able to answer *is this official* there, not only in a bar they clicked away on a
-different day. `/legal` is the notice, `/privacy` and `/terms` are
+**Every page reaches the Bandai disclaimer, and no page restates it. Do not add
+anything that implies official standing.** The full notice lives on `/legal`, is
+shown once in a first-visit banner, and is linked from the footer of every page
+under *Legal — Disclaimer*. It used to be repeated in full at the foot of all
+4,700 pages, then as one line; both are gone, on request, and the link is what
+carries the obligation now.
+
+The trade is worth stating rather than rediscovering. The banner is dismissible
+and per-browser, so a reader landing on a card page from a search engine sees a
+link and not a sentence — that is a deliberate choice about noise, not an
+oversight, and restoring a line to `Footer.tsx` is how it is undone. `/legal` is the notice, `/privacy` and `/terms` are
 the two URLs the OAuth providers require.
 
 **A page opens on its content, not on a paragraph about itself.** Five pages led
