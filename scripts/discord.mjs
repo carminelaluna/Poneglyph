@@ -1,0 +1,169 @@
+/**
+ * Poneglyph — reading card reveals out of Discord messages.
+ *
+ * Pure and free of imports, so a test can run it without a bot token, which is the
+ * whole reason it is a file of its own: everything else about this source needs
+ * credentials and a server, and none of that can be exercised in CI.
+ *
+ * Why Discord at all. The web source we had publishes a leak article and then
+ * leaves it alone — both of its current articles were last *modified* twelve days
+ * before anybody noticed the page was stale. Reveals reach a community channel
+ * within minutes and keep coming, one card at a time, which is the shape this
+ * archive actually wants.
+ *
+ * What a message looks like, and why both halves are read:
+ *
+ * - **Attachment filenames** are the reliable half when somebody uploads a scan
+ *   named for its card, `OP18-021.png`. That is how the web source names them too.
+ * - **Message text** is the other half, because most posts are a photo of a card
+ *   with the number typed beside it, and the photo is named `IMG_4821.jpg`.
+ *
+ * Neither is trustworthy alone and both are cheap, so both are read and the ids
+ * are merged.
+ */
+
+/**
+ * A card number as this game writes it: two to four letters, an optional set
+ * number, a dash, exactly three digits.
+ *
+ * The trailing guard is the same one `cardsFromHtml` needs in the spoilers ingest,
+ * for the same reason: WordPress and phone cameras both produce `name-1024x768`,
+ * and without it `prb22-1024x461.jpeg` reads as set `PRB22` card `102` — a set
+ * that does not exist holding a card that does not exist.
+ */
+const CARD_ID = /\b([A-Z]{1,4}\d{0,2})-(\d{3})(?![\dx])/gi;
+
+/** `OP18-021`, uppercased, from any string. */
+export function cardIds(text) {
+  const out = new Set();
+  for (const m of String(text ?? '').matchAll(CARD_ID)) {
+    out.add(`${m[1].toUpperCase()}-${m[2]}`);
+  }
+  return out;
+}
+
+/**
+ * The set a card id belongs to. `OP18-021` -> `OP18`, `P-122` -> `P`.
+ *
+ * Promos carry no set number, which is why the pattern above allows zero digits
+ * there — three of the archetypes in the deck corpus are promo Leaders.
+ */
+export const setOf = (id) => id.split('-')[0];
+
+/**
+ * One Discord message -> the cards it reveals.
+ *
+ * `content` is the typed text, `attachments` the uploaded files. A crossposted
+ * message — one that arrived by following an announcement channel — has the same
+ * shape with a `webhook_id` set, so nothing here needs to know which it is.
+ *
+ * Both come back empty unless the app has the MESSAGE_CONTENT privileged intent,
+ * which is a checkbox for a bot this size but is not optional: without it this
+ * function is handed nothing and correctly finds nothing.
+ */
+export function cardsFromMessage(message) {
+  const found = new Map();
+
+  const note = (id, image) => {
+    const held = found.get(id);
+    /* First image wins, but an id seen first in text still takes a later file. */
+    if (!held) found.set(id, { id, image: image ?? null });
+    else if (!held.image && image) held.image = image;
+  };
+
+  for (const id of cardIds(message?.content)) note(id, null);
+
+  for (const attachment of message?.attachments ?? []) {
+    const name = attachment?.filename ?? '';
+    const ids = [...cardIds(name)];
+    /*
+     * A file named for its card is evidence about that card. A file named
+     * `IMG_4821.jpg` beside a message naming one card is evidence about that one
+     * too — but beside a message naming six, it is not evidence about any of
+     * them, so it is left unattached rather than guessed at.
+     */
+    if (ids.length > 0) {
+      for (const id of ids) note(id, attachment.url ?? null);
+    }
+  }
+
+  const named = [...cardIds(message?.content)];
+  const loose = (message?.attachments ?? []).filter((a) => cardIds(a?.filename ?? '').size === 0);
+  if (named.length === 1 && loose.length === 1) {
+    const entry = found.get(named[0]);
+    if (entry && !entry.image) entry.image = loose[0].url ?? null;
+  }
+
+  return [...found.values()];
+}
+
+/**
+ * A batch of messages -> what is revealed, by set, newest first.
+ *
+ * `released` is the set prefixes already in the card archive. A channel talks
+ * about released cards constantly — deck advice, price chat, a reprint — so
+ * without this filter the spoilers page would fill up with sets that shipped
+ * years ago. It is the same test the web ingest applies.
+ */
+export function revealsFromMessages(messages, released = new Set()) {
+  const sets = new Map();
+
+  /* Oldest first, so the earliest sighting is the one whose timestamp is kept. */
+  const ordered = [...messages].sort((a, b) =>
+    String(a?.timestamp ?? '').localeCompare(String(b?.timestamp ?? ''))
+  );
+
+  for (const message of ordered) {
+    for (const card of cardsFromMessage(message)) {
+      const set = setOf(card.id);
+      if (released.has(set.toUpperCase())) continue;
+
+      if (!sets.has(set)) sets.set(set, { set, cards: new Map(), first: null, last: null });
+      const entry = sets.get(set);
+
+      if (!entry.cards.has(card.id)) {
+        entry.cards.set(card.id, {
+          id: card.id,
+          image: card.image,
+          seen: message?.timestamp ?? null,
+          source: message?.id ?? null,
+        });
+      } else if (card.image && !entry.cards.get(card.id).image) {
+        entry.cards.get(card.id).image = card.image;
+      }
+
+      const at = message?.timestamp ?? null;
+      if (at) {
+        if (!entry.first || at < entry.first) entry.first = at;
+        if (!entry.last || at > entry.last) entry.last = at;
+      }
+    }
+  }
+
+  return [...sets.values()]
+    .map((entry) => ({
+      set: entry.set,
+      cards: [...entry.cards.values()].sort((a, b) => a.id.localeCompare(b.id)),
+      first: entry.first,
+      last: entry.last,
+    }))
+    .sort((a, b) => String(b.last ?? '').localeCompare(String(a.last ?? '')));
+}
+
+/**
+ * The newest message id in a batch, for the next run to read after.
+ *
+ * Discord ids are snowflakes: they sort by time as integers, and as strings only
+ * while they are the same length. They are the same length today and will be for
+ * years, but comparing them as BigInt costs nothing and does not have a date on
+ * which it starts being wrong.
+ */
+export function newestId(messages) {
+  let newest = null;
+  for (const message of messages) {
+    const id = message?.id;
+    if (!id || !/^\d+$/.test(id)) continue;
+    if (newest === null || BigInt(id) > BigInt(newest)) newest = id;
+  }
+  return newest;
+}

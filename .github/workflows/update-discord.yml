@@ -1,0 +1,78 @@
+name: Update spoilers from Discord
+
+# Card reveals from a Discord channel, which reach it within minutes and keep
+# arriving one card at a time — the shape this archive wants, and the opposite of
+# the web source, whose two leak articles sat unmodified for twelve days while the
+# spoilers page quietly went stale.
+#
+# **Manual only, on purpose, until the secrets exist.** A schedule without a token
+# would be red four times a day for a configuration that has not been done yet,
+# which is precisely the kind of noise that teaches people to stop reading a run
+# list. Add the `schedule` block below once a dispatch run has come back green.
+#
+# What has to be true first, none of which is in this repository:
+#
+#   1. A Discord *application* with a bot, from the developer portal. Not a user
+#      token — automating a user account is against Discord's terms.
+#   2. The **Message Content** privileged intent switched on. It is a checkbox for
+#      an app this size and it is not optional: without it Discord returns the
+#      content, embeds and attachments empty, and this ingest reads a channel full
+#      of reveals and correctly finds nothing.
+#   3. The bot invited to the server with View Channel and Read Message History.
+#      Inviting needs Manage Server on that guild.
+#   4. Two repository secrets: DISCORD_BOT_TOKEN and DISCORD_SPOILER_CHANNEL.
+#
+# The token reads a private channel, so it lives in Actions secrets and nowhere
+# else — never in .env.local, and never under a NEXT_PUBLIC_ name, which would
+# compile it into the browser bundle.
+on:
+  workflow_dispatch:
+    inputs:
+      all:
+        description: 'Re-read the channel from the start instead of from the last message'
+        type: boolean
+        default: false
+  # schedule:
+  #   - cron: '15 */6 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-discord
+  cancel-in-progress: true
+
+jobs:
+  discord:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Read the spoiler channel
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_SPOILER_CHANNEL: ${{ secrets.DISCORD_SPOILER_CHANNEL }}
+        run: |
+          ARGS=""
+          if [ "${{ inputs.all }}" = "true" ]; then
+            ARGS="--all"
+          fi
+          node scripts/ingest-discord.mjs $ARGS
+
+      - name: Commit what moved
+        run: |
+          git config user.name 'poneglyph-bot'
+          git config user.email 'poneglyph-bot@users.noreply.github.com'
+          git add data public/data
+          # generatedAt and durationMs change on every run, so a plain diff would
+          # commit, rebuild and redeploy the site to publish a new timestamp.
+          if ! node scripts/substantive-change.mjs; then
+            git reset
+            echo 'Nothing changed.'
+            exit 0
+          fi
+          git commit -m 'data: refresh spoilers from Discord'
+          git push

@@ -58,6 +58,7 @@ Moving to a domain, another CDN, or a real machine: **[MIGRATIONS.md](MIGRATIONS
 | `npm run ingest:matchups` | Limitless pairings — one request per tournament |
 | `npm run ingest:topdecks` | Top Decks archives, both regions |
 | `npm run ingest:spoilers` | Unreleased sets |
+| `npm run ingest:discord` | Reveals from a Discord channel — **needs a bot token** |
 | `npm run ingest:banlist` | Banned & restricted list |
 | `npm run ingest:events` | Official events from Bandai |
 | `npm run ingest:submissions` | Approved organizer tournaments — needs the service key |
@@ -99,6 +100,8 @@ ingest-decks.mjs     Limitless -> data/decks|tournaments|decks-state.json
 ingest-matchups.mjs  Limitless -> data/matchups.json (pairings, resumable)
 ingest-topdecks.mjs  Top Decks -> data/decks-{en,jp}.json (guarded, writes nothing else)
 ingest-spoilers.mjs  leaks     -> data/spoilers.json (two categories, see below)
+discord.mjs          messages  -> cards, pure so a test needs no bot token
+ingest-discord.mjs   Discord   -> data/spoilers-discord.json (needs a bot, see below)
 ingest-banlist.mjs   Bandai    -> data/banlist.json (+ numbers-only in public/data)
 ingest-events.mjs    Bandai    -> data/events-official.json (+ public/data)
 ingest-submissions   Supabase  -> data/decks-community.json (approved only)
@@ -867,6 +870,33 @@ timeout, a reset) — logs a `::warning`, writes nothing and exits **0**, since
 a schedule that is red every few hours for something outside this repository is a
 schedule nobody reads. Everything else still exits 1.
 
+**A Discord channel is the fast source, and it needs a bot.** The web source
+publishes a leak article and then leaves it: both of its articles were last
+*modified* twelve days before anybody noticed `/spoilers` had stopped moving.
+Reveals reach a community channel in minutes and keep arriving one card at a
+time. Reading one means `GET /channels/{id}/messages` as an **app** — automating
+a user account is against Discord's terms — with View Channel, Read Message
+History, and the **Message Content** privileged intent, which is a checkbox for a
+bot this size and is not optional: without it `content`, `embeds` and
+`attachments` all come back **empty**, so the ingest reads a channel full of
+reveals and correctly finds nothing.
+
+Two halves of a message are read because neither is reliable alone: an attachment
+named `OP18-021.png` is the card it names, and a phone photo named `IMG_4821.jpg`
+beside a typed number is that number's card. A message naming six cards with one
+photo attaches the photo to **none** of them — guessing would put the wrong art on
+a card. `discord.mjs` is where that lives, pure and import-free, because
+everything else about this source needs a token and a server and so cannot be
+exercised in CI; `ingest-discord.mjs` takes `--fixture` for the same reason.
+
+**Discord's image links expire and that decides the whole image question.**
+Attachment URLs are signed — `?ex=&is=&hm=` — and Discord refreshes them only
+inside its own payloads. A link saved into a static JSON file is dead within
+hours, so hotlinking the way `/spoilers` hotlinks Top Decks is not available.
+Copying them is a policy question rather than a technical one, since these are
+photographs of cards that are not out, so the ingest records the link it saw and
+does not act on it.
+
 **Reveals are filed in two categories, and one of them is called nothing.**
 onepiecetopdecks.com has five categories and puts leak coverage in two: *Card
 Leaks*, which has 15 posts, and *Uncategorized*, which is where ST-31..36, OP-15,
@@ -976,6 +1006,7 @@ change it in `.claude/launch.json` *and* `package.json` together.
 | [Top Decks](https://onepiecetopdecks.com) | JP/EN archives, leaks | WordPress API |
 | [Bandai rules](https://en.onepiece-cardgame.com/rules/) | Banlist, block updates | HTML, no API |
 | [Bandai events](https://en.onepiece-cardgame.com/events/) | Regionals, Finals, Cups | HTML, no API |
+| Discord | Card reveals, minutes after they leak | Bot token, private channel |
 | Organizers | Submitted tournaments, after review | Supabase |
 
 **Do not point card images at anyone else's CDN.** Bandai's blocks browser embedding
@@ -1055,4 +1086,4 @@ Standard-legal, 20 via the block exception · 2,651 priced · 69,708 decklists �
 English 63,814 from 2022-10, Japanese 5,894 from 2022-07 · 7,904 tournaments ·
 18,960 named players, 3,691 with five or more results · 152,529 recorded matches
 from 1,020 brackets · 44/46 release windows · 53 dated set releases · 67 announced
-official events across 6 types · 151 tests.
+official events across 6 types · 168 tests.

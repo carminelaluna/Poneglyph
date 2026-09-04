@@ -16,6 +16,7 @@
     "ingest:decks": "node scripts/ingest-decks.mjs",
     "ingest:all": "node scripts/ingest.mjs && node scripts/ingest-decks.mjs",
     "ingest:spoilers": "node scripts/ingest-spoilers.mjs",
+    "ingest:discord": "node scripts/ingest-discord.mjs",
     "ingest:banlist": "node scripts/ingest-banlist.mjs",
     "ingest:topdecks": "node scripts/ingest-topdecks.mjs",
     "build:indexes": "node scripts/build-indexes.mjs",
