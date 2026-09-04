@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T10:21:23.264Z",
+  "generatedAt": "2026-09-04T10:36:47.089Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -12,7 +12,7 @@
     "named": 3,
     "articles": 3
   },
-  "durationMs": 2480,
+  "durationMs": 2021,
   "sets": [
     {
       "set": "OP18",
@@ -76,12 +76,14 @@
         {
           "id": "EB05-005",
           "name": null,
-          "image": null
+          "image": null,
+          "thumb": "EB05-005.webp"
         },
         {
           "id": "EB05-007",
           "name": null,
-          "image": null
+          "image": null,
+          "thumb": "EB05-007.webp"
         },
         {
           "id": "EB05-010",
@@ -91,12 +93,14 @@
         {
           "id": "EB05-011",
           "name": null,
-          "image": null
+          "image": null,
+          "thumb": "EB05-011.webp"
         },
         {
           "id": "EB05-013",
           "name": null,
-          "image": null
+          "image": null,
+          "thumb": "EB05-013.webp"
         },
         {
           "id": "EB05-016",
@@ -106,42 +110,50 @@
         {
           "id": "EB05-023",
           "name": null,
-          "image": null
+          "image": null,
+          "thumb": "EB05-023.webp"
         },
         {
           "id": "EB05-025",
           "name": null,
-          "image": null
+          "image": null,
+          "thumb": "EB05-025.webp"
         },
         {
           "id": "EB05-035",
           "name": null,
-          "image": null
+          "image": null,
+          "thumb": "EB05-035.webp"
         },
         {
           "id": "EB05-036",
           "name": null,
-          "image": null
+          "image": null,
+          "thumb": "EB05-036.webp"
         },
         {
           "id": "EB05-042",
           "name": null,
-          "image": null
+          "image": null,
+          "thumb": "EB05-042.webp"
         },
         {
           "id": "EB05-045",
           "name": null,
-          "image": null
+          "image": null,
+          "thumb": "EB05-045.webp"
         },
         {
           "id": "EB05-054",
           "name": null,
-          "image": null
+          "image": null,
+          "thumb": "EB05-054.webp"
         },
         {
           "id": "EB05-056",
           "name": null,
-          "image": null
+          "image": null,
+          "thumb": "EB05-056.webp"
         }
       ],
       "articles": [
