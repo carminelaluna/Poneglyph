@@ -382,17 +382,13 @@ export default function AccountView() {
       'Signed in';
 
     return (
-      /*
-        A stack, not four siblings. Each of these is a bordered slab and nothing
-        between them set a margin, so they met edge to edge and read as one panel
-        with rules drawn across it — measured at 0px, twice over.
-      */
-      <div className="account-stack">
+      <>
         {/*
-          A small card, top left, rather than a panel across the page. Who you are
-          is one line and a way out; the width it had made a name and a Sign out
-          button look like the point of the page, when what a reader came for is
-          their decks below.
+          Who you are sits beside the heading rather than under it, which is why
+          this is a sibling of the stack and not a member of it: `.account-page`
+          is a grid, and only a direct child can be placed in its second column.
+          It is one name and a way out — a row of its own made that look like the
+          point of a page whose point is the decks below.
         */}
         <div className="account account-who slab slab-pad">
           <p className="eyebrow">Signed in</p>
@@ -415,27 +411,6 @@ export default function AccountView() {
               </button>
             </h2>
           )}
-          <p className="muted" style={{ fontSize: '0.8rem', marginTop: '0.4rem' }}>
-            {profile?.role === 'organizer' ? (
-              <>
-                Organizer — you can{' '}
-                <Link href="/submit" className="inline-link">
-                  submit tournament results
-                </Link>{' '}
-                for review.
-              </>
-            ) : profile?.role === 'admin' ? (
-              <>
-                Reviewer —{' '}
-                <Link href="/review" className="inline-link">
-                  submissions waiting for review
-                </Link>
-                .
-              </>
-            ) : (
-              'Player account. Submitting tournament results needs the organizer role.'
-            )}
-          </p>
           <button
             type="button"
             /*
@@ -451,14 +426,23 @@ export default function AccountView() {
         </div>
 
         {/*
-          Only for a plain account. An organizer has the role and an admin grants
-          it; offering either of them a form to ask for what they already have, or
-          hand out themselves, would be a page not paying attention.
+          A stack, because each of these is a bordered slab and nothing between
+          them set a margin — they met edge to edge and read as one panel with
+          rules drawn across it, measured at 0px, twice over.
         */}
-        {profile && profile.role === 'user' ? <OrganizerRequest userId={session.user.id} /> : null}
+        <div className="account-stack">
+          {/*
+            Only for a plain account. An organizer has the role and an admin grants
+            it; offering either of them a form to ask for what they already have, or
+            hand out themselves, would be a page not paying attention.
+          */}
+          {profile && profile.role === 'user' ? (
+            <OrganizerRequest userId={session.user.id} />
+          ) : null}
 
-        <SavedDecks />
-      </div>
+          <SavedDecks />
+        </div>
+      </>
     );
   }
 

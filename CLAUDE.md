@@ -444,11 +444,19 @@ has_role` instead of an empty list, and row-level security is meant to say "noth
 here" rather than to error. Since neither function takes a user id — both ask about
 `auth.uid()`, null for an anonymous caller — the grant discloses nothing.
 
-**Who you are is a small card, not a panel.** `.account-who` is `width: fit-content`
-in a stack that is `justify-items: start`, so it holds a name, a line about the
-account and a way out, and stops there. At full width those three things read as
-the point of the page, when what a reader came for is the decks under them — which
-still stretch, because a list wants the room.
+**Who you are sits beside the heading, not under it.** `.account-page` is a grid:
+the title takes column one, `.account-who` takes column two and spans the two
+heading rows, and everything below runs `1 / -1` because a list of decks has no
+reason to be narrowed by a card. The card has to be a *direct* child for that, so
+`AccountView` renders it as a sibling of the stack rather than inside it — a
+grandchild cannot be placed in a grid's second column. Under 48rem the second
+column goes away and the card returns to being the first thing under the title.
+
+**The role line is gone, and with it the only link to `/review`.** It said
+*Reviewer — submissions waiting for review* to an admin and *Organizer — you can
+submit tournament results* to an organizer. `/review` is not in the nav, not in
+the footer and noindex, so it is now reachable only by typing the path. Removed on
+request and worth restoring with it.
 
 **The signed-in account page is a stack, and was four touching slabs.** Who you
 are, the ways in, the organizer request and your decks are each a bordered panel,

@@ -20,15 +20,64 @@
 }
 
 /*
+ * The signed-in page as a whole: a heading on the left, who you are beside it on
+ * the right, and everything else across the full width beneath them both.
+ *
+ * The card has to be a direct child for this to work, which is why AccountView
+ * renders it as a sibling of the stack rather than inside it — a grandchild
+ * cannot be placed in a grid's second column.
+ */
+.account-page {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  column-gap: 2rem;
+}
+
+.account-page > * {
+  grid-column: 1;
+  min-width: 0;
+}
+
+/*
+ * Everything below the two of them runs the full width. The heading shares its
+ * row with the card; a list of decks has no reason to be narrowed by it.
+ */
+.account-page > .account-stack {
+  grid-column: 1 / -1;
+}
+
+/*
  * Who you are: a small card in the corner, not a panel across the page. It holds
- * one name, one line about the account and one way out — at full width that read
- * as the point of the page, when what a reader came for is the decks below it.
+ * one name and one way out — at full width that read as the point of the page,
+ * when what a reader came for is the decks below it.
  */
 .account-who {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  justify-self: end;
   width: fit-content;
-  min-width: 15rem;
-  max-width: 24rem;
+  min-width: 14rem;
+  max-width: 22rem;
   margin-top: 0;
+}
+
+/*
+ * Nothing to put beside a heading when there is no room for it. Below this the
+ * card goes back to being the first thing under the title, which is where a
+ * phone wants it anyway.
+ */
+@media (max-width: 48rem) {
+  .account-page {
+    grid-template-columns: 1fr;
+  }
+
+  .account-who {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: start;
+    margin-top: 1.25rem;
+  }
 }
 
 /* Everything that is a list still wants the room. */

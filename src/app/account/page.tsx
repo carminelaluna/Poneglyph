@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function AccountPage() {
   return (
-    <div className="shell" style={{ paddingBlock: '2rem 3rem', maxWidth: '52rem' }}>
+    <div className="shell account-page" style={{ paddingBlock: '2rem 3rem', maxWidth: '52rem' }}>
       <p className="eyebrow">Account</p>
       <h1
         className="display"
