@@ -113,6 +113,7 @@ two runs before the answer is refused.
 sources.mjs          every upstream, with its role and limits
 env.mjs              .env.local as Next reads it, for the three scripts that must
 corpus-guard.mjs     when an answer is too small to overwrite what is recorded
+dedupe.mjs           one deck in two sources: same fifty cards, or same event
 refusal.mjs          an upstream that will not talk, told apart from a bug of ours
 limitless.mjs        the rate limiter and request helper, shared by two ingests
 matchups.mjs         a bracket -> results, and the flip that stores both sides
@@ -214,24 +215,39 @@ was written, and the backfill is why. A duplicate is same day + player + Leader 
 *the same fifty cards*. The looser key matches more, and the reason the strict one is
 used is that a player can genuinely bring one archetype to two events in a day.
 
-**39 rows survive that, and measurement says they are the same event.** They share
-day, player and Leader with a Limitless row and differ in the fifty: 23 by a single
-entry, 11 by two. The independent evidence that they are one deck and not two: Top
-Decks writes the field size into its event name (`ChinoizeCup(128)`), and for 27 of
-the 39 that number equals the Limitless entrant count; for 33 of the 39, at least
-half of the *other* players at that Top Decks event also appear on that Limitless
-event's roster. One pair checked by hand — `2026-08-19 mstrkenc OP16-001` — is
-Limitless's 128-deck field and Top Decks's top 16 of it, with 14 of the 16 players
-in both, and the lists differ by one card (`OP16-015` against `OP12-015`).
+**Failing that, the same event**, which is the second test and the one with an
+inference in it. 39 rows used to survive the first: same day, player and Leader as
+a Limitless row, differing in the fifty — 23 by a single entry, 11 by two. They read
+as a player bringing one archetype to two events in a day, which is real and happens
+354 times inside Limitless alone. They were not that.
 
-So this is a transcription disagreement between two sources describing one list,
-not a player at two events, and those 39 decks are counted twice. It is 0.06% of
-64,011 English rows and it is **not fixed**: a one-card difference is equally
-consistent with a player tweaking a deck between two events on one day, so a
-similarity threshold cannot tell the two apart. What could is event identity —
-matching the field size Top Decks names against Limitless's entrant count — and
-that is a feature rather than a tightening, because it changes every share and win
-rate on the site. Measured and left alone deliberately.
+Top Decks writes the field size into its event name — `ChinoizeCup(128)` — and
+Limitless records an entrant count. For 27 of the 39 those numbers are equal. For 33
+of the 39, at least half of the *other* players at that Top Decks event appear on
+that Limitless event's roster, which is evidence not involving the player in
+question. One pair checked by hand — `2026-08-19 mstrkenc OP16-001` — is Limitless's
+128-deck field and Top Decks's top 16 of it, 14 of those 16 players in both, the two
+lists apart by one card (`OP16-015` against `OP12-015`). Two sources disagreeing
+about one list, not one player at two events.
+
+So the field size is what the second test asks about: a fact about the *event*, which
+is the thing the two rows either share or do not. **27 rows go**, and the run says
+which test took them — `434 the same fifty cards, 27 the same event`.
+
+What it deliberately does not do is compare lists for similarity. One card apart is
+exactly what two sources typing one deck look like *and* what a player swapping a
+card between two Saturday events looks like; no threshold separates them. Nor is
+there a guard for a loose key pointing at two Limitless events: both such cases are
+two 64-player cups at one venue on one day with this player in both, so which one
+the Top Decks row duplicates is unknown and does not matter — the list is recorded
+either way.
+
+`scripts/dedupe.mjs` holds both tests, pure so `tests/dedupe.test.ts` can run them.
+Mutation-tested: deleting the event branch fails two tests, dropping the `MIN_FIELD`
+floor fails one. A third mutation — indexing an unrecorded field size as `0` — fails
+nothing, and that is correct rather than a gap: `fieldSize` returns null or a number
+at or above 8, never 0, so the reader's null check is the guard and the skip in the
+indexer is housekeeping.
 
 Limitless wins the tie; community submissions lose it, because an automated source can
 be re-checked.
@@ -1467,11 +1483,11 @@ site.
 ## Current shape
 
 2,785 cards · 4,843 printings · 60 sets (17 boosters, 36 starter decks) · 2,172
-Standard-legal, 20 via the block exception · 2,770 priced · 69,948 decklists —
-English 64,011 from 2022-10, Japanese 5,937 from 2022-07 · 7,948 tournaments ·
+Standard-legal, 20 via the block exception · 2,770 priced · 69,921 decklists —
+English 63,984 from 2022-10, Japanese 5,937 from 2022-07 · 7,948 tournaments ·
 19,565 named players, 3,678 with five or more results · 152,890 recorded matches
 from 1,025 brackets · 44/46 release windows · 53 dated set releases · 67 announced
-official events across 6 types · 189 tests.
+official events across 6 types · 206 tests.
 
 These drift daily and are a snapshot, not an invariant — the ones worth checking
 against the code are above. Two were wrong rather than stale: the booster count

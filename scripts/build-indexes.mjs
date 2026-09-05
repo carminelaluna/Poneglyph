@@ -28,6 +28,7 @@
 
 import { writeFile, readFile, mkdir, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
+import { indexOf, withoutRecorded } from './dedupe.mjs';
 import { flip } from './matchups.mjs';
 
 const DATA = path.resolve('data');
@@ -827,29 +828,22 @@ async function main() {
     }));
 
   /*
-   * Limitless and Top Decks both cover 2026 English events, so 223 lists appear
-   * twice. A duplicate is the same player, on the same day, with the same Leader and
-   * the same fifty cards — anything short of that is kept, because a player can
-   * genuinely bring one deck to two events in a day. Limitless wins the tie: it
-   * carries the field size, the Swiss record and the real event name.
+   * Limitless and Top Decks both cover English events, so a great many lists appear
+   * twice. Two tests decide it, and scripts/dedupe.mjs is where they live and why:
+   * the same fifty cards, and failing that, the same event — which Top Decks names
+   * with its field size and Limitless records as an entrant count.
+   *
+   * Limitless wins the tie: it carries the field size, the Swiss record and the
+   * real event name.
    */
-  const listKey = (d) =>
-    [
-      d.date.slice(0, 10),
-      d.player.trim().toLowerCase(),
-      d.leaderId,
-      d.cards
-        .slice()
-        .sort((a, b) => a.id.localeCompare(b.id))
-        .map((c) => `${c.count}x${c.id}`)
-        .join(','),
-    ].join('|');
-
-  const limitlessKeys = new Set(west.map(listKey));
   const topDecksEn = fromTopDecks(en);
-  const deduped = topDecksEn.filter((d) => !limitlessKeys.has(listKey(d)));
-  const dropped = topDecksEn.length - deduped.length;
-  if (dropped) log(`deduplicated ${dropped} English lists already recorded by Limitless`);
+  const { kept: deduped, dropped } = withoutRecorded(topDecksEn, indexOf(west));
+  if (dropped.list || dropped.event) {
+    log(
+      `deduplicated ${dropped.list + dropped.event} English lists already recorded by ` +
+        `Limitless (${dropped.list} the same fifty cards, ${dropped.event} the same event)`
+    );
+  }
 
   /*
    * Approved organizer submissions — the third source, written by
@@ -861,9 +855,9 @@ async function main() {
    * where the two disagree the automated source is the one that can be re-checked.
    */
   const community = (await load('decks-community.json', { decks: [] })).decks ?? [];
-  const knownKeys = new Set([...west, ...deduped, ...fromTopDecks(jp)].map(listKey));
-  const submitted = community.filter((d) => !knownKeys.has(listKey(d)));
-  const alreadyHeld = community.length - submitted.length;
+  const held = indexOf([...west, ...deduped, ...fromTopDecks(jp)]);
+  const { kept: submitted, dropped: alsoHeld } = withoutRecorded(community, held);
+  const alreadyHeld = alsoHeld.list + alsoHeld.event;
   if (community.length) {
     log(
       `${submitted.length} submitted decks folded in` +
