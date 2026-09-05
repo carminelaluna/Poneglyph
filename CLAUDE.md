@@ -1,67 +1,24 @@
 # Poneglyph — working notes
 
 Unofficial ONE PIECE CARD GAME archive and metagame tracker. Next.js 16 (App
-Router), TypeScript, no database — ingest scripts write JSON, the site is built from
-it, and accounts are the one exception (Supabase, for saved decks and organizer
+Router), TypeScript, **no database** — ingest scripts write JSON, the site is built
+from it. Accounts are the one exception (Supabase: saved decks, organizer
 submissions).
 
-**Every page reaches the Bandai disclaimer, and no page restates it. Do not add
-anything that implies official standing.** The full notice lives on `/legal`, is
-shown once in a first-visit banner, and is linked from the footer of every page
-under *Legal — Disclaimer*. It used to be repeated in full at the foot of all
-4,700 pages, then as one line; both are gone, on request, and the link is what
-carries the obligation now.
+This file is the condensed version. The long form — the reasoning behind each
+decision and the bug that produced it — is in git history before the commit that
+shortened it.
 
-The trade is worth stating rather than rediscovering. The banner is dismissible
-and per-browser, so a reader landing on a card page from a search engine sees a
-link and not a sentence — that is a deliberate choice about noise, not an
-oversight, and restoring a line to `Footer.tsx` is how it is undone. `/legal` is the notice, `/privacy` and `/terms` are
-the two URLs the OAuth providers require.
+**Every page reaches the Bandai disclaimer, and no page restates it.** The full
+notice is `/legal`, shown once in a dismissible first-visit banner, linked from
+every footer. `/privacy` and `/terms` are the two URLs the OAuth providers require.
+Do not add anything implying official standing.
 
-**A page opens on its content, not on a paragraph about itself.** Five pages led
-with an explanation — what the metagame page averages and why, what the deck
-builder checks while you build, that spoilers are unofficial, that Bandai's
-registration dates are a guideline — and the metagame page spent a five-figure
-stat row on top of it. A reader arrives wanting the table. Those intros are gone,
-and with them `regionsJson` from `/decks`, which nothing else on that page read.
-
-`/submit` and `/review` were the last two and have gone the same way, along with
-the per-set *Reveals from* list on `/spoilers`: where the reveals come from is on
-`/legal` and `/data`, and the page still carries the attribution once, at its
-foot. Four CSS rules nothing rendered any more went with it.
-
-Two of them carried something that could not simply go, and neither is lost.
-Bandai's *guideline, organisers vary* is printed by `EventBrowser` as `· guideline`
-beside every registration time it takes from the month table — which is where the
-reader meets the date, and so where CLAUDE.md's rule that the caveat travels with
-the data is actually satisfied. On `/spoilers`, that these are somebody else's
-images of cards that are not out is the reason the page may show them at all, so
-attribution and *liable to change* moved into the line already at the foot of the
-page rather than being restated twice at the top.
-
-When a caveat comes off a page it has to land somewhere, and mostly it already
-had: the metagame's sampling line is `/data` under *How to read the numbers*, and
-*if we and Bandai disagree, Bandai is right* is `/legal` under *Rules and
-rulings*, both said better and at length. Two facts from the banlist header were
-the exception — that a ban applies to every printing of a card, and that
-restrictions cover Standard and Extra unless stated — because those are facts
-about the rules rather than about this site, and nothing else carried them. They
-are on `/data` now, with the effective date and the source, which that table had
-also never listed.
-
-**Caveats live on the page that exists for them, not on every page.** Ten pages each
-carried a dashed red callout, which made the treatment reserved for "look at this"
-the thing a reader met almost everywhere. How the archive is built — sampling, decks
-against entrants, spellings never merged, what a matchup is — is on `/data` under
-*How to read the numbers*; what this site is and is not is on `/legal`; accounts are
-on `/privacy` and `/terms`. A browse page keeps at most one line of provenance
-(`.source-line`) and a link. The exception is `MetaBrowser`, whose two warnings are
-conditional: they describe the table in front of you right now, so they stay, as a
-line rather than a box. Its events section spent the one plain line the rule allowed
-on *Decks* and *Entrants* disagreeing; the section is gone, and the fact is on
-`/data` and on `/tournaments`, which are the pages that exist for it.
-
-Moving to a domain, another CDN, or a real machine: **[MIGRATIONS.md](MIGRATIONS.md)**.
+**A page opens on its content, not on a paragraph about itself.** Caveats live on
+the page that exists for them — `/data` for how the archive is built, `/legal` for
+what this site is and is not. A browse page keeps at most one line of provenance
+(`.source-line`) and a link. The exception is a *conditional* warning describing the
+table in front of you right now; those stay.
 
 ---
 
@@ -70,14 +27,14 @@ Moving to a domain, another CDN, or a real machine: **[MIGRATIONS.md](MIGRATIONS
 | | |
 | --- | --- |
 | `npm run dev` | Dev server, port 4321 — **under `NEXT_PUBLIC_BASE_PATH`** |
-| `npm run build` | Server build, ~4,700 pages |
-| `npm run verify` | `check` + `typecheck` + `test` — what CI runs on every push |
+| `npm run build` | Server build, ~8,700 pages |
+| `npm run verify` | `check` + `typecheck` + `test` — what CI runs |
 | `npm run check` | Control characters, reserved SQL column names, recursive policies |
-| `npm run typecheck` | `tsc --noEmit` |
 | `npm test` | `node --test` over `tests/*.test.ts` |
-| `npm run ingest` | Cards, and a price point (runs `check` first) |
+| `npm run ingest` | Cards, and a price point |
 | `npm run ingest:decks` | Limitless tournaments, budgeted and resumable |
-| `npm run ingest:decks -- --backfill --since 2023-01-01` | Reach past where the archive already is |
+| `npm run ingest:decks -- --backfill --since 2023-01-01` | Reach past where the archive is |
+| `npm run ingest:decks -- --rebuild` | Re-derive from stored decks, no network |
 | `npm run ingest:matchups` | Limitless pairings — one request per tournament |
 | `npm run ingest:topdecks` | Top Decks archives, both regions |
 | `npm run ingest:spoilers` | Unreleased sets |
@@ -88,22 +45,14 @@ Moving to a domain, another CDN, or a real machine: **[MIGRATIONS.md](MIGRATIONS
 | `npm run build:indexes` | **Run after any deck ingest** — derives everything |
 | `npm run ingest:images` | Mirror card art into `public/cards` |
 | `npm run build:cdn` | That mirror to WebP at 3 widths, into `cdn/` |
-| `npm run build:cdn:lock` | Same, plus a referrer check — **read the cost first** |
 | `npm run deploy:cdn` | Upload `cdn/` to Cloudflare Pages |
 | `npm run build:static` | `out/` for GitHub Pages — needs `NEXT_PUBLIC_CDN_URL` |
 | `npm run serve:static` | Serve `out/` on 4322 **the way Pages does** |
-| `npm run deploy:site` | Push `out/` to `main-selfhost` |
+| `node scripts/build-share-image.mjs` | The 1200×630 link preview, by hand |
 
 `build:indexes` is not optional plumbing: it merges the corpora, deduplicates,
 derives release eras, shards the matchups, and writes both the browser payloads and
-`data/decks-merged.json`. A deck or matchup ingest without it leaves the site on
-stale data.
-
-The modules above the ingests are pure and imported rather than inlined, and both
-properties are load-bearing: shared so two copies cannot drift, pure so a test can
-run them. Every one of them is a place where a number is decided — including
-`corpus-guard.mjs`, where the number is how much of an archive may vanish between
-two runs before the answer is refused.
+`data/decks-merged.json`. A deck or matchup ingest without it leaves stale data.
 
 ---
 
@@ -111,7 +60,7 @@ two runs before the answer is refused.
 
 ```
 sources.mjs          every upstream, with its role and limits
-env.mjs              .env.local as Next reads it, for the three scripts that must
+env.mjs              .env.local as Next reads it, for the scripts that must
 corpus-guard.mjs     when an answer is too small to overwrite what is recorded
 dedupe.mjs           one deck in two sources: same fifty cards, or same event
 refusal.mjs          an upstream that will not talk, told apart from a bug of ours
@@ -119,832 +68,265 @@ limitless.mjs        the rate limiter and request helper, shared by two ingests
 matchups.mjs         a bracket -> results, and the flip that stores both sides
 price-history.mjs    the append and the ninety-day trim, both pure
 submissions.mjs      an organizer's answer -> corpus rows
+discord.mjs          messages -> cards, pure so a test needs no bot token
 ingest.mjs           cards     -> data/cards|sets|filters|meta.json + cards-index
-                                 + data/price-history.json (one point per change)
+                                  + data/price-history.json (one point per change)
 ingest-decks.mjs     Limitless -> data/decks|tournaments|decks-state.json
-                                 (nothing under public/ — build-indexes owns those)
+                                  (nothing under public/ — build-indexes owns those)
 ingest-matchups.mjs  Limitless -> data/matchups.json (pairings, resumable)
-ingest-topdecks.mjs  Top Decks -> data/decks-{en,jp}.json (guarded, writes nothing else)
-ingest-spoilers.mjs  leaks     -> data/spoilers.json (two categories, see below)
-discord.mjs          messages  -> cards, pure so a test needs no bot token
-ingest-discord.mjs   Discord   -> data/spoilers-discord.json (needs a bot, see below)
+ingest-topdecks.mjs  Top Decks -> data/decks-{en,jp}.json (guarded)
+ingest-spoilers.mjs  leaks     -> data/spoilers.json
+ingest-discord.mjs   Discord   -> data/spoilers-discord.json (needs a bot)
 ingest-banlist.mjs   Bandai    -> data/banlist.json (+ numbers-only in public/data)
 ingest-events.mjs    Bandai    -> data/events-official.json (+ public/data)
 ingest-submissions   Supabase  -> data/decks-community.json (approved only)
 build-indexes.mjs    all       -> public/data/decks-{en,jp}-index.json,
-                                 public/data/decks-{en,jp}-archive/{YYYY-MM}.json,
-                                 public/data/decks-{en,jp}/*.json,
-                                 public/data/{events,players,deck}/*.json (256 each),
-                                 public/data/{tournaments,players}-{index,archive}.json,
-                                 public/data/matchups/{leaderId}.json,
-                                 public/data/{leaders,card-names}.json,
-                                 data/decks-merged.json, data/regions.json
+                                  decks-{en,jp}-archive/{YYYY-MM}.json,
+                                  decks-{en,jp}/*.json,
+                                  {events,players,deck}/*.json (256 each),
+                                  {tournaments,players}-{index,archive}.json,
+                                  matchups/{leaderId}.json,
+                                  {leaders,card-names}.json,
+                                  data/decks-merged.json, data/regions.json
 build-static.mjs     the app   -> out/
 deploy-site.mjs      out/      -> main-selfhost
 ```
 
+The modules above the ingests are **pure and imported rather than inlined**, and both
+properties are load-bearing: shared so two copies cannot drift, pure so a test can run
+them. Each is a place where a number is decided.
+
 `data/*.json` is imported at build time; `public/data/*.json` is fetched by the
-browser. **Never import a `public/data` file into a component** — it exists precisely
-to stay out of the bundle.
+browser. **Never import a `public/data` file into a component.**
 
 ---
 
 ## Invariants
 
-Load-bearing. Breaking one produces plausible-looking wrong numbers.
+Breaking one produces plausible-looking wrong numbers.
 
 **Cards vs printings.** A card is the gameplay entity; `OP01-025`, `_p1`, `_p2` are
-printings of it. Search returns 2,785 cards, not 4,843 printings. The UI writes
-`OP01-025`, `V2`, `V3` — the `_pN` suffix is an image filename, not something on the
-card.
+printings of it. Search returns 2,785 cards, not 4,843 printings.
 
-**Sampling is per deck, not per corpus.** Limitless publishes whole Swiss fields; Top
-Decks publishes only decks that placed; organizers say which they are uploading. Each
-row carries `f: 1|0`. *Share* counts every deck; *win rate* counts only `f === 1` and
-shows its sample (`52.8% /195`). A win rate over winners-only data reads near 100% and
-means nothing.
+**Sampling is per deck, not per corpus.** Each row carries `f: 1|0`. *Share* counts
+every deck; *win rate* counts only `f === 1` and shows its sample (`52.8% /195`). A
+win rate over winners-only data reads near 100% and means nothing.
 
-**A matchup is not a win rate, and they are counted from different things.** The
-win rate on an archetype page is its record against *the field*. The matchup table
-is its record against a **named** opponent, and it exists only because Limitless
-publishes `/tournaments/{id}/pairings` — round, table, both usernames, the winner.
-`ingest-matchups.mjs` joins that against the Leader each username played *at that
-tournament* — 152,529 matches from 1,020 brackets, back to March 2023. Nothing is
-inferred from standings. It follows that matchups cover **Limitless events only**:
-Top Decks publishes finishing lists and organizers are not asked for brackets, so
-the table says whose events it is drawn from — and shows nothing at all under the
-Japanese view, because Limitless is an English-corpus source and an English table
-under a Japanese heading would be real matches about a different metagame. Mirrors
-are dropped (a deck beats itself half the time) and rows under five games are held
-behind a click — 67% from three games is noise wearing a percentage. A bye has no
-opponent and is dropped with the matches whose other side never submitted a list:
-the missing archetype is genuinely unknown, and inventing one would put matches on a
-deck that never sat at that table.
+**A matchup is not a win rate.** The win rate on an archetype page is its record
+against *the field*. The matchup table is its record against a **named** opponent,
+joined from `/tournaments/{id}/pairings` against the Leader each username played at
+that tournament. Nothing is inferred from standings. It follows that matchups cover
+**Limitless events only**, and show nothing under the Japanese view. Mirrors are
+dropped; rows under five games are held behind a click; byes and matches whose other
+side never submitted a list are dropped rather than guessed at.
 
-**Each match is stored twice, once from each side**, which is 12 bytes against every
-reader flipping it themselves and one of them getting it backwards. `flip()` lives in
-`scripts/matchups.mjs` and is used by the writer; `tests/matchups.test.ts` reads the
-built payloads back and asserts that every pair agrees — 3,770 ordered pairs, and if
-two ever disagreed the site would report a matchup and its opposite as both winning.
+**Each match is stored twice, once from each side.** `flip()` in `scripts/matchups.mjs`
+is used by the writer; `tests/matchups.test.ts` reads the built payloads back and
+asserts every pair agrees.
 
-**Prices are a series now, and it is sparse in both directions.**
-`data/price-history.json` keeps ninety days. `prices[cardId]` holds one entry per
-*change*, so reading a day means the last point at or before it — and `days` holds
-the days something moved **on**, not the days the ingest ran. The second half is not
-symmetry for its own sake: the ingest runs three times a day and the file is
-committed by a scheduled job, so appending a date on a quiet day would rewrite it,
-and a rewritten file is a commit, a rebuild and a deploy of 24,000 files to publish
-one longer flat line. That is the failure `substantive-change.mjs` already exists to
-prevent, and the first version of this shipped with it.
-
-The consequence for the reader is that the gaps are uneven, so `sparkline()` places
-points **by date rather than by index**: a fortnight of stillness and an overnight
-jump drawn the same width is the one thing a price chart is read to tell apart. The
-card page prints the number of recorded changes and the days they span as two
-separate figures, because three points across sixty days is a price that sat still.
-
-Nothing is back-filled — the source publishes a price and a scrape date, not a
-history — so a card the ingest has seen once says so instead of drawing a flat line
-that would read as a steady price.
+**Prices are a sparse series.** `data/price-history.json` keeps ninety days.
+`prices[cardId]` holds one entry per *change*, so reading a day means the last point
+at or before it — and `days` holds the days something moved **on**, not the days the
+ingest ran. `sparkline()` places points **by date rather than by index**. Nothing is
+back-filled: a card seen once says so rather than drawing a flat line.
 
 **Regions are separate corpora, not a filter.** English and Japanese have different
-card pools and event structures. Switching region swaps the dataset.
+card pools and event structures. Switching region swaps the dataset. They also do not
+share a release calendar, so an era one corpus never had answers with **nothing** and
+says so.
 
-**English is deduplicated.** 434 lists appear in both English sources — 223 when this
-was written, and the backfill is why. A duplicate is same day + player + Leader +
-*the same fifty cards*. The looser key matches more, and the reason the strict one is
-used is that a player can genuinely bring one archetype to two events in a day.
+**English is deduplicated, by two tests.** `scripts/dedupe.mjs`. First: same day +
+player + Leader + *the same fifty cards*. Second, for the rows that survive it: the
+same **event**, which Top Decks names with its field size (`ChinoizeCup(128)`) and
+Limitless records as an entrant count. The second exists because 39 rows were the same
+deck typed differently by two sources, not a player at two events — which is real and
+happens 354 times inside Limitless alone. Deliberately **not** list similarity: one
+card apart is what both cases look like. Limitless wins the tie; community submissions
+lose it.
 
-**Failing that, the same event**, which is the second test and the one with an
-inference in it. 39 rows used to survive the first: same day, player and Leader as
-a Limitless row, differing in the fifty — 23 by a single entry, 11 by two. They read
-as a player bringing one archetype to two events in a day, which is real and happens
-354 times inside Limitless alone. They were not that.
-
-Top Decks writes the field size into its event name — `ChinoizeCup(128)` — and
-Limitless records an entrant count. For 27 of the 39 those numbers are equal. For 33
-of the 39, at least half of the *other* players at that Top Decks event appear on
-that Limitless event's roster, which is evidence not involving the player in
-question. One pair checked by hand — `2026-08-19 mstrkenc OP16-001` — is Limitless's
-128-deck field and Top Decks's top 16 of it, 14 of those 16 players in both, the two
-lists apart by one card (`OP16-015` against `OP12-015`). Two sources disagreeing
-about one list, not one player at two events.
-
-So the field size is what the second test asks about: a fact about the *event*, which
-is the thing the two rows either share or do not. **27 rows go**, and the run says
-which test took them — `434 the same fifty cards, 27 the same event`.
-
-What it deliberately does not do is compare lists for similarity. One card apart is
-exactly what two sources typing one deck look like *and* what a player swapping a
-card between two Saturday events looks like; no threshold separates them. Nor is
-there a guard for a loose key pointing at two Limitless events: both such cases are
-two 64-player cups at one venue on one day with this player in both, so which one
-the Top Decks row duplicates is unknown and does not matter — the list is recorded
-either way.
-
-`scripts/dedupe.mjs` holds both tests, pure so `tests/dedupe.test.ts` can run them.
-Mutation-tested: deleting the event branch fails two tests, dropping the `MIN_FIELD`
-floor fails one. A third mutation — indexing an unrecorded field size as `0` — fails
-nothing, and that is correct rather than a gap: `fieldSize` returns null or a number
-at or above 8, never 0, so the reader's null check is the guard and the skip in the
-indexer is housekeeping.
-
-Limitless wins the tie; community submissions lose it, because an automated source can
-be re-checked.
-
-**A release window is closed at both ends.** Picking a set under *Since release*
-used to mean "from that day to now", so the oldest release answered with the entire
-archive — decks from 2026 under a heading about 2022, played with sets that did not
-exist. An era now runs until the next **expansion** entered play, and only the
-newest one is open, because that one is still going on.
-
-The next *expansion*, not the next set of any kind: a starter deck does not end a
-format. Measured against the corpus, ending on any release at all made OP-01 one day
-wide and two decks deep — three products entered play inside 48 hours at the start
-of the archive — where ending on the next expansion makes it 98 days and 160 decks.
-It also stops ST-30 cutting OP-16 in half. `windowEnd()` is exclusive, so the day a
-set arrives belongs to its own era; `withTrend` measures the previous window against
-the same length, and the matchup table takes both ends.
-
-**The two regions do not share a release calendar**, so an era is a question one
-corpus can answer and the other cannot — five sets entered play in Japanese that
-never did in English, and two the other way. A release this corpus never had
-therefore answers with **nothing**, and says so. It used to fall through to "no
-start date, so no filtering" and report the whole archive under a heading naming
-that release: real numbers, wrong question, with the dropdown still reading *Choose
-a release…*. Reachable by switching region with one selected, not only by typing a
-URL.
+**A release window is closed at both ends.** An era runs until the next **expansion**
+entered play — not the next set of any kind, because a starter deck does not end a
+format. `windowEnd()` is exclusive. Only the newest era is open.
 
 **Windows are measured from the newest deck on record, not from today.** Results
-arrive in batches; anchoring on the clock would silently empty "last 7 days" whenever
+arrive in batches; anchoring on the clock would empty "last 7 days" whenever
 ingestion paused.
 
 **Release eras are derived, never hardcoded.** A date is claimed only when a set first
 appears after the corpus starts, reaches ≥10% of decks in a 7-day stretch, *and* brings
-≥3 distinct cards. All three matter: ST-01 shipped in 2022, but one of its cards
-entered play mid-corpus and hit 17% — a deckbuilding trend, not a release. The date is
-when a set entered *competitive play*, not its paper release (OP-17: played 2026-08-17,
-printed 2026-08-28).
+≥3 distinct cards. All three matter. The date is when a set entered *competitive play*,
+not its paper release.
 
-`data/regions.json` also carries **`releases`** — those eras flattened across both
-regions, newest first, earliest date per set. The home page reads it for the six most
-recent Leaders. It used to take the last match per colour out of `cards`, which is
-ordered by card number rather than by release, so it showed three different
-Monkey.D.Luffy from starter decks. Still play dates, so nothing on the page claims a
-release date.
-
-**Standard legality has a published exception.** Standard is Block ≥ 2
-(`STANDARD_MIN_BLOCK`), but Bandai keeps 20 Block 1 cards legal and
+**Standard legality has a published exception.** Standard is Block ≥ 2, but Bandai
+keeps 20 Block 1 cards legal and
 [lists them](https://en.onepiece-cardgame.com/rules/blockicon-card/). Read that page;
-do not infer. Upstream reports block 1 for every printing including reprints, and "has
-an alternate art" is not the rule.
+do not infer. Upstream reports block 1 for every printing including reprints.
 
 **Missing values are named, not blanked.** `Not recorded` for absent players, events,
-records and field sizes. A blank reads as a bug; a `0` field size reads as "nobody
-came". `NA` is not a player — it is the most common name in the raw data (172 rows) and
-would top every leaderboard.
+records and field sizes. `NA` is not a player — it is the most common name in the raw
+data and would top every leaderboard.
 
 **Card art is fetched once, never hotlinked.** The official CDN sends
-`Cross-Origin-Resource-Policy: same-site`, so a browser refuses to render its images
-from another origin. `/art/[id]` fetches server-side, where that header does not apply,
-and mirrors to `public/cards`.
+`Cross-Origin-Resource-Policy: same-site`. `/art/[id]` fetches server-side and mirrors
+to `public/cards`.
 
-**Art is served at the width it is rendered.** One 600×838 source appears at 38 px in a
-table row and 600 px in the lightbox; sending the original to both made a grid of 60
-weigh 18 MB. `art(id, width)` takes 96, 320 or 600; `artSrcSet` offers all three. Both
-live in `lib/art.ts` — **not** `lib/cards.ts` — because the client grids need them and
-importing from `cards.ts` would drag 4.4 MB of card JSON into the bundle.
+**Art is served at the width it is rendered.** `art(id, width)` takes 96, 320 or 600;
+`artSrcSet` offers all three. Both live in `lib/art.ts` — **not** `lib/cards.ts`,
+because importing from there would drag 4.4 MB of card JSON into the client bundle.
+With `NEXT_PUBLIC_CDN_URL` unset the proxy answers, so a fresh checkout works with no
+CDN; `build:static` refuses to run without it.
 
-With `NEXT_PUBLIC_CDN_URL` unset the proxy answers instead, so a fresh checkout works
-with no CDN. `build:static` refuses to run without it — an export has no proxy.
+**A flag that says what a row is *not* only works while there are two things.** `o`
+on a deck row was `1` for Top Decks and absent otherwise, so the first submitted
+tournament read as Limitless. It carries the source now — 1 Top Decks, 2 community,
+absent Limitless. Sampling is likewise read off the rows (`f`), never from which site
+they came from.
 
-**`/compare` counts wins, because share is not the same measurement twice.** The
-one question a metagame page split by corpus cannot answer is what is winning in
-Japan and has not reached English — and subtracting one region's share from the
-other would be the worst kind of wrong number, the kind that looks right. English
-is `mixed`, 58,399 of its decks from whole Swiss fields; Japanese is `winners`,
-`fieldDecks: 0`, because Limitless is an English-corpus source and Top Decks
-publishes finishing lists. A share over winners reads high for whatever wins.
+**`/compare` counts wins, not share.** English is `mixed` (58,399 whole-field decks);
+Japanese is `winners`, `fieldDecks: 0`. Subtracting one share from the other would be
+a wrong number that looks right. First places are defined identically in both. An
+empty cell reads *Not recorded* when that corpus has never held the Leader at all,
+because the pools differ.
 
-First places are defined identically in both, so that is the whole of what the page
-counts: 4,639 Japanese and 3,513 English across the archive, 146 and 75 in a default
-window. Every row carries its sample and `MIN_WINS` holds back anything under two.
+**The metagame page opens with ten archetypes**, and the rest are one click away —
+which closes again whenever a control above it changes. An archetype page shows ten
+matchups and ten decklists, with `/decks/[slug]/matchups` and `/decks/[slug]/decklists`
+for the rest. Ten **by best finish**, not ten winners: in a default window 42 of 68
+archetypes with results have no first place at all.
 
-**An empty cell there means two opposite things, so it says which.** The pools
-differ — five sets entered play in Japanese that never did in English, two the other
-way — so an archetype missing from a region may be unplayed or may not exist there.
-`index.leaders` is per corpus, so a Leader that region has never recorded at all
-reads *Not recorded* rather than 0%. Two of them do, over the full archive.
-
-It reuses `.matchup-bar`, the two-sided bar from the matchup table, for the same
-reason it exists there: a single left-to-right bar makes "ahead in Japan" and "ahead
-in English" differ only by length.
-
-**`robots.txt` carries content signals, and `build-static.mjs` is what writes
-them.** `MetadataRoute.Robots` has no field for a directive Next does not know, and
-the path rules and the sitemap URL are worth keeping in `robots.ts` — that URL comes
-from `NEXT_PUBLIC_SITE_URL` and changes the day this moves to a domain. So the export
-step inserts `Content-Signal: search=yes,ai-input=yes,ai-train=no` **into** the
-`User-agent: *` group Next already wrote, rather than prepending a second one: two
-groups with the same name is ambiguous, and parsers disagree about whether a repeat
-means merge or first-wins.
-
-What it asks for is the archive rather than the cards: the card text and art are
-Bandai's, but the recorded results, the 152,890 matches joined out of published
-brackets and the indexes over both are this project's work, and Article 4 of EU
-Directive 2019/790 permits mining them unless the reservation is machine-readable.
-`use` is left unset, which under the policy grants and restricts nothing — the
-honest answer for a distinction not thought through. Eight training crawlers are
-disallowed outright in `robots.ts`, `ClaudeBot` among them for consistency: this is
-the same request the project honours when it is on the other side of it, which is why
-nothing here ever fetches onepiece.gg.
-
-**A new top-level route needs a line in `sitemap.ts`, and nothing enforces it.**
-That file already carried a comment about five pages missing "for no reason other
-than having been added after this list was written"; `/compare` made it six. The 282
-archetype sub-pages went in at the same time, at a lower priority than the page they
-hang off — they are separate answers rather than a paginated view of one.
-
-**The metagame page opens with ten archetypes, and shows what it counted.** A
-window holds up to 141 and the tail is decks somebody brought once, so the table
-takes the top ten and the rest are one click away — which closes again whenever a
-control above it changes, since every one of those changes what the top ten *are*.
-Below it, *Latest winners* replaced a top-eight list: eight rows of one Regional is
-a standings page, and the placing column went with the change because every row now
-reads 1st.
-
-*Events in this window* sat under that and has gone. It was added because every
-figure on the page is an aggregate and nothing said what of, which was true — but
-answered by a table listing the same recent events *Latest winners* already lists,
-keyed on the same winners, read a second way. Two tables saying one thing is worse
-than the gap. What it had that the winners list does not is *Entrants* beside
-*Decks*, and that pair belongs to `/tournaments`, which is the page for the
-question and is linked from the footer of every page.
-
-**The deck builder does not print a rule the counter above it already shows.**
-*50 more cards needed — a deck is 50 plus the Leader* met a reader in a red box the
-moment they picked a Leader, three lines under a running `0 / 50` that turns green
-at fifty. The rule stays in `validate()` — it is tagged `rule: 'size'` and filtered
-out of the list rather than removed, because *Legal in Standard* has to keep meaning
-fifty cards wherever it is asked, and `deck-rules.ts` is shared with the submission
-form and the tests.
-
-Hiding it moved a second thing. *Legal in {format}* used to render whenever the
-displayed list was empty, so filtering the size out would have announced a twelve
-card deck as legal — the exact failure this file keeps finding, where suppressing a
-message turns a true page into a confidently wrong one. It is gated on `problems`
-being empty, size included, so an unfinished deck now says nothing at all and the
-counter does the work.
-
-**An archetype page shows ten of each, and the rest have their own pages.** The
-matchup table ran to every opponent on record and the decklist table to sixty rows
-with a *Show more* under it, which put the two longest things on the page between
-the cards that define the deck and the end of it. Both now take ten and link out:
-`/decks/[slug]/matchups` and `/decks/[slug]/decklists`, prerendered per archetype,
-282 pages against a build that already makes 8,698 and costing no payload — they
-read the index the page they came from has already cached.
-
-The ordering control moved with the table it orders. *Best finish* is still the
-default and is now the only order the archetype page has, because a reader asking
-for the oldest lists is asking a different question and that is what the second
-page is for; *Newest* and *Oldest* live there, along with the growing limit, which
-starts at 100 rather than 60 since a page that exists to be long may as well be.
-
-**Ten by best finish, not ten winners, and the difference is 62% of these pages.**
-The ask was the last ten first places, and sorted by finish that is exactly what
-ten rows are wherever an archetype has ten. Measured against the corpus, in the
-default thirty-day window **42 of the 68 archetypes with recorded results have no
-first place at all** — one of them with 31 decks on record — so cutting strictly to
-winners would have left the majority of these pages with an empty *Decklists*
-section under a deck that plainly has results. The same sort answers with the ten
-best finishes instead, and the reader loses nothing: where wins exist they are
-still the top of the list.
-
-**Three sentences came off the matchup table, and `/data` already had all three.**
-*From published brackets · Limitless events only · mirrors are left out* sat above
-every archetype's table, which is the same paragraph 141 times for a rule about the
-archive rather than about the deck in front of you — and `/data` under *How to read
-the numbers* says it at more length, including the five-game rule. The conditional
-notes stay: *not for the Japanese corpus* and *no recorded pairings yet* are not
-preamble, they say why the table you are looking at is empty. One line on `/data`
-lost the words *and say so*, which had stopped being true the moment the blurb went.
-
-**The window travels with the link, and `windowQuery` is why it can.** The encoding
-that `useWindow` writes into the address bar was inline in its effect; it has a
-second caller now — every *All N →* and *Back to the archetype* link — and two
-copies of "what is this page showing" would have meant a reader clicking through
-from a four-year window and landing on the last thirty days. `useWindow` returns
-`query` for it. `DeckTable` was extracted for the same reason in the other
-direction: two copies of a decklist row would drift, and the one that drifted would
-be the one nobody was reading.
-
-**One action on a panel gets `.chip-solid`.** An outlined chip reads as a label
-when it is the only thing on a panel — *Sign out* was measured as, and looked
-like, a wide empty box. The solid variant is the same shape a step louder: the
-lifted slab, the stronger edge, the carve the slabs themselves use. It is not a
-new colour and not a new shape, because the site has one of each.
-
-**A chip that is a button is a control, and the selector says so.** `.chip` was
-one rule for two things: a tag you read and a button you press. So a control had
-no pointer, no pressed state and no disabled state — the region toggle on
-`/tournaments` and `/players` drew *Both*, *English* and *Japanese* with the same
-background, border and colour whichever was selected, measured rather than
-guessed, which left those pages unable to say what they were filtered to. The
-states hang off `button.chip` and `a.chip` rather than a class, so every control
-gets them and every `span.chip` label is untouched with no markup to change; that
-also retired `.chip-link`, which had become a class resolving to nothing across
-fourteen files. Selected reuses the accent underline `.window-chip` already means
-it with, because two controls answering the same question should look the same
-doing it. Focus is left to the one `:focus-visible` rule in `globals.css` — a
-chip-specific ring would have been the same mistake in a different colour.
-
-**`.link-btn` lives in `globals.css`, and used to live in two stylesheets.** Both
-copies were byte-identical and each carried a comment arguing that repeating the
-rule beat letting one control look different on different pages. What neither
-noticed is the third case: `/decks` and `/decks/[slug]` load neither file, so on
-the metagame page and every archetype page the control rendered as a raw grey
-browser button — *Show all recorded results* and *Show 5 more with fewer than 5
-games*, both of them. A rule used on five routes belongs in the file every route
-loads.
+**The window travels with the link.** `windowQuery` in `useMeta.tsx` encodes it for
+both the address bar and every *All N →* link; `useWindow` also returns `bar`, the
+props `WindowBar` wants, so four views do not each write out ten.
 
 **Never `fetch('/data/…')`.** Next rewrites `<Link>` hrefs and asset URLs under a
-`basePath`; it does not touch `fetch`. On a project page that asks the account root for
-a file one directory down and gets the 404 page back — as JSON, which fails to parse
-and reads like a corrupt payload rather than a wrong URL. Everything goes through
-`dataUrl()` in `lib/paths.ts`. Same for hand-written `<img src>`: use `asset()`.
+`basePath`; it does not touch `fetch`. Everything goes through `dataUrl()` in
+`lib/paths.ts`. Same for hand-written `<img src>`: use `asset()`.
 
 ---
 
 ## Rendered in the browser, not prerendered
 
-`/event/[id]`, `/player/[slug]` and `/deck/[id]` fetch their own data. Prerendering all
-37,000 costs **5.5 GB** against GitHub Pages' 1 GB; shipping a whole region so a page
-can find its three rows costs 362 KB gzipped to draw one small event.
+`/event/[id]`, `/player/[slug]` and `/deck/[id]` fetch their own data. Prerendering
+all 37,000 costs **5.5 GB** against GitHub Pages' 1 GB.
 
-So `build-indexes.mjs` groups the corpus by entity into **256 buckets** and a page pulls
+`build-indexes.mjs` groups the corpus by entity into **256 buckets** and a page pulls
 the one its id falls in — 11–15 KB. `shardOf` is FNV-1a and exists **twice**, in
-`build-indexes.mjs` and `src/lib/shards.ts`; if they drift every lookup misses and every
-page reads "not found". Same for `playerSlugOf` against `playerSlug` in `lib/meta.ts` —
-note it is *not* the script's `slugify`, which truncates at 48 rather than 64.
+`build-indexes.mjs` and `src/lib/shards.ts`; if they drift every lookup misses. Same
+for `playerSlugOf` against `playerSlug` in `lib/meta.ts`. `tests/parity.test.ts` lifts
+the *source text* of each copy and runs the two against nine thousand real keys.
 
-**The two directories are whole files, split by interest rather than by hash.**
-`/tournaments` and `/players` list what those leaf pages are pages *of* — before
-them, 7,163 events and 8,686 players had pages and nothing linked to the set of
-them. Rows are positional arrays (`tournaments-index.json`, `players-index.json`),
-and the split is the same trick as the metagame index: the last ninety days of
-events (11 KB) and everyone with two or more results (45 KB) up front, the rest
-behind one deliberate click. The positions are written in `writeDirectories` and
-read in `lib/directory.ts`; `tests/parity.test.ts` checks a built payload back
-through the readers, because a column inserted on one side renders a venue where a
-tier should be and looks like a styling bug.
+`/tournaments` and `/players` are whole files split by interest rather than hash: the
+last ninety days of events (12 KB) and everyone with five or more results (55 KB) up
+front, the rest behind one click. Rows are positional arrays; the positions are written
+in `writeDirectories` and read in `lib/directory.ts`.
 
-The prerender lists stay: an event with a real field, a regular, a notable finish. What
-they buy is a 200 and a title written from the data. **Everything else is reached
-through `404.html`**, which reads `location.pathname` and renders the same view — a real
-HTTP 404 under a correct page, which is the trade for not spending the 5.5 GB. Those
-pages carry no search value; the Regionals do, and they are prerendered.
+Prerendered leaf pages are the ones with search value. **Everything else is reached
+through `404.html`**, which reads `location.pathname` and renders the same view.
 
 ---
 
 ## Deck builder
 
 `/deckbuilder` builds a deck in the page from the same 176 KB card index search already
-downloads. Rules live in `lib/deck-rules.ts`, free of imports so they run the same in
-the builder, the submission form and a test.
+downloads. Rules live in `lib/deck-rules.ts`, **free of imports** so they run the same
+in the builder, the submission form and a test.
 
-**Nothing persists unless it is saved.** Reloading starts empty, on purpose: an earlier
-version kept the deck in the address bar and localStorage, which made "start over" the
-awkward operation and greeted people with a deck they had abandoned. `?deck=<id>` opens
-a *saved* deck — reloading that reopens the saved version and discards unsaved edits,
-which is what starting over means once a deck has somewhere to live.
+**Nothing persists unless it is saved.** `?deck=<id>` opens a *saved* deck.
 
-**What the fifty cards add up to is arithmetic on what is already downloaded.** The
-cost curve, the average cost, the counter total and the deck's price all come out of
-the same 176 KB card index the search uses, so the panel costs no request. The price
-is the **lowest listed**, summed over every copy including the Leader, and it names
-how many copies it could not price — about one card in twenty has no figure, and a
-total that folded those in as zero would read as a cheaper deck rather than as an
-incomplete one. The decklist pages get the same total from `card-names.json`, which
-gained a third element for it (+4 KB gzipped, against 176 KB to reuse the index).
-
-**Export is one button and one format**: `{count}x{cardId}`, one per line, Leader first
-— what OPTCGSim's *Import from clipboard* reads. The dialog that used to be here offered
-four formats and a download; three were choices to read past on the way to the one with
-a destination.
-
-**Import is a textarea, not a clipboard read.** `navigator.clipboard.readText()` needs a
-secure context and a permission Firefox does not grant to pages, so a button that only
-did that would be dead for a share of readers with no way to tell. The clipboard
-prefills the box where it is allowed. `DeckExport` has an `execCommand` fallback for the
-same reason; a programmatic click fails both and that is a test artefact, not a bug.
+**Export is one button and one format**: `{count}x{cardId}`, one per line, Leader
+first — what OPTCGSim's *Import from clipboard* reads. **Import is a textarea**, not a
+clipboard read: `navigator.clipboard.readText()` needs a permission Firefox does not
+grant to pages.
 
 **Imported counts are not clamped.** A pasted list with six copies keeps six and the
-validator says so — trimming to four on the way in would hide precisely what the reader
-needs to see. Cards the archive does not have are dropped *and named*.
+validator says so. Cards the archive does not have are dropped *and named*.
 
-**The banlist covers the Leader, and once did not.** Two of the five banned cards are
-Leaders, and the banned *pairs* include Leader `OP11-040`, which may not be played
-alongside Charlotte Katakuri or Charlotte Linlin. `validate()` compared the banlist only
-against the fifty, so a banned Leader reported "Legal in Standard". The `held` set now
-starts with the Leader's id.
+**The banlist covers the Leader.** Two of the five banned cards are Leaders, and the
+banned pairs include a Leader. The `held` set starts with the Leader's id.
 
-**The colour rule is a warning, not an error.** Every colour on a card has to be a colour
-on its Leader — checked against 63,155 card-and-leader pairs from recorded decks, with
-not one exception. (Four rows appear to break it and all come from a single decklist
-whose data is wrong: that Leader is mono-Purple in its other 63 decks.) It stays a
-warning because `P-117 Nami` carries a deckbuilding clause in its own text and a future
-Leader can too. Refusing the card would be confidently wrong; flagging it is only noisy.
+**The colour rule is a warning, not an error** — checked against 63,155 card-and-leader
+pairs with no exception, but `P-117 Nami` carries a deckbuilding clause in its own text
+and a future Leader can too.
 
-Errors are what the rules state and this data can check — fifty cards, four copies of a
-card number, the banned list, rotation. `ingest-banlist.mjs` writes a numbers-only copy
-to `public/data/banlist.json` for that; the `/banlist` page imports the build-time file.
+**The size rule is not printed.** `validate()` still returns it, tagged `rule: 'size'`,
+and the builder filters it out of the displayed list — the running `0 / 50` above says
+it better. *Legal in {format}* is gated on `problems` being empty **including size**,
+so filtering the message cannot announce a twelve-card deck as legal.
 
 ---
 
 ## Accounts and submissions
 
-`supabase/schema.sql` is the whole thing; run it once on a new project. A **user** saves
-decks only they can see. An **organizer** can also submit a tournament, which after
-review joins the metagame corpus.
+`supabase/schema.sql` is the whole thing; `supabase/migrations/` holds the same changes
+for a project that already exists, **numbered in the order they must run**. All are safe
+to run twice. Migrations are run by hand; nothing in the repo applies them.
 
-**The role is a single column, not a set**, and that has one consequence worth
-knowing before you go looking for the setting: an account is a `user`, an
-`organizer` or an `admin`, never two. So the person who runs the site cannot also
-hold the organizer role, and asking for it from an admin account cannot work — the
-grant policy refuses to touch an admin's row on purpose. `0006-admins-may-submit`
-widens the insert on `submissions` instead, so an admin submits as themselves the
-way an organizer does. It lets an admin approve their own submission, which is not
-a hole it opens: an admin can already approve anything. The separation being
-protected is that an *organizer* cannot, and `edit while pending` still says so.
+**The role is a single column, not a set.** `user`, `organizer` or `admin`, never two.
+So an admin cannot also hold the organizer role — `0006-admins-may-submit` widens the
+insert on `submissions` instead.
 
-**No client can mint an admin, and that is the line the whole model rests on.**
-There are three roles — `user`, `organizer`, `admin`. Nothing lets an account change
-its own `role` or a submission's `status`. The update policy on `profiles` re-reads the
-stored role in its `with check`, because `using (auth.uid() = id)` alone would let
-anyone promote themselves with one PATCH. That is the entire security model: every
-number here is derived from recorded results, so an account that could add a
-tournament unreviewed could put anything into them.
+**No client can mint an admin.** Nothing lets an account change its own `role` or a
+submission's `status`. The update policy on `profiles` re-reads the stored role in its
+`with check`. That is the entire security model: every number here is derived from
+recorded results.
 
-**Reviewing happens on `/review`, and the gate did not move.** Approving used to mean
-opening the Supabase table editor and changing a cell — fine for the first few, and
-poor immediately after, since the decklists are JSON in a column and the fifty cards
-are the one thing a reviewer has to actually read. `admin` is what the two new
-policies check, it is still granted by hand, and it is still checked against the
-reader's **own** profile row. Rejecting requires a note, and the organizer sees it.
+**No policy may read the table it is on.** Postgres refuses — *infinite recursion
+detected in policy for relation "profiles"* — and since SELECT policies are OR'd, one
+breaks *every* read of that table. Roles go through `public.has_role()` and
+`public.my_role()`, `security definer` functions. `npm run check` refuses the shape.
+Both are executable by `anon` as well as `authenticated`, so a signed-out read gets an
+empty list rather than `42501`; neither takes a user id, so neither can probe another
+account.
 
-**A decision can be put back, and until now only the table editor could do it.**
-Approve and Reject render only while a row is `pending`, so an approval was final
-from the site — and an approved row is exactly what `ingest-submissions.mjs` reads
-on its next run, at 07:20 and 19:20 UTC, after which undoing it means editing the
-corpus rather than a row. *Reopen* is the operation `/review` was still sending
-people to the Supabase dashboard for, which is the thing that page exists to
-replace. The database always allowed it: `admins review submissions` is
-`using (has_role('admin'))` with no condition on the status, so this is the page
-catching up with the policy and not a widening of it.
+**PLACING is reserved in PostgreSQL.** The column is `place`; `submissions.mjs` maps it
+to the corpus field `placing`. `npm run check` scans `.sql` for reserved column names.
 
-One click and no confirmation, matching the weight this page already gives Approve
-— and reopening is the milder of the two, since it undoes a decision rather than
-making one and the submitted decks are untouched. The verdict is cleared with the
-status, because a note reading *rejected: the placings do not add up* under a row
-that is waiting again describes a decision that no longer stands; the old text goes
-into the reviewer's note box rather than being thrown away with the column.
+**The flow, end to end.** Sign-up → role `user`. They ask for organizer from the
+account menu (one open request per account, a partial unique index; once sent it
+stands — no update or delete policy for the sender). An admin approves on `/review`.
+The organizer submits on `/submit` → a **pending** submission. That is reviewed too.
+`ingest-submissions.mjs` reads only `approved` rows on a schedule; `build-indexes.mjs`
+folds them in as a third corpus, `source: 'community'`.
 
-Found by testing the admin-submit path end to end: approving a test tournament left
-it queued for the next ingest with no route back through the site.
+**A decision can be put back.** *Reopen* on `/review` returns a decided row to
+`pending` and clears the verdict — the database always allowed it (`admins review
+submissions` has no condition on status), this is the page catching up. An organizer
+can withdraw their own submission while it is pending, which is a `DELETE` and
+cascades to its decks.
 
-`supabase/` holds `schema.sql`, the whole thing for a new project, and `migrations/`,
-the same changes for one that already exists, **numbered in the order they must
-run**. All are safe to run twice. They were dated at first, until two landed on one
-day and the order they sorted in stopped being the order they had to run in.
-
-**No policy may read the table it is on.** Postgres has to evaluate the policy to
-decide whether the policy applies, and refuses — `infinite recursion detected in
-policy for relation "profiles"` — and since SELECT policies are OR'd, one of these
-breaks *every* read of that table, and with it every policy elsewhere that asks it a
-question. The symptom therefore surfaces a long way from the cause: this shipped
-once, and what it took down was renaming yourself. Roles are asked through
-`public.has_role()` and `public.my_role()`, `security definer` functions that run as
-the table's owner and so do not re-enter its policies; neither takes a user id, so
-neither can be used to probe another account. `npm run check` refuses the shape now.
-
-Both are executable by **`anon` as well as `authenticated`**, which reads as too
-generous and is not. Policies are OR'd, so a signed-out read evaluates the admin
-policy too; revoked from `anon`, that answers `42501 permission denied for function
-has_role` instead of an empty list, and row-level security is meant to say "nothing
-here" rather than to error. Since neither function takes a user id — both ask about
-`auth.uid()`, null for an anonymous caller — the grant discloses nothing.
-
-**Who you are is a name with a menu behind it, in the site's own geometry.** The
-trigger is a `.chip`, which is already what a small control looks like here, and
-the panel takes `--radius` and the same edges as every slab. An earlier version
-answered "too big" with 999px and 12px corners, which fixed the size and broke the
-shape — the only thing the menu keeps of its own is `--lift` instead of `--carve`,
-because a panel floating *over* the page is the one thing not carved *into* it,
-and that is a lighting difference rather than a shape one. At rest the account is one line
-of text in the top right; *Change name* and *Sign out* live in a dropdown, which
-is also where anything added later goes without the page growing to hold it. It
-was a bordered card carrying a name and a button — a lot of furniture for two
-facts, and square beside a page that is mostly a list.
-
-The menu is the one place the site's 3px `--radius` is not used: 999px on the
-trigger, 12px on the panel, and `--lift` rather than `--carve`, because a thing
-floating *over* the page is the one thing here that is not carved *into* it. It
-closes on Escape and on a pointer down anywhere else, and closing returns focus
-to the trigger so a keyboard does not lose its place; `aria-haspopup` and
-`aria-expanded` are what make it a menu rather than a button that did nothing.
-
-**`undefined` is "not looked yet" and `null` is "no row", and `profile` did not
-make that distinction.** It was `null` in both cases, so for the moment between
-the session landing and the row arriving, the account page fell through to the
-name the OAuth provider sent — somebody's real name, shown in place of the display
-name they chose, on every refresh. `/review` and `/submit` had the same bug with
-worse manners: their gates are `isAdmin` and `isOrganizer`, both `false` in that
-gap, so they told the right person they were the wrong one before settling.
-
-`roleKnown` is the answer all three wanted, and it is the same distinction
-`checked` already made one layer up for the session. Showing a name late is a
-flicker; showing the wrong one is telling a reader something untrue about
-themselves in public, so the trigger holds a placeholder sized to about where a
-name settles — three pixels of movement rather than thirty.
-
-**The account page has one title, and it is the eyebrow.** It said *Account* in an
-eyebrow and *Your account* under it in display type — the same word twice at two
-sizes. The eyebrow is the `h1` rather than a paragraph left beside a deleted one,
-because a page with no heading is a structural hole and not a tidier page: it is
-what a screen reader announces the page as.
-
-**Who you are sits beside the heading, not under it.** `.account-page` is a grid:
-the title takes column one, `.account-who` takes column two and spans the two
-heading rows, and everything below runs `1 / -1` because a list of decks has no
-reason to be narrowed by a card. The card has to be a *direct* child for that, so
-`AccountView` renders it as a sibling of the stack rather than inside it — a
-grandchild cannot be placed in a grid's second column. Under 48rem the second
-column goes away and the card returns to being the first thing under the title.
-
-**The role line is gone, and with it the only link to `/review`.** It said
-*Reviewer — submissions waiting for review* to an admin and *Organizer — you can
-submit tournament results* to an organizer. `/review` is not in the nav, not in
-the footer and noindex, so it is now reachable only by typing the path. Removed on
-request and worth restoring with it.
-
-**The signed-in account page is a stack, and was four touching slabs.** Who you
-are, the ways in, the organizer request and your decks are each a bordered panel,
-rendered as siblings with nothing between them — 0px, measured twice — so they met
-edge to edge and read as one panel with rules drawn across it. `.account-stack`
-holds the gap in one place rather than a margin on each, so a fifth section cannot
-arrive without it, and it overrides `.section`'s generous `padding-block` so the
-deck list sits the same distance down as everything else. It also gives them one
-width: `.account-ask` capped itself at 34rem from when it was a block on its own,
-which made the panels 750, 510 and 750 pixels wide with right edges that did not
-line up. Prose is held to a measure by `.account-ask-note`, which is where a line
-length belongs — on the text, not on the panel around it.
-
-Two more came out of rendering that view rather than reading it. **Sign out was a
-full-width bar**: `.account` is a grid, so a direct child stretches to the column,
-which is what the signed-out provider buttons want and the opposite of what a
-small control wants; the provider buttons sit one level deeper, so
-`.account > .chip { justify-self: start }` reaches only the one that was wrong.
-And its inline `margin-top` doubled the grid's own gap, so it went.
-
-**The menu is what the account can do, and the role decides what is in it.** A
-player can ask to become an organizer; an organizer can submit a tournament and no
-longer needs to ask; an admin can review what others sent. Offering somebody the
-thing they already have is a page not paying attention, which is why the items are
-passed in rather than written into `AccountMenu`. An item that goes somewhere is a
-`Link` and not a button, so it middle-clicks and opens in a tab like anything else.
-
-That is also where `/review` came back. It had been reachable from exactly one
-sentence beside the name, and removing that sentence left it reachable only by
-typing the path.
-
-**Asking for the organizer role is a row, not an email.** The site used to answer
-"how do I submit results" with the contact address on `/legal` — off the record, easy
-to lose, visible to nobody but whoever received it. A plain account now asks from its
-account page (who they are, what they run, somewhere it can be checked) and `/review`
-answers. One open request per account, enforced by a partial unique index rather than
-by the form.
-
-**Once sent, it stands.** No update policy for the sender and no delete either: a
-request that could be rewritten, or taken back and replaced, after a reviewer had
-read it is a request nobody can rely on having read. The way out of a mistaken one
-is a refusal, which carries a note and allows another. Collapsed, the whole feature
-is one button whose label is the status; a **tournament submission** is a different
-case and can still be withdrawn while pending, because that is the organizer's own
-work rather than a decision someone else has already read.
-
-Approving is **the one place a role changes outside the dashboard**, and the policy is
-the narrowest rule that does it: `using` requires the target row to be a `user` or an
-`organizer`, so an admin's row is unreachable through it, and `with check` requires the
-new value to be one of those two, so no client can produce an admin however it is
-called. An admin can also *read* those rows — not to browse them, but because
-**PostgREST does not treat an RLS-filtered update as an error**: it affects nothing and
-returns cleanly. Without reading the row back, "Grant the role" would report success
-every time that policy was missing. Both review writes now assert they changed a row
-and name the migration when they did not.
-
-**An organizer can see what happened to what they sent.** `/submit` lists their own
-submissions with status and the reviewer's note, and lets them withdraw one that is
-still pending — all through the `read own submissions` policy, which had been in the
-schema from the first version with nothing ever calling it. The form was write-only
-until then: you sent a tournament and the site never mentioned it again.
-
-**A flag that says what a row is *not* only works while there are two things.**
-`o` on a deck row was `1` for Top Decks and absent otherwise, and the reader turned
-absent into Limitless. That held for exactly as long as there were two sources: the
-first submitted tournament rendered its own event page as *via Limitless*, crediting
-a site that had never seen it. It carries the source now — 1 Top Decks, 2 community,
-absent Limitless — so the bulk still pays nothing and the reader is not inferring.
-Found by the first real submission, not by a test, which is the shape of this bug:
-the wrong answer was the *default* answer.
-
-**Sampling is read off the rows, not off which site they came from.** The same line
-picked its second sentence with `source === 'limitless'`, so that test event was
-also announced as *whole-field results, so the standings below are the tournament*
-— while the organizer had answered **winners only**, and `f: 0` in the payload said
-so. Every corpus carries `f` per deck precisely because sampling is per deck; the
-page now asks the decks. Two upstreams happening to agree (Limitless whole fields,
-Top Decks winners-only) is what made a guess look like a rule for three years.
-
-**An event says who ran it, when somebody did.** That is the one thing this source
-can answer and the two automated ones cannot, and it is the same attribution the
-others get by being named. It is the display name on the account that sent it, and
-it costs `ingest-submissions.mjs` a **second request**: `submissions.organizer_id`
-references `auth.users`, not `public.profiles`, so there is no foreign key for
-PostgREST to follow and `select=…,profiles(display_name)` answers with an error
-rather than a name. That request failing warns and writes the results anyway — the
-results are the point, and an event that does not say who ran it is better than no
-event.
-
-**Submissions do not reach the site directly.** `ingest-submissions.mjs` reads only rows
-marked `approved`; `build-indexes.mjs` folds them in as a **third corpus**,
-`source: 'community'`, carrying the organizer's own answer about field versus winners.
-`--fixture <file>` reads a local JSON instead of Supabase, which is how the mapping and
-the merge were tested before any database existed.
+**An event says who ran it.** The display name on the account that sent it. It costs
+`ingest-submissions.mjs` a **second request**: `submissions.organizer_id` references
+`auth.users`, not `public.profiles`, so PostgREST has no foreign key to embed through.
+That request failing warns and writes the results anyway.
 
 **`SUPABASE_SERVICE_ROLE_KEY` bypasses every policy.** Workflow secrets only — never in
-`.env.local`, never under a `NEXT_PUBLIC_` name, since anything with that prefix is
-compiled into the browser bundle. The anon key ships in that bundle by design, and it is
-safe to because the policies stand behind it.
+`.env.local`, never under a `NEXT_PUBLIC_` name.
 
-**The provider marks are inline SVG, in their own colours.** Hotlinking Google's
-or Discord's CDN would be their bandwidth and their uptime for 1 KB of path data,
-on the one page a reader is waiting on — the same argument that mirrors card art.
-They are each provider's own mark because that is what both ask for on a button
-that signs you into them, and a wrong-coloured Google G is a worse answer than
-none; `aria-hidden`, since the button already says which service it is.
+**Sign-in is OAuth first**, because Supabase's built-in mail sends two messages an hour
+and is documented as non-production. The email form is **drawn but disabled**, under a
+note saying SMTP is not configured — hidden, the gap was invisible to everyone; working,
+it would hand somebody an unrecoverable account. `NEXT_PUBLIC_AUTH_EMAIL=1` turns it on.
+One `disabled` on a `fieldset`, and note that a child input's `disabled` *property* stays
+`false` under a disabled fieldset — check `matches(':disabled')`.
 
-**Sign-in is OAuth first, and that is a constraint rather than a preference.** Supabase's
-built-in mail sends **two messages an hour** to pre-authorized addresses and is documented
-as non-production. Discord and Google send no mail at all. Email and password needs
-confirmation and reset mail, so it waits on a custom SMTP provider: an account whose
-password cannot be reset is a trap, not a feature. (Resend's free tier is 3,000 a month,
-100 a day.)
+**One address is one account, and Supabase does that part.** Automatic identity linking
+is built in and has **no switch**: it links when the email matches an existing *verified*
+user, and drops unconfirmed identities on the way. The toggle is for *manual* linking:
+Authentication → Providers. `linkProvider`/`unlinkProvider` in `useAccount` are uncalled
+but kept — they answer the case automatic linking cannot, two accounts on different
+addresses. Restoring that panel needs its CSS back too.
 
-**The email form is drawn anyway, and disabled.** `NEXT_PUBLIC_AUTH_EMAIL=1` still decides
-whether it *works*; it no longer decides whether it is *seen*. Hidden, the gap was
-invisible to everyone including whoever has to close it, and the form sat written and
-unreachable for months. Working, it would hand somebody an account with no way back in.
-So it renders greyed out under a dashed note saying which of the two it is — the first
-half for a reader, who needs to be sent to Discord or Google, and the second half a
-to-do naming the flag, because a to-do nobody can see is a to-do nobody does.
-
-One `disabled` on a `fieldset` rather than one per control: an attribute that cannot be
-forgotten beats four that can. Note that a child input's `disabled` **property** stays
-`false` under a disabled fieldset — it reflects its own attribute, not the inherited
-state — so a check has to ask `matches(':disabled')`. Measured rather than assumed:
-the inputs cannot be focused, the submit does nothing, and the provider buttons above
-are untouched.
+**A third way in cannot be policed by refusing it.** Nothing may ask "is this address
+registered?" from the browser — that is an enumeration oracle. Supabase answers a
+sign-up on a taken address with an obfuscated success and no mail, so the confirmation
+line names Discord and Google as the thing to try instead.
 
 The token comes back in the URL **fragment**, which browsers never send to a server —
-that is what makes this work on GitHub Pages with nothing behind it. Every value
-`authRedirectTo()` can produce must be in Supabase's redirect allowlist, **with the
-trailing slash**, and it is built from `location.origin` so localhost and the live site
-both work.
-
-**One address is one account, and Supabase already does that part.** Automatic
-identity linking is built in and has **no switch**: when a sign-in arrives whose
-email matches an existing user *and that user's email is verified*, it links rather
-than making a second account, and it drops any unconfirmed identity on the way —
-which is the pre-account-takeover defence, not a convenience. Google and Discord
-both verify, so the two of them on one address are one account. Do not go looking
-in the dashboard for a toggle. The one that **is** a toggle is *manual* linking:
-Authentication → Providers → allow manual linking.
-
-**A third way in cannot be policed by refusing it.** The obvious rule — if the
-address already exists under another provider, fail — is unimplementable and
-already happens. Unimplementable because nothing may ask "is this address
-registered?" from the browser: that is an enumeration oracle, and the anon key is
-denied it on purpose. Already happening because Supabase answers a sign-up on a
-taken address with an **obfuscated success and no mail at all**, so the person sees
-"check your inbox", nothing arrives, and they conclude the site is broken. We may
-not say the account exists. What we can do is write the confirmation line so it
-survives the case, which is why it names Discord and Google as the thing to try.
-
-**Linking a second provider is not offered on the page, and the code stays.** The
-*Ways in* panel is gone — with it the only route to `linkIdentity`, so an account
-keeps whichever provider opened it. `useAccount` still returns `linkProvider` and
-`unlinkProvider`, uncalled, and they are the answer for the case automatic linking
-cannot reach: two accounts on **different** addresses. Note that restoring the panel
-now needs its CSS back too — `.account-providers-list` went in a dead-rule sweep,
-and the comment on it pointed at `SignInMethods`, a component that no longer exists.
-What follows describes why it worked the way it did.
-
-**Two providers are two accounts until somebody links them.** Supabase gives a
-Discord sign-in and a Google sign-in different users even on one address, and that
-is correct: merging on a matching email is an account takeover waiting for a
-provider that stops verifying them. So the account page lists which providers open
-this account and offers to attach the other — `linkIdentity`, from inside the
-account you are keeping. It needs *Manual linking* enabled in the dashboard, and it
-cannot merge two accounts that both exist: the second comes back as "already linked
-to another user", and the way out is to delete the spare.
+that is what makes this work on GitHub Pages. Every value `authRedirectTo()` can produce
+must be in Supabase's redirect allowlist, **with the trailing slash**.
 
 `lib/supabase.ts` is imported **only** by pages under `/account` and `/submit`: the
-library is ~100 KB against a site measured in tens, and importing it from a shared
-component would put it on every page. Measured, it reaches 2 chunks out of 16.
-`accountsEnabled` is false on a checkout with no project, and the account page and the
-nav entry both check it — the site was useful before accounts and has to stay that way.
-
-**Decklists are pasted, not built.** The submission form takes the same format the site
-exports; `parseDeckList` is the inverse of `DeckExport`. Nobody with a 32-player event
-will click fifty cards thirty-two times. The parser is tolerant of the four shapes that
-turn up in the wild and strips the `_pN` suffix — two entries for one playset would each
-look under the copy limit. **The form checks and refuses nothing**: review is the gate,
-and rejecting a real result because our archive is behind would be strict in the wrong
-direction.
-
-**Dead code found by counting, not by reading.** A pass over every exported symbol
-against every other file turned up eleven that nothing imported and that their own
-file did not use either — `latestSets`, `pigmentGlow`, `archetypeDecks`,
-`recentResults`, `largestEvents`, `eventCount`, `playerCount`, `hasEventPage` and
-`eventSize` behind it, `CardColor`, `LANGUAGES` — plus seven CSS rule blocks whose
-classes nothing renders, left behind by the *Ways in* panel, the four-format export
-dialog and an older decklist layout. Removing one made the next visible: `eventSize`
-had exactly one caller, `hasEventPage`, and became dead the moment it went.
-
-Two false positives are worth knowing before running that scan again. `onRequest` in
-`build-cdn.mjs` sits inside a template literal — it is the Cloudflare Functions entry
-point, called by the platform. And a class built as `` `sub-status sub-${row.status}` ``
-is invisible to a scanner reading string literals, which covers `.sub-approved`,
-`.sub-rejected`, `.price-move`, `.build-total`, `.event-row` and `.to-top`.
-
-**`ingest-decks.mjs` spent every run deriving release eras that were thrown away.**
-It carried its own copy of the adoption scan — the one its comment calls the slowest
-part of a rebuild — and fed it to `writeBrowserIndex`, which wrote
-`public/data/decks-index.json` and `public/data/decks/*.json`. `build-indexes.mjs`
-**deletes both** on every run, thirty lines from its end. The eras also went into
-`decks-meta.json`, where `DecksMeta` does not declare them and nothing reads them.
-
-The two copies had already drifted: the minimum sample for a 7-day adoption stretch
-was `total < 30` in one and `total < 40` in the other. Nothing surfaced it because
-the answer was discarded. That is 227 lines gone from an ingest that runs twice a
-day, and the same lesson `ingest-topdecks.mjs` learned: **one writer per payload**.
-
-**`loadEnvFiles` existed three times**, byte-identical in `build-static.mjs` and
-`deploy-site.mjs` and as a partial re-implementation in `serve-static.mjs` that read
-one variable with the same quote-stripping and the same file order. `env.mjs` holds
-it now, with `parseEnv` split out pure so a test can reach it — the same split
-`price-history.mjs` and `matchups.mjs` already make. What it decides is not cosmetic:
-a variable this misses is a build refusing a correctly configured checkout, or a
-deploy pointed at the wrong CDN.
-
-**Four views render `WindowBar` and all four wrote out its ten props.** `useWindow`
-returns `bar` for that now, and `IndexError` replaces the fourth copy of a paragraph
-telling the reader which command rebuilds the archive. The rule is the one this file
-keeps arriving at from the other direction: the eleventh prop would have been added
-four times, or three.
-
-**Still to do — merge `dev` into `prod`.** `/compare`, the content signals and the
-two sitemap gaps are committed to `dev` and are not live. `git checkout prod && git
-merge --ff-only dev && git push origin prod` when they are wanted, and expect the
-fast-forward to fail if an ingest has committed since — rebase `dev` first, never the
-other way.
-
-**Still to do — a contact address, and it is the one real hole.** `/legal`, `/privacy`
-and `/terms` each say to *"use the contact address published in the project
-repository"*, and the repository publishes none. It is a circular reference pointing
-at nothing, and three separate things depend on it: a privacy policy has to make its
-controller reachable, `/legal` invites requests from rights holders and gives them no
-route, and the OAuth providers were handed those two URLs. It needs an address a
-person chooses to publish — not one inferred from a git config.
-
-**Still to do — the share image is square.** `/brand/share-1024.png` is 1024×1024 and
-link previews are built for 1200×630, so every unfurl crops or letterboxes it. It is
-the picture that goes into every search result and chat paste.
-
-**Deliberately absent, so nobody adds them by reflex.** There is no analytics and no
-cookie banner, and both are choices rather than gaps: `document.cookie` is empty,
-the only browser storage is `poneglyph:notice:1` and Supabase's own session, and
-`/privacy` and `/legal` both promise in writing that nothing is collected. Installing
-any analytics makes two published pages false, which is a content change before it is
-a technical one. There is also no sticky mobile call to action — the two on the home
-page are above the fold at 375×812, measured, and a bar that follows a reader down a
-card list is a conversion pattern on a site with nothing to convert.
-
-**Still to do:** email and password sign-in waits on a custom SMTP provider — an
-account to open, not a code change, and everything else about it is written. The form
-is on the account page now, disabled, carrying that to-do where it can be seen. Flip
-`NEXT_PUBLIC_AUTH_EMAIL=1` once the provider is set. Deferred until the site has a
-real domain, since the sender address wants one.
+library is ~100 KB. `accountsEnabled` is false on a checkout with no project.
 
 ---
 
@@ -953,96 +335,69 @@ real domain, since the sender address wants one.
 [carminelaluna/Poneglyph](https://github.com/carminelaluna/Poneglyph), public — which is
 what makes Actions unmetered and Pages free.
 
-**`prod`** holds the code, the ingests and the data. It is the default branch, it is what
-the site is built from, and it is the only history that matters. **`dev`** is the same
-thing for work in progress. **`main-selfhost`** holds `out/` and nothing else, an orphan
-branch rebuilt from scratch each deploy: fresh `git init`, one commit, force push. That is
-safe precisely because nothing on it was ever authored. Roll back by checking out an older
-commit on `prod` and building again.
+**`prod`** holds the code, the ingests and the data. Default branch, what the site is
+built from. **`dev`** is the same for work in progress. **`main-selfhost`** holds `out/`
+and nothing else, an **orphan** branch rebuilt from scratch each deploy: fresh
+`git init`, one commit, force push. It shares no history with `prod` and **must never be
+merged in either direction**.
 
-It was `main-node` until it was renamed through GitHub's own rename, which carries the
-redirects, the default-branch setting and any open pull request with it — a delete and
-recreate would have carried none of those.
+**The ingests commit to `prod`.** They name no branch; `actions/checkout` gives them the
+default one. So `prod` moves ahead of `dev` twice a day without anybody touching code —
+**`dev` rebases onto `prod`, never the other way**, and nothing on `dev` writes into
+`data/` or `public/data/`.
 
-**The ingests commit to `prod`, and that is the constraint the whole arrangement bends
-around.** They name no branch: `actions/checkout` gives them the default one, so the
-archive refreshes twice a day on the branch the site is built from, which is the property
-worth keeping. The consequence is that `prod` moves ahead of `dev` by a data commit twice
-a day without anybody touching code, so **`dev` is rebased onto `prod`, never the other
-way**, and nothing on `dev` should ever write into `data/` or `public/data/` — a merge
-conflict in a 66 MB JSON file is not a thing anybody wants to resolve.
+`deploy-site.mjs` refuses `prod`, `dev`, `main-node`, `main` and `master` as a force-push
+target. **Never `shell: true` when spawning git** — Node hands the string to cmd.exe
+unescaped. It also sets `core.autocrlf=false` on the generated repo: Pages serves what it
+checks out, and CRLF conversion would alter RSC payloads byte for byte.
 
-`check.yml` runs on both, and on every pull request into either. `publish-site.yml` only
-ever deploys `prod`.
-
-The force push is aimed at a branch name, so `deploy-site.mjs` refuses `prod`, `dev`,
-`main-node`, `main` and `master` outright — pointing it at a source branch would delete
-the project. The two retired names stay in that list because a stale checkout or an old
-script may still hold them, and the cost of keeping them is a regex.
+**Pages rebuilds can take a long time.** `Publish site` finishing is not the site being
+live — check `gh api repos/…/pages --jq .status` before assuming anything is wrong.
 
 ```
 PONEGLYPH_SITE_REMOTE=https://github.com/carminelaluna/Poneglyph.git
 PONEGLYPH_SITE_BRANCH=main-selfhost
-NEXT_PUBLIC_BASE_PATH=/Poneglyph       # project page; empty for a user page or domain
+NEXT_PUBLIC_BASE_PATH=/Poneglyph       # project page; empty for a domain
 ```
-
-**Never `shell: true` when spawning git.** Node concatenates the arguments and hands the
-string to cmd.exe unescaped, so `--message "Site build 2026-08-25T…"` arrived as three
-pathspecs. `deploy-site.mjs` also sets `core.autocrlf=false` on the generated repo: Pages
-serves what it checks out, and CRLF conversion would alter the RSC payloads and JSON byte
-for byte on the way to the browser.
-
-**Pages rebuilds can take a long time.** 24,000 files and 500 MB is a lot for a legacy
-Pages build; it has sat `queued` for over an hour. The branch having the new chunk while
-the site still serves the old HTML is that, not a broken deploy — check
-`gh api repos/…/pages --jq .status` before assuming anything is wrong, and do not pile on
-more deploys.
 
 ---
 
 ## The static build
 
-`npm run build:static` is not `npm run build` with a flag. Five things must be true that
-are not true of the server build, and each was found by a deploy failing.
+`npm run build:static` is not `npm run build` with a flag. Five things must be true.
 
-**`/art/[id]` cannot exist.** `output: 'export'` refuses to build while any route handler
-does — nothing can run it. `build-static.mjs` moves it to `.art-route-parked` *outside*
-`src/app` and puts it back in a `finally`. Parking it in place does not work: everything
-under the app directory is a route, dot-prefixed or not.
+**`/art/[id]` cannot exist.** `output: 'export'` refuses to build while any route
+handler does. `build-static.mjs` moves it to `.art-route-parked` *outside* `src/app` and
+puts it back in a `finally` — everything under the app directory is a route,
+dot-prefixed or not.
 
 **`.next` must be deleted first.** Next caches a type validator naming every route it has
-seen; a cache from a normal build still names the art proxy, and the export then fails
-typechecking on a file that was just moved — reported as a broken import in a generated
-file.
+seen, and the export then fails typechecking on a file that was just moved.
 
-**`.nojekyll` must be in `out/`.** Jekyll skips anything whose name starts with an
-underscore, and Next puts the whole application in `_next/`. Without it the deploy
-succeeds and the site is unstyled and inert. `CNAME` is written from `PONEGLYPH_CNAME`
-for the same reason — one added through the Pages settings screen lives in the branch
-that the next deploy replaces.
+**`.nojekyll` must be in `out/`.** Jekyll skips anything starting with an underscore, and
+Next puts the whole application in `_next/`. `CNAME` is written from `PONEGLYPH_CNAME` for
+the same reason — one added through the settings screen lives in the branch the next
+deploy replaces.
 
 **Prefetch payloads need flattening.** The router asks for
-`/decks/__next.decks.__PAGE__.txt`; the export writes `out/decks/__next.decks/__PAGE__.txt`.
-Segments are joined with dots in the URL and slashes on disk, so every prefetch misses —
-and on a static host a miss is answered with the full 40 KB `404.html`. Fifteen links is
-half a megabyte of error pages. The build moves each payload to the flat name.
+`/decks/__next.decks.__PAGE__.txt`; the export writes it at a nested path. Every prefetch
+would miss, and a miss on a static host is answered with the whole 40 KB `404.html`.
 
-**The build id must be derived, not random.** Next generates a random `BUILD_ID` per build
-and writes it into every page and RSC payload — 4,735 files. Two builds of *identical
-data* differed in 23,667 of 24,196 files, so each deploy force-pushed 466 MB of new git
-objects. `generateBuildId` in `next.config.mjs` hashes `data/` instead: two builds of the
-same data are byte-identical, measured. Do not replace it with a timestamp or a random
-value. This was not the bundler — webpack moved the same 23,667 files — though webpack is
-kept because its chunk names are content addressed.
+**The build id must be derived, not random.** `generateBuildId` in `next.config.mjs`
+hashes `data/`, so two builds of the same data are byte-identical. Do not replace it with
+a timestamp.
 
-`out/cards` holds both the card pages and the mirrored PNGs — `/cards/OP01-025.png` beside
-`/cards/op01-025/`. The build strips the images only; removing the directory takes the
-archive with it.
+`build-static.mjs` also signs `robots.txt`: it inserts
+`Content-Signal: search=yes,ai-input=yes,ai-train=no` **into** the `User-agent: *` group
+Next already wrote, rather than adding a second one — two groups of one name is ambiguous.
+Eight training crawlers are disallowed in `robots.ts`, `ClaudeBot` among them, which is
+the same request this project honours when it is on the other side of it.
 
-`serve:static` is the only way to test this locally. `npm run start` runs the Next server,
-which resolves routes itself and will happily render a page the export never wrote. It
-reads `NEXT_PUBLIC_BASE_PATH` and mounts `out/` under it — serving at the root answers
-every asset with `404.html` and fails differently from production, which proves nothing.
+`out/cards` holds both the card pages and the mirrored PNGs. The build strips the images
+only; removing the directory takes the archive with it.
+
+`serve:static` is the only way to test this locally. `npm run start` resolves routes
+itself and will render a page the export never wrote.
 
 ---
 
@@ -1052,427 +407,146 @@ every asset with `404.html` and fails differently from production, which proves 
 | --- | --- |
 | Source | 4,843 PNG · 1.66 GB · 348 KB average |
 | Bundle | 14,529 WebP · ~700 MB · 96 / 320 / 600 px |
-| A grid tile | 348 KB → **30 KB** |
 | A grid page | 18 MB → **~1.5 MB** |
 
 Cloudflare Pages, assets-only. Not R2: without a custom domain R2 serves from `r2.dev`,
-which Cloudflare rate-limits, calls development-only, and — decisively — does not put
-behind its cache. The binding constraint is **20,000 files per deployment** on the free
-plan; `build-cdn.mjs` refuses to run past it rather than failing at upload. `_headers`
-sets a one-year immutable cache, which is the thing GitHub Pages cannot do.
+which Cloudflare rate-limits and does not cache. The binding constraint is **20,000 files
+per deployment** on the free plan; `build-cdn.mjs` refuses to run past it.
 
-**Restricting the bundle to the site costs the free tier.** `_headers` names the site in
-`Access-Control-Allow-Origin` and adds `X-Robots-Tag: noindex`. Neither stops hotlinking —
-an `<img>` makes no CORS request — but both are free. Actually refusing foreign requests
-needs per-request logic, and Cloudflare bills it plainly: *"requests to static assets are
-free and unlimited. A request is considered static when it does not invoke Functions."*
-Root middleware matches every path, so `build:cdn:lock` means **no request is static any
-more** — all count against 100,000 Functions requests a day, roughly 1,600 grid views.
-Weigh that against what it buys: `Referer` is chosen by the client. Plain `build:cdn`
-removes the middleware again, so the switch turns off as well as on.
+**Restricting the bundle to the site costs the free tier.** Root middleware matches every
+path, so `build:cdn:lock` means no request is static any more — all count against 100,000
+Functions requests a day, roughly 1,600 grid views. Plain `build:cdn` removes it again.
 
-`wrangler` is a devDependency, not `npx`. The deploy passes `--branch poneglyph-art`
-because that is the project's production branch: this folder is not a git repo, so
-without it the upload lands as a *preview* on a different hostname.
+`wrangler` is a devDependency, and the deploy passes `--branch poneglyph-art` because that
+is the project's production branch.
 
 ---
 
 ## Payload budget
 
-The metagame page is the heaviest thing on the site. Keep it honest.
-
 | File | gzip | Used by |
 | --- | --- | --- |
-| `cards-index.json` | 176 KB | card search, deck builder, submission form |
-| `decks-en-index.json` | 117 KB | English table, last 90 days |
-| `decks-jp-index.json` | 38 KB | Japanese table, last 90 days |
-| `decks-{en,jp}-archive/{YYYY-MM}.json` | 20 KB median, 78 KB worst | the months an older window covers |
+| `cards-index.json` | 183 KB | card search, deck builder, submission form |
+| `decks-en-index.json` | 119 KB | English table, last 90 days |
+| `decks-jp-index.json` | 40 KB | Japanese table |
+| `decks-{en,jp}-archive/{YYYY-MM}.json` | 20 KB median | the months an older window covers |
 | `decks-{en,jp}/{leaderId}.json` | 4 KB median, 74 KB worst | one archetype's card lists |
-| `events/{NNN}.json` | 12 KB | one event page (256 buckets) |
-| `players/{NNN}.json` | 11 KB | one player page (256 buckets) |
-| `deck/{NNN}.json` | 13 KB | one decklist's row (256 buckets) |
+| `events/{NNN}.json` · `players/{NNN}.json` · `deck/{NNN}.json` | 11–13 KB | one leaf page (256 buckets) |
 | `leaders.json` · `card-names.json` | 1.8 / 26 KB | archetype names · names and prices |
-| `tournaments-index.json` | 12 KB | /tournaments, last 90 days |
-| `players-index.json` | 53 KB | /players, everyone with 5+ results |
+| `tournaments-index.json` · `players-index.json` | 12 / 55 KB | the two directories |
 | `tournaments-archive.json` · `players-archive.json` | 128 / 215 KB | only on "include the rest" |
 | `matchups/{leaderId}.json` | 1–31 KB | one archetype's pairings |
-| `events-official.json` | 3.9 KB | the events page, whole |
 
-Card prices are the one figure that appears in three of these. It is in
-`cards-index.json` already (`$`), so the deck builder totals a deck for free; the
-decklist and archetype pages get it from `card-names.json` instead, because they
-were fetching that anyway and pulling the card index would have cost 176 KB. The
-card page reads the *history* at build time and ships it as inline SVG — a payload
-would have been the whole file to draw one card's line.
-
-**The archive is a file per month, and it was one file until the backfill.** One
-file was right at 21,027 decks: the whole English archive was 253 KB gzipped and
-"All" was the only realistic reason to want it. Backfilling took it to 1.1 MB —
-and made old eras worth opening, which is the click it exists for, so the cost
-landed on exactly the reader the backfill was for. A month is the unit because
-every window here is a date range, so a range selects its months by arithmetic:
-`archiveMonthsFor()` in `lib/meta.ts`, tested against a fixture with two months
-deliberately missing, because a payload that is not there is answered on a static
-host with the whole of `404.html` — as JSON, which fails to parse. An era is now
-one to three requests of about 20 KB. "All" still costs the full 1.1 MB, which is
-what all costs, but in parallel and cached a month at a time.
+**The archive is a file per month**, because a window is a date range and selects its
+months by arithmetic (`archiveMonthsFor()` in `lib/meta.ts`, tested against a fixture with
+months deliberately missing — a payload that is not there is answered on a static host
+with the whole of `404.html`, as JSON, which fails to parse).
 
 Two things were tried and are worth not repeating: **interning** repeated event and player
 names made the file *larger* (gzip already collapses that), and shipping the whole English
-corpus cost 324 KB for a page most people open to ask about last month. Splitting by
-recency is what worked.
+corpus cost 324 KB for a page most people open to ask about last month.
 
 ---
 
 ## Gotchas
 
 **Control characters in regexes.** A `\b` written through a patch became a literal `0x08`
-three separate times, and a fourth time it was worse: inside a **template literal**
-`\b` *is* the backspace character, so a regex built as
-`` new RegExp(`\b(?:${COLOURS.join('|')})\b`) `` compiled and matched nothing — and
-`npm run check` cannot see that one, because the file holds a backslash and a `b`
-and only the runtime turns them into a control character. Build a regex out of a
-variable by concatenating plain strings. Invisible in an editor and in a diff, the
-regex compiles, and it matches nothing — the last one made the block-update list read as empty, twenty legal
-cards silently reported as rotated out. `npm run check` fails on this and runs before the
-card ingest. When editing a regex through a script, verify with `grep … | cat -A`. Writing
-a file through a tool can turn `\u0000` escapes into real control characters; the check
-caught itself doing exactly that.
+four times, and once worse: inside a **template literal** `\b` *is* the backspace
+character, so a regex built as `` new RegExp(`\b(?:${COLOURS.join('|')})\b`) `` compiled
+and matched nothing — and `npm run check` cannot see that one. **Build a regex out of a
+variable by concatenating plain strings.** Invisible in an editor and in a diff.
 
-**A policy may not read the table it is on.** Postgres has to evaluate the policy to
-decide whether the policy applies, and refuses — `infinite recursion detected in
-policy for relation "profiles"`. SELECT policies are OR'd, so one of these breaks
-*every* read of that table and every policy elsewhere that asks it a question; the
-symptom surfaces a long way from the cause, and here it was a rename failing. Roles
-go through `public.has_role()` and `public.my_role()`, `security definer` functions
-that run as the owner and so do not re-enter policies. `npm run check` reads every
-`create policy` and refuses the shape.
+**A test that writes where the site keeps its files will delete them.** The Discord ingest
+prunes thumbnails no card points at, and a fixture corpus points at none — so `npm test`
+removed every real thumbnail in `public/spoilers`, and because `verify` runs *before*
+`build:static`, the deploy shipped a site whose images its own test suite had deleted. The
+script takes `--out` and `--thumbs`; one test asserts `public/spoilers` is untouched.
 
-**PLACING is reserved in PostgreSQL.** A bare `placing integer` column will not parse, and
-the error points at the column name without saying the word is the problem — it belongs to
-`overlay(… placing … from …)`. The column is called `place`, and `ingest-submissions.mjs`
-maps it to the corpus field `placing`; quoting it would mean quoting it in every query
-forever. `npm run check` now scans `.sql` for reserved column names. `role`, `format` and
-`name` are *non*-reserved and fine bare.
+**One writer per payload.** `ingest-topdecks.mjs` and `ingest-decks.mjs` both used to write
+`public/data` files that `build-indexes.mjs` rewrote or deleted seconds later — visible only
+when build-indexes did not get that far, leaving a 0 KB index. `ingest-decks` also spent
+every run on an adoption scan whose output was discarded, and its copy had already drifted
+from the live one (`total < 30` against `total < 40`).
 
-**Bandai's event pages are server-rendered.** Written off twice as client-rendered, both
-times after reading the first sixty lines and finding only navigation. The events are
-further down the same HTML, and there are 67. Check the whole document — and note that
-`grep -c` counts *lines*, which on minified HTML is one. Three things about parsing them:
+**Rate limit.** Limitless advertises `RateLimit: "50-in-5min"`. The limiter lives in
+`scripts/limitless.mjs` because two ingests use it, and two copies would be two limiters
+against one server. `update-matchups` runs three hours after `update-decks`.
 
-- **The layout varies.** The name is `<h5>` on the Regionals page and `<h4>` on the Mall
-  Tour one; fields sit bare with `<br>`, in `<div>`, or wrapped as
-  `<strong>Date: </strong>value` — where "everything up to the next tag" is the empty
-  string. `lines()` flattens first and reads by label.
-- **The real name is often not the heading.** Finals headings are `[Season 1]`, shared by
-  three events; the organiser is in a `<strong>` and the region in the preceding `<h4>`. A
-  heading identical across every event on a page is dropped — that is how "Event Schedule
-  and Tournament Organizer" stopped appearing on all 28 rows. Regions are matched **by
-  name**, not by heading level, for the same reason; `regionOf()` falls back to scanning
-  the whole address, since some venues end in a hall name or a US zip.
-- **Their text carries zero-width characters.** One date ends `2026` + U+200B. `decode()`
-  strips U+200B/C/D, U+FEFF and U+00A0, written as escapes rather than literals.
+**A refusal is not a breakage.** `scripts/refusal.mjs`: 403/429/503 and a connection that
+never completed are the upstream's decision — warn and exit 0. A parse that broke is ours
+and exits 1. Backoff is in *seconds* (3, 10, 30). **Up to a point:** past
+`STALE_AFTER_HOURS` (72) a refusal goes red, because `update-spoilers` once spent five days
+green while writing nothing.
 
-**When registration opens is published, and it is a guideline.** At the foot of the
-Regionals, Treasure Cup and Extra Grand Battle pages is an *Application Period* table: one
-opening date per event month (`For August Events: May 24, 2026`) and a time per region.
-Every one of those dates is a **Sunday** — checked, all five. In the same block Bandai
-writes that the date *"may vary by tournament organizer"* and the table is *"a guideline
-provided only for reference"*. That caveat travels with the data and is printed on the
-page. An event's own note — `*Registration begins 2nd August 9AM(CEST)` — is exact and
-wins over the table.
-
-**Discovery stops where the archive already reaches.** The tournament listing is
-read newest first and the loop breaks at the first page whose every entry has been
-seen, because new events arrive at the front. That is right for keeping up and it
-made a backfill impossible — no budget would have helped, since the loop exits
-before spending one. `--backfill` pages to the cutoff instead, at one request per
-page: 57 to reach the end of the listing, which is 19% of a 300-request budget and
-worth paying only while there is history left to collect.
-
-**The corpus outgrew its shards, and the shard count is a payload budget in
-disguise.** 64 buckets held ~10 KB a page at 21,000 decks; at 69,708 the same
-arithmetic gives ~380 KB, so every event, player and deck page would have pulled
-that to draw a handful of rows. It is 256 now, and the bucket name went from two
-digits to three — which `tests/parity.test.ts` caught the moment the count changed,
-because 256 does not fit in two. The same pressure moved `DIRECTORY_MIN_RESULTS`
-from 2 to 5: of 18,960 players, 9,449 appear once and 3,115 twice, so "two or more"
-stopped meaning regular and trebled a payload that loads on arrival.
+**A refusal can wear a successful answer.** onepiecetopdecks.com once served forty pages to
+a runner as clean 200s yielding **zero decks**, and both corpora were written away to
+nothing. `scripts/corpus-guard.mjs` refuses an empty answer over a non-empty corpus, and any
+run returning less than half of what is recorded. An index page with no links on it is the
+same refusal one page earlier. `--limit N` reads without writing, because a spot check looks
+exactly like a collapse.
 
 **`decks-merged.json` carries no card lists.** It is imported by `lib/decks.ts`, so
-`resolveJsonModule` infers a literal type for every key in it — pleasant at 26 MB
-and fatal at 83, where `tsc --noEmit` dies with *Ineffective mark-compacts near heap
-limit* and takes the build with it. The fifty cards of 69,708 decks were the weight,
-and no page reads them from there: the archetype pages fetch
-`decks-{region}/{leaderId}.json` and the deck page fetches its shard. What the file
-is for is resolving *which* deck, not what is in it.
+`resolveJsonModule` infers a literal type for every key — fine at 26 MB and fatal at 83,
+where `tsc --noEmit` dies with *Ineffective mark-compacts near heap limit*.
 
-**Rate limit.** Limitless advertises `RateLimit: "50-in-5min"`. The ingests read that
-header and pause *before* being refused. Raising `--max` does not make a run faster,
-only longer. The limiter lives in `scripts/limitless.mjs` because two ingests now use
-it, and two copies would mean two limiters against one server, each unaware of the
-other's requests — which is the shape of an accidental ban rather than of a rate
-limit. `update-matchups` runs three hours after `update-decks` for the same reason.
-
-**`data/decks.json` is 66 MB and GitHub says so on every push.** *"larger than
-GitHub's recommended maximum file size of 50.00 MB"* is a warning, not a refusal —
-the hard limit is 100 MB and a push over it is rejected outright. Measured: 58,214
-rows across 41 months is 1,410 a month and 1.6 MB a month, which reaches 100 MB in
-about 21 months. Nothing to do today; the thing not to do is discover it on the
-push that fails. Splitting the corpus by year is the obvious way out, and it is
-cheaper to do while nothing depends on the file being whole — `build-indexes.mjs`
-reads it once and derives everything else, so it is the only reader.
+**`data/decks.json` is 66 MB and GitHub warns on every push.** The hard limit is 100 MB and
+a push over it is rejected. Measured: ~1.6 MB a month, so about 21 months. Splitting by year
+is the way out, and `build-indexes.mjs` is the only reader.
 
 **`decks-state.json` holds `details`.** That map is the only copy of each event's venue. An
-earlier "slimming" of the loader dropped it and a rebuild reclassified all 275 tournaments
-as `unknown`. Re-fetching cost 289 requests.
+earlier "slimming" dropped it and a rebuild reclassified 275 tournaments as `unknown`.
 
-**A refusal is not a breakage, and its newest disguise is an empty page.**
-onepiecetopdecks.com sits behind a filter that occasionally answers a datacenter
-IP with a Cloudflare challenge — an HTML body under a **200**, so `res.ok` is true
-and the failure surfaces as `Unexpected token '<'`. On 2026-09-02 it did something
-worse: it served every one of the forty deck-list pages to a GitHub runner as a
-200 that parsed cleanly and yielded **zero decks**, and `ingest-topdecks.mjs` wrote
-both corpora away to nothing. The same command from a home connection read 6,037
-and 5,920. Nothing between the empty answer and the write said no — the invariant
-below claimed otherwise and this ingest was the one that did not hold it.
+**Discovery stops where the archive already reaches.** The listing is read newest first and
+the loop breaks at the first fully-seen page, which is right for keeping up and made a
+backfill impossible. `--backfill` pages to the cutoff instead.
 
-That was one of two shapes, and the run that proved the fix hit the other: the
-next scheduled attempt could not reach the index page at all (`fetch failed`) and
-`ingest-topdecks.mjs` exited 1, because only the spoilers ingest had been taught
-that a refusal is not a breakage — for the same host. `scripts/refusal.mjs` is
-that judgement, shared so the two cannot drift, the way `limitless.mjs` shares a
-rate limiter: 403/429/503 and a connection that never completed are the upstream's
-decision and exit 0 with a `::warning`; a parse that broke or a shape that changed
-is ours and still exits 1. What it cannot see is a refusal wearing a successful
-answer, which is the other half:
+**Bandai's event pages are server-rendered**, and the events are far down the same HTML.
+The layout varies (`<h5>` on one page, `<h4>` on another; fields bare, in `<div>`, or
+wrapped in `<strong>`), the real name is often not the heading, and their text carries
+zero-width characters — `decode()` strips U+200B/C/D, U+FEFF and U+00A0, **written as
+escapes rather than literals**. Registration dates are published as a *guideline*, and that
+caveat travels with the data.
 
-`scripts/corpus-guard.mjs` holds it now: `refusesWrite(found, held)` refuses an
-empty answer over a non-empty corpus, and any run that comes back with less than
-half of what is recorded — these are per-set archive pages, so the count only ever
-grows, and half is loose on purpose because the number to catch is zero and a
-guard that cries wolf gets removed. It is a module rather than eight lines in the
-script because it is the only thing standing between an upstream's bad morning and
-an emptied archive, and a guard nothing exercises can silently invert; a mutation
-test proved that by deleting a `Math.max` from it and passing, which is how a dead
-branch in the first version was found. A refusal warns and exits 0: the corpus on
-disk is untouched, and a job red every eight hours for someone else's filter is a
-job nobody reads.
+**A Discord channel needs a bot** — automating a user account is against Discord's terms —
+with the **Message Content** privileged intent, without which `content`, `embeds` and
+`attachments` all come back empty. **A forward is empty at the top level**: the real message
+is in `message_snapshots[].message`. A reveal post is `Name Colour Type Rarity`, and the
+colour is the hinge. Discord's attachment URLs are signed and expire in hours, so a link
+saved into static JSON is dead within the day.
 
-**Up to a point, and that point is three days.** Exiting 0 on a refusal is right
-for one run and wrong for twenty. It was wrong for twenty: `update-spoilers` runs
-four times a day and spent five days green while this host turned the runner
-away, so `/spoilers` served twelve-day-old reveals under a wall of green ticks.
-Nothing in the schedule said so — what surfaced it was somebody looking at the
-page and asking. `exitOnFailure` now takes `since`, the `generatedAt` of the file
-on disk, and past `STALE_AFTER_HOURS` a refusal goes red after all: still nothing
-written, but the archive is out of date and the green run was what hid it.
-Seventy-two hours is deliberately generous — a blocked afternoon, a weekend of
-one, an upstream migration should redden nothing.
+**A new ingest workflow needs three things**: the schedule, the right `git add` paths
+(**always `data public/data`**, and `public/spoilers` where it applies), and a line in
+`publish-site.yml`'s `workflows:` list — or its commits are never deployed.
 
-The guard is per region, and the run meant to prove it came back **green having
-read nothing**: the filter served the deck-list index as a 200 whose HTML carried
-no links, so forty pages became zero, both regions were skipped by a `continue`
-that said nothing, and the guard never ran. An index with no links on it is the
-same refusal one page earlier — the site publishes forty archive pages, and if it
-publishes none we were not talking to the site — so that is a refusal now too. A
-region whose own pages vanish from an index that otherwise has links is a
-different thing, a URL prefix Top Decks renamed for the third time, and it warns
-rather than refusing the run.
+**Commit only when something substantive changed**, which is
+`node scripts/substantive-change.mjs`. Naming the files that lack a timestamp does not
+work: `spoilers.json`, `banlist.json`, `regions.json` and `meta.json` all carry
+`generatedAt`, so three workflows committed on *every* run and each rebuilt the whole site.
 
-`--limit N` now reads without writing, for the same reason and not as an
-afterthought: a spot check of two pages looks exactly like a collapse to the
-guard, so the flag makes the ingest read-only rather than unguarded — which is
-also what you want from a flag whose whole purpose is reading a couple of pages
-by hand.
+**A failing step and a stopped pipeline are different decisions.** `update-decks` reads
+submissions after spending thirty minutes of request budget, so that step is
+`continue-on-error` **and** checked in a final step that fails the job.
 
-Two things followed from the same run. `build-indexes.mjs` failed on the empty
-corpus as `Invalid time value`, from `shiftDays(index.window.to, ...)` with a null
-date — a message naming neither the region nor the file that should have filled
-it; it stops earlier now and says which corpus is missing. And
-`ingest-topdecks.mjs` no longer writes any `public/data` payload. It used to write
-`decks-{en,jp}-index.json` and the per-archetype card lists, from before
-`build-indexes.mjs` merged the corpora; since then build-indexes rewrote both
-seconds later on every run, so those copies were only ever visible when
-build-indexes did not get that far — which is exactly what happened, leaving a
-0 KB index behind. One writer per payload. It reddened `update-spoilers` four times in thirty-six hours
-while the same host answered `update-rules` fine, minutes apart. Two things follow.
-The backoff is in *seconds* (3, 10, 30 across four attempts): the old 0.5s/2s put
-every attempt inside one blocked window. And a refusal — HTML where JSON was
-promised, a 403/429/503, or a connection that never completed (`fetch failed`, a
-timeout, a reset) — logs a `::warning`, writes nothing and exits **0**, since
-a schedule that is red every few hours for something outside this repository is a
-schedule nobody reads. Everything else still exits 1.
+**Windows and WSL share one `node_modules`.** Native modules ship one platform's binary;
+`wrangler` and `sharp` both fail with "you installed X on another platform". Both platforms'
+binaries are present, with the other's in `optionalDependencies`.
 
-**A Discord channel is the fast source, and it needs a bot.** The web source
-publishes a leak article and then leaves it: both of its articles were last
-*modified* twelve days before anybody noticed `/spoilers` had stopped moving.
-Reveals reach a community channel in minutes and keep arriving one card at a
-time. Reading one means `GET /channels/{id}/messages` as an **app** — automating
-a user account is against Discord's terms — with View Channel, Read Message
-History, and the **Message Content** privileged intent, which is a checkbox for a
-bot this size and is not optional: without it `content`, `embeds` and
-`attachments` all come back **empty**, so the ingest reads a channel full of
-reveals and correctly finds nothing.
+**What a test can reach decides where code lives.** Node resolves neither extensionless
+relative imports nor the `@/…` aliases, so anything a test needs must be free of imports —
+which `deck-rules.ts`, `meta.ts`, `prices.ts`, `deck-stats.ts` and `directory.ts` are, and
+why the directory fetches sit in `shards.ts`. Tests are TypeScript run straight through
+`node --test` (Node strips the types from 22.18, which CI pins) and the glob must be
+quoted: a bare directory argument makes Node load `tests` as a module.
 
-**A forward is empty at the top level**, and that is how this channel is fed. A
-forwarded message carries `content`, `attachments` and `embeds` blank and the real
-message in `message_snapshots[].message`, an immutable copy taken when the forward
-was made. Reading only the top level saw twelve posts, found nothing in any of
-them, and looked exactly like a missing Message Content intent — which cost two
-runs to tell apart, and was settled by asking `GET /applications/@me` whether the
-intent was on rather than inferring it. Discord caps snapshot nesting at one
-level, so one pass reads all of it.
+**A script's own guards need a test that runs the script.** `--fixture` evaluates neither
+`CONFIGURED` nor `fromSupabase`; `node --check` parses and sees nothing; `tsc` does not read
+`.mjs`. `tests/ingest-submissions.test.ts` spawns it and reads the exit code.
 
-**A reveal post is `Name Colour Type Rarity`, and the colour is the hinge.** They
-arrive wrapped in a code fence with a role ping on the end. What sits before the
-colour is the card's **name** — which the articles almost never give and which
-`/spoilers` had been printing as *Name not listed* under every one of these — and
-what follows is what else is known: a cost, a power, an ability. Discord's markup
-comes out first, mentions included, because an id printed on a public page is
-somebody's role and noise to every reader. Splitting on a colour costs a name to a
-card actually called something like *Red-Haired*, where nothing sits before it,
-and that is deliberate: no name is better than a blank one.
+**`basePath` applies to every build, including `npm run dev`.** It used to apply only to the
+export while `NEXT_PUBLIC_BASE_PATH` was set for everyone, so every payload 404ed locally.
 
-**A reveal opens itself, and only on `/spoilers`.** The picture links to the file
-it is showing — `/spoilers/EB05-036.webp` — in a tab of its own. A card is drawn a
-couple of centimetres wide in that grid and the next thing a reader wants is a
-closer look, which here is the file itself: there is no card page to send them to
-until the set ships, which is the whole condition for being on this page. A new
-tab rather than a navigation, so coming back finds the grid where it was left.
-
-**The text is the reveal, when the card is not English.** A Japanese card arrives
-as a photograph plus somebody typing out what it does, and that transcription is
-the only thing on the site that says what an unreleased card does — an English
-reveal comes with none, because the picture is already readable. It is kept under
-the same rule as the image and for the same reason: a message naming one card is
-about that card, and a message naming six is about six, so text from the second
-kind is dropped rather than printed under whichever number came first. The card
-number is taken out of it, since the page prints that beside it, and anything past
-600 characters is a conversation rather than a card.
-
-Two halves of a message are read because neither is reliable alone: an attachment
-named `OP18-021.png` is the card it names, and a phone photo named `IMG_4821.jpg`
-beside a typed number is that number's card. A message naming six cards with one
-photo attaches the photo to **none** of them — guessing would put the wrong art on
-a card. `discord.mjs` is where that lives, pure and import-free, because
-everything else about this source needs a token and a server and so cannot be
-exercised in CI; `ingest-discord.mjs` takes `--fixture` for the same reason.
-
-**A test that writes where the site keeps its files will delete them.** The
-Discord ingest prunes thumbnails no card points at, and a fixture corpus points at
-none — so `npm test`, which spawns the script, removed every real thumbnail in
-`public/spoilers`. Because `npm run verify` runs *before* `build:static` in
-`publish-site.yml`, the deploy then exported a site whose twelve reveal images had
-been deleted minutes earlier by its own test suite, and the only symptom was
-twelve 404s on the live page. The script takes `--out` and `--thumbs`, the tests
-point both at the temp directory, and one test asserts that `public/spoilers` is
-untouched by a run. This is the second time here: the same tests deleted
-`data/spoilers-discord.json` before that.
-
-**Discord's image links expire and that decides the whole image question.**
-Attachment URLs are signed — `?ex=&is=&hm=` — and Discord refreshes them only
-inside its own payloads. A link saved into a static JSON file is dead within
-hours, so hotlinking the way `/spoilers` hotlinks Top Decks is not available.
-Copying them is a policy question rather than a technical one, since these are
-photographs of cards that are not out, so the ingest records the link it saw and
-does not act on it.
-
-**Reveals are filed in two categories, and one of them is called nothing.**
-onepiecetopdecks.com has five categories and puts leak coverage in two: *Card
-Leaks*, which has 15 posts, and *Uncategorized*, which is where ST-31..36, OP-15,
-EB-04, ST-29 and the P-122 promos went. Reading only the one named for the job
-missed those until each set shipped. Both are read now — which adds no cards
-today, since both top out at the same two articles, and is coverage for the next
-time rather than a fix for a set currently missing.
-
-Widening it needed one other thing first. WordPress writes a resized copy of every
-upload as `name-{width}x{height}`, so `prb22-1024x461.jpeg` read as set `PRB22`,
-card `102` — a set that does not exist holding a card that does not exist, which
-`/spoilers` would have announced as an unreleased set. Three of them, all from
-*Uncategorized*, which is why the bug was latent. Card numbers are three digits
-with nothing but a separator after them, so `cardsFromHtml` refuses a fourth digit
-and the resize suffixes fall out while `-aa`, `_p1` and `_p2` stay.
-
-**What the source publishes is not what it reveals.** The OP-18 article carries 11
-distinct images and 6 identifiable cards: two are named for the character rather
-than the card (`Saint-Shamrock.jpg`), and one is an alt art of an already-released
-set. EB-05 carries 10 images and 2 cards, the rest being `_p3` reprints of cards
-that shipped years ago. So a count that looks low against the images on the page
-is usually right, and the way to check is the image filenames, not the prose.
-
-**Ingests refuse to write nonsense.** Too few cards, an empty banlist, a dead spine — each
-aborts before overwriting. An empty banlist that looks successful is worse than none. The
-submissions ingest is the exception: zero approved submissions is a real answer. Top Decks
-was an exception too, silently, until the day the source answered with nothing and it wrote
-that down; `scripts/corpus-guard.mjs` is what makes the sentence true of it.
-
-**The mark lives in five files, from one drawing.** `src/app/` holds `favicon.ico`,
-`icon.png` and `apple-icon.png`, which Next picks up by filename. `public/brand/` holds
-`mark-128.png` for the header and `share-1024.png` for link previews. Source artwork is
-outside the repo in `Poneglyph Logo Design/icons`. `metadataBase` reads
-`NEXT_PUBLIC_SITE_URL` — it was pinned to a domain not in use, which would have pointed
-every link preview at a host that does not serve the image.
-
-**Windows and WSL share one `node_modules`.** The project lives on the Windows filesystem,
-so running `npm` from WSL over `/mnt/c` reuses the same install — and native modules ship
-one platform's binary. `wrangler` (via `workerd`) and `sharp` both fail with "you installed
-X on another platform". Both platforms' binaries are present, with the other platform's in
-`optionalDependencies` so a clean install skips what does not apply. If one goes missing:
-
-```bash
-npm i -D --force @cloudflare/workerd-linux-64@<matching-workerd-version> @img/sharp-linux-x64 @img/sharp-libvips-linux-x64
-```
-
-`--force` is required because npm refuses an os-mismatched package. The
-`workerd-linux-64` version must match the `workerd` wrangler pulled in. Uploads are also
-markedly faster from Windows than from WSL over `/mnt/c`.
-
-**`basePath` applies to every build, including `npm run dev`.** It used to apply only
-to the export, while `NEXT_PUBLIC_BASE_PATH` — the same variable, read by
-`lib/paths.ts` — was set in `.env.local` for everyone. So `dataUrl()` asked for
-`/Poneglyph/data/cards-index.json` while the dev server answered at the root: every
-payload 404ed locally and the card browser, the deck builder and the metagame page
-all said the archive had failed to load. The proxy fallback in `lib/art.ts` goes
-through `asset()` for the same reason. Dev now serves from the path production
-serves from, which is the same argument `serve:static` already made.
-
-**What a test can reach decides where code lives.** Node resolves neither
-extensionless relative imports nor the `@/…` aliases, so anything a test needs has
-to be free of imports — which is why `deck-rules.ts`, `meta.ts`, `prices.ts`,
-`deck-stats.ts` and `directory.ts` are, and why the fetches for the directories sit
-in `shards.ts` instead. The same rule pushed four things out of scripts that run on
-import: `limitless.mjs` (the rate limiter, shared by two ingests), `price-history.mjs`
-(the append and the trim), `matchups.mjs` (a bracket becoming results, and the flip
-that writes it from both sides) and `submissions.mjs` (an organizer's answer becoming
-corpus rows). Each of those is where a number gets decided, and each was unreachable
-by a test until it moved.
-
-**Tests are TypeScript run straight through `node --test`.** No runner, no
-transform: Node strips the types itself from 22.18, which is what CI pins. Two
-consequences. Node does **not** resolve extensionless relative imports or the
-`@/…` and `@data/…` aliases, so a module a test imports has to be free of imports —
-which `deck-rules.ts`, `meta.ts`, `prices.ts` and `directory.ts` all are, and it is
-why the fetches for the directories live in `shards.ts` instead. And the glob has to
-be quoted (`"tests/*.test.ts"`): a bare directory argument makes Node try to load
-`tests` as a module and the run fails with `MODULE_NOT_FOUND`. `tsconfig.json` needs
-`allowImportingTsExtensions` because those imports name the `.ts` file.
-
-**A script's own guards need a test that runs the script.** Extracting `toDecks`
-out of `ingest-submissions.mjs` took `CONFIGURED` and `fromSupabase` with it, and
-the extraction was checked with `--fixture` — the one mode that evaluates neither.
-`node --check` parses and sees nothing; `tsc` does not read `.mjs`. The scheduled
-run found it six hours later, by failing after the deck ingest had already spent
-its request budget. `tests/ingest-submissions.test.ts` spawns the script the way CI
-does and reads the exit code, which is the only thing that would have caught it.
-
-**The parity tests do not import the build script.** `shardOf` and `playerSlugOf`
-exist twice on purpose, so the test lifts the *source text* of each copy and runs
-the two against nine thousand real keys. That is the drift the comments warn about,
-and it is invisible to a typechecker.
-
-**Dev server port.** 4321, static preview 4322. If `preview_start` reports a port in use,
-change it in `.claude/launch.json` *and* `package.json` together.
+**A new top-level route needs a line in `sitemap.ts`**, and nothing enforces it. Six pages
+have been missed that way.
 
 ---
 
@@ -1490,97 +564,61 @@ change it in `.claude/launch.json` *and* `package.json` together.
 | Discord | Card reveals, minutes after they leak | Bot token, private channel |
 | Organizers | Submitted tournaments, after review | Supabase |
 
-**Do not point card images at anyone else's CDN.** Bandai's blocks browser embedding
-outright. The optcgapi mirror does not, but a 24-printing sample found ~83% coverage —
-OP-17, promos and many alt arts missing — and it would be their bandwidth for every view,
-at 348 KB a card, with no way to resize.
+**Do not point card images at anyone else's CDN.** Bandai's blocks browser embedding; the
+optcgapi mirror has ~83% coverage and would be their bandwidth at 348 KB a card.
 
-**Do not integrate onepiece.gg.** Its `robots.txt` names `anthropic-ai`, `Claude-Web`,
-`GPTBot` and `ChatGPT-User` as disallowed and its pages 403 non-browser clients. An
-explicit opt-out: link to it, never fetch it. **optcg.one** disallows `/api/`.
-**matchmaking.gg** is a parked domain, not a TCG site.
+**Do not integrate onepiece.gg.** Its `robots.txt` names AI crawlers as disallowed and its
+pages 403 non-browser clients. An explicit opt-out: link to it, never fetch it. Same for
+**mtggoldfish.com**, which disallows `ClaudeBot` outright. **optcg.one** disallows `/api/`.
 
-Top Decks card scans are referenced from their server with attribution, not copied.
-Pre-release art is not ours to re-host.
+Top Decks card scans are referenced with attribution, not copied. Pre-release art is not
+ours to re-host.
 
 ---
 
 ## Scheduled jobs
 
 `update-cards` (daily, gated on `ingest.mjs --check`, which exits 3 when current),
-`refresh-prices` (2×/day), `update-decks` (2×/day), `update-matchups` (daily at 10:20
-UTC, three hours after the morning deck ingest so the tournaments it found already
-have decklists to join pairings against), `update-rules` (8h), `update-spoilers` (6h),
-`update-discord` (2h — the fast spoiler source, and it rebuilds `spoilers.json`
-in the same run so a reveal does not wait six hours for the other schedule),
-`update-events` (daily at 10:00 UTC — noon in Italy on summer time, 11:00 in winter;
-cron has no timezone). Then `publish-site`.
+`refresh-prices` (2×/day), `update-decks` (07:20 and 19:20 UTC), `update-matchups` (daily
+at 10:20 UTC, three hours after the morning deck ingest), `update-rules` (8h),
+`update-spoilers` (6h), `update-discord` (2h — the fast spoiler source, and it rebuilds
+`spoilers.json` in the same run), `update-events` (daily at 10:00 UTC). Then `publish-site`.
 
-`check` is the other one, and it is not a schedule: `npm run verify` on every push to
-`prod` or `dev`, and on every pull request into them. Before it existed, the first thing to notice a
-type error was the production build, and the first thing to notice a rule that had
-stopped being true was a reader.
+**Cron has no timezone.** 07:20 UTC is 09:20 in Italy on summer time, and GitHub delays
+scheduled runs — four hours is normal on a busy day, and a run can be dropped entirely.
 
-**`publish-site` also runs on `push` to `prod`.** `workflow_run` covers commits made by
-the ingests; a commit made by a *person* triggers nothing else, so a change to the site
-itself used to sit undeployed until a scheduled ingest happened to finish. Markdown
-is ignored, since none of it is built into the site.
-
-**Commit only when something substantive changed**, which is
-`node scripts/substantive-change.mjs` — stage everything, then ask. Naming the files that
-lack a timestamp does not work and had already failed twice: `spoilers.json`,
-`banlist.json`, `regions.json` and `meta.json` all carry `generatedAt` and `durationMs`, so
-three workflows committed on *every* run and each commit rebuilt and redeployed the whole
-site to publish a new timestamp.
-
-**A failing step and a stopped pipeline are different decisions.** `update-decks`
-reads approved submissions after spending thirty minutes of Limitless request
-budget, so a hard stop there commits none of the decklists it just fetched and
-freezes the whole archive over a subsystem that may hold no rows at all. The step
-is therefore `continue-on-error` **and** checked in a final step that fails the job.
-The original arrangement had the first half without the second, which is how a URL
-read from a secret that did not exist ran red for a day under a green tick: what was
-missing was not the failing, it was the looking.
-
-**Always `git add data public/data`, and `public/spoilers` where it applies.**
-`update-discord` wrote twelve thumbnails in the runner and staged neither, so the
-corpus recorded that every EB-05 card had a picture while the page pointed at
-twelve files that had never left the machine — the third time this has happened
-here. Three workflows did not — one staged only `data/`, the
-other named individual files, a list that went stale the moment the per-entity shards
-appeared. They run `build-indexes.mjs` or an ingest that writes into `public/`, so the
-archive refreshed and the site kept serving what it had.
-Nothing fails when a payload is missing; the page just reads "not found".
-
-**A new ingest workflow has to be added to `publish-site.yml`'s `workflows:` list**,
-or its commits are never deployed. `update-discord` wrote twelve thumbnails,
-committed them, and the site went on serving a build that predated them — no run
-failed, because nothing ran. That list is the deploy trigger, and it is the third
-thing a new ingest needs after the schedule and the `git add` paths.
-
-`publish-site` also runs on `workflow_run`, because **a commit made with `GITHUB_TOKEN`
-does not trigger another workflow** — GitHub's own loop protection. Six
-schedules add up to twelve triggers a day and most find nothing, so it compares the tip of
-`prod` against `out/.source` on the deployed branch and stops when they match: a
-skipped run takes 7 seconds against 2m20s for a real one.
+`check` runs `npm run verify` on every push to `prod` or `dev` and on every pull request.
+`publish-site` runs on push to `prod` **and** on `workflow_run`, because a commit made with
+`GITHUB_TOKEN` does not trigger another workflow. It compares the tip of `prod` against
+`out/.source` on the deployed branch and stops when they match.
 
 **Let CI do the deploying.** The build is deterministic for a given Node version but not
-across them: CI pins 22, and building the same commit on 26 produced five different app
-chunks out of twelve. CI against CI is byte-identical, which is what keeps the pushes
-small; a manual `deploy:site` from a different Node is a one-off large push, not a broken
-site.
+across them: CI pins 22, and building the same commit on 26 produced five different chunks.
 
 ---
 
 ## Current shape
 
-2,785 cards · 4,843 printings · 60 sets (17 boosters, 36 starter decks) · 2,172
-Standard-legal, 20 via the block exception · 2,770 priced · 69,920 decklists —
-English 63,983 from 2022-10, Japanese 5,937 from 2022-07 · 7,948 tournaments ·
-19,565 named players, 3,678 with five or more results · 152,890 recorded matches
-from 1,025 brackets · 44/46 release windows · 53 dated set releases · 67 announced
-official events across 6 types · 206 tests.
+2,785 cards · 4,843 printings · 60 sets · 2,172 Standard-legal, 20 via the block exception ·
+2,770 priced · 69,920 decklists — English 63,983 from 2022-10, Japanese 5,937 from 2022-07 ·
+7,936 tournaments · 19,546 named players, 3,677 with five or more results · 152,890 recorded
+matches from 1,025 brackets · 44/46 release windows · 67 announced official events · 206
+tests.
 
-These drift daily and are a snapshot, not an invariant — the ones worth checking
-against the code are above. Two were wrong rather than stale: the booster count
-said 22 against 17 in `sets.json`, and priced said 2,651 against 2,770.
+These drift daily and are a snapshot, not an invariant.
+
+---
+
+## Still to do
+
+**Email and password sign-in** waits on a custom SMTP provider — an account to open, not a
+code change. The form is on the account page, disabled, carrying that to-do where it can be
+seen. Flip `NEXT_PUBLIC_AUTH_EMAIL=1` once the provider is set. Deferred until there is a
+real domain, since the sender address wants one.
+
+**Deliberately absent, so nobody adds them by reflex.** No analytics and no cookie banner:
+`document.cookie` is empty, the only browser storage is `poneglyph:notice:1` and Supabase's
+session, and `/privacy` and `/legal` both promise in writing that nothing is collected —
+installing any analytics makes two published pages false. No sticky mobile call to action
+either: the two on the home page are above the fold at 375×812, measured, and a bar that
+follows a reader down a card list is a conversion pattern on a site with nothing to convert.

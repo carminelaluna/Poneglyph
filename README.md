@@ -1,7 +1,7 @@
 # Poneglyph
 
 A searchable archive and metagame tracker for the ONE PIECE CARD GAME: every card,
-every printing, every stat line, plus twenty thousand tournament decklists and what
+every printing, every stat line, plus seventy thousand tournament decklists and what
 people are actually winning with.
 
 > **Poneglyph is an unofficial fan project.** It is not affiliated with, endorsed
@@ -26,14 +26,16 @@ npm run dev             # http://localhost:4321
 | Cards / printings / sets | 2,785 · 4,843 · 60 |
 | Standard-legal | 2,172 (613 Extra only) |
 | Traits / keywords | 171 · 45 |
-| Priced | 2,651, with ninety days of history |
-| Decklists | 21,027 |
-| — English | 15,168, back to Oct 2022 |
-| — Japanese | 5,859, back to Jul 2022 |
-| Tournaments / players | 7,163 · 8,686 |
-| Recorded matches | 19,419, archetype against archetype |
-| Release windows | 43 English, 46 Japanese |
+| Priced | 2,770, with ninety days of history |
+| Decklists | 69,920 |
+| — English | 63,983, back to Oct 2022 |
+| — Japanese | 5,937, back to Jul 2022 |
+| Tournaments / players | 7,936 · 19,546 (3,677 with five or more results) |
+| Recorded matches | 152,890 from 1,025 published brackets |
+| Release windows | 44 English, 46 Japanese |
 | Official events announced | 67 across 6 types |
+
+These move daily; the ingests keep them current.
 
 ## What you can do with it
 
@@ -76,6 +78,12 @@ number here is derived from recorded results, so nothing joins them unreviewed.
 filterable by region and type, with venues, registration links and when
 registration opens — which is a Sunday, and which they publish as a guideline.
 
+**Compare the two regions** on `/compare`. It counts first places rather than
+share, because the English corpus holds whole Swiss fields and the Japanese one holds
+decks that placed — two different measurements, and subtracting one from the other
+would be a wrong number that looks right. Who won an event is recorded the same way
+in both.
+
 **See what is coming** on `/spoilers`, and what is currently banned on `/banlist`,
 both read from source rather than maintained by hand.
 
@@ -96,6 +104,8 @@ scripts/ingest-topdecks.mjs Top Decks archives (JP + EN)
 scripts/ingest-spoilers.mjs unreleased sets
 scripts/ingest-banlist.mjs  banned & restricted
 scripts/ingest-events.mjs   official events (Regionals, Finals, Cups)
+scripts/ingest-submissions  organizer-submitted events, after review
+scripts/dedupe.mjs          one deck in two sources: same fifty cards, or same event
 scripts/build-indexes.mjs   merges everything into what the site reads
 scripts/check-sources.mjs   source hygiene, runs before the card ingest
 ```
@@ -116,8 +126,6 @@ A few decisions are worth knowing, because they change what the numbers mean:
 - **Absent values say "Not recorded"** rather than showing a blank or a zero.
 
 The full reasoning, the invariants and the traps live in [CLAUDE.md](CLAUDE.md).
-Moving the site to a domain of its own, changing CDN, or hosting it on a real
-machine: [MIGRATIONS.md](MIGRATIONS.md).
 
 ---
 
@@ -204,7 +212,7 @@ the default here because a bad upstream day is then a visible diff and a
 
 | | |
 | --- | --- |
-| `npm run dev` / `build` | Dev server on 4321 / ~4,700 static pages |
+| `npm run dev` / `build` | Dev server on 4321 / ~8,700 static pages |
 | `npm run verify` | Source check, types and tests — what CI runs |
 | `npm test` | `node --test` over `tests/*.test.ts`, no runner to install |
 | `npm run check` | Fail on stray control characters in sources |
@@ -235,12 +243,18 @@ npm run serve:static     # check it on :4322 before pushing
 npm run deploy:site      # -> the site repository
 ```
 
-One repository, three branches. **`prod`** holds the code and the data and is what
-the site is built from; **`dev`** is the same for work in progress; **`main-selfhost`**
-holds `out/` and is what Pages serves.
-The second is an orphan branch, rebuilt from scratch each deploy and keeping no
-history — it is 24,000 generated files that change twice a day, and the history that
-matters is on the first.
+One repository, three branches:
+
+| | |
+| --- | --- |
+| **`prod`** | The code and the data. Default branch, and what the site is built from. The scheduled ingests commit here, twice a day. |
+| **`dev`** | The same, for work in progress. Rebase it onto `prod`, never the other way, and never let it write into `data/`. |
+| **`main-selfhost`** | `out/` and nothing else. What Pages serves. |
+
+`main-selfhost` is an **orphan** branch: `deploy-site.mjs` builds it from scratch
+each deploy — fresh `git init`, one commit, force push — so it shares no history
+with `prod` and must never be merged in either direction. It is 24,000 generated
+files that change twice a day, and the history that matters is on `prod`.
 
 Configure it in `.env.local`:
 
@@ -263,3 +277,37 @@ start` resolves routes itself and will happily render pages the export never wro
 so it cannot tell you whether the deploy will work.
 
 `public/cards` is gitignored; cache it between CI runs.
+
+### Moving to a domain
+
+Six of these are outside the repository, and the site half-works if any is missed —
+sign-in is what breaks, because three separate services hold a copy of the address.
+
+1. **DNS.** A `CNAME` record for `www` pointing at `<user>.github.io`, or four `A`
+   records at GitHub's apex addresses for a bare domain. Then enter the domain in the
+   repository's Pages settings and wait for the certificate.
+
+2. **The `CNAME` file.** Set `PONEGLYPH_CNAME` so `build-static.mjs` writes it into
+   `out/`. Adding it through the settings screen instead writes it into
+   `main-selfhost`, which the next deploy replaces wholesale — the domain would then
+   revert on its own, hours later, for no visible reason.
+
+3. **The subpath goes.** `NEXT_PUBLIC_BASE_PATH` becomes empty and
+   `NEXT_PUBLIC_SITE_URL` becomes the domain, in `.env.local` and in
+   `publish-site.yml`. Every asset URL, the sitemap and `robots.txt` follow from
+   those two.
+
+4. **Supabase.** Add the new origin to the redirect allowlist — **with the trailing
+   slash**, and keep the old one until you are sure. Everything `authRedirectTo()`
+   can produce has to be listed, or sign-in returns to a refused URL.
+
+5. **Google and Discord.** Each OAuth app holds its own authorised redirect. Both
+   point at Supabase's callback rather than at the site, so they change only if the
+   Supabase project does — but check them, because a wrong one fails at the last
+   step of a sign-in and looks like the site's fault.
+
+6. **The CDN's `_headers`.** `Access-Control-Allow-Origin` names the site; update it
+   and redeploy the art bundle, or grids go blank on the new domain.
+
+Afterwards: sign in with both providers, paste a link somewhere that unfurls to check
+the preview image resolves, and open a card page to confirm the art loads.
