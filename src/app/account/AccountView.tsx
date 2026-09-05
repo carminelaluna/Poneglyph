@@ -513,8 +513,20 @@ export default function AccountView() {
             })
           : await client.auth.signInWithPassword({ email, password });
 
+      /*
+       * Supabase answers a sign-up on an address that already has an account with
+       * an obfuscated success and sends no mail — deliberately, so the response
+       * cannot be used to find out who is registered. We cannot say "that account
+       * exists", and must not try; what we can do is make the message survive the
+       * case, so somebody who signed up with Google months ago is not left waiting
+       * for a mail that was never sent.
+       */
       if (error) setNotice(error.message);
-      else if (mode === 'up') setNotice('Check your email to confirm the address.');
+      else if (mode === 'up')
+        setNotice(
+          'Check your email to confirm the address. If nothing arrives, you may already ' +
+            'have an account from Discord or Google on that address — sign in with it instead.'
+        );
       setBusy(false);
     },
     [mode, email, password]
@@ -652,8 +664,21 @@ export default function AccountView() {
         ))}
       </div>
 
-      {emailAuthEnabled ? (
-        <form className="account-email slab slab-pad" onSubmit={withEmail}>
+      {/*
+        Drawn whether or not it works, and inert until it does.
+
+        Hiding it behind the flag made the gap invisible to everybody, including
+        whoever has to close it — the form sat written and unreachable for months.
+        Leaving it *working* is the other wrong answer: with no SMTP provider there
+        is no confirmation mail and no reset mail, so signing up here would hand
+        somebody an account they could never get back into.
+
+        So it is visible, disabled, and says which of the two it is. `fieldset`
+        rather than a `disabled` on each control, because one attribute that cannot
+        be forgotten beats four that can.
+      */}
+      <form className="account-email slab slab-pad" onSubmit={withEmail}>
+        <fieldset className="account-email-fields" disabled={!emailAuthEnabled || busy}>
           <label className="eyebrow" htmlFor="account-email">
             Or use an email address
           </label>
@@ -678,7 +703,7 @@ export default function AccountView() {
             required
           />
           <div className="account-actions">
-            <button type="submit" className="chip" disabled={busy}>
+            <button type="submit" className="chip">
               {mode === 'up' ? 'Create account' : 'Sign in'}
             </button>
             <button
@@ -694,8 +719,22 @@ export default function AccountView() {
               </button>
             ) : null}
           </div>
-        </form>
-      ) : null}
+        </fieldset>
+
+        {emailAuthEnabled ? null : (
+          <p className="account-todo">
+            <b>Not finished.</b> Confirmation and password-reset mail needs an SMTP
+            provider, and there is none configured — so an account made here could not
+            be recovered. Sign in with Discord or Google instead; either can have an
+            email address added to it later.
+            <span className="account-todo-note">
+              To finish: set a custom SMTP provider on the Supabase project, then set{' '}
+              <code className="mono">NEXT_PUBLIC_AUTH_EMAIL=1</code>. The form and the
+              reset flow are already written.
+            </span>
+          </p>
+        )}
+      </form>
 
       {notice ? <p className="account-notice">{notice}</p> : null}
     </div>

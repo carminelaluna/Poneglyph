@@ -712,9 +712,24 @@ none; `aria-hidden`, since the button already says which service it is.
 **Sign-in is OAuth first, and that is a constraint rather than a preference.** Supabase's
 built-in mail sends **two messages an hour** to pre-authorized addresses and is documented
 as non-production. Discord and Google send no mail at all. Email and password needs
-confirmation and reset mail, so the form is hidden behind `NEXT_PUBLIC_AUTH_EMAIL=1` until
-a custom SMTP provider exists: an account whose password cannot be reset is a trap, not a
-feature. (Resend's free tier is 3,000 a month, 100 a day.)
+confirmation and reset mail, so it waits on a custom SMTP provider: an account whose
+password cannot be reset is a trap, not a feature. (Resend's free tier is 3,000 a month,
+100 a day.)
+
+**The email form is drawn anyway, and disabled.** `NEXT_PUBLIC_AUTH_EMAIL=1` still decides
+whether it *works*; it no longer decides whether it is *seen*. Hidden, the gap was
+invisible to everyone including whoever has to close it, and the form sat written and
+unreachable for months. Working, it would hand somebody an account with no way back in.
+So it renders greyed out under a dashed note saying which of the two it is — the first
+half for a reader, who needs to be sent to Discord or Google, and the second half a
+to-do naming the flag, because a to-do nobody can see is a to-do nobody does.
+
+One `disabled` on a `fieldset` rather than one per control: an attribute that cannot be
+forgotten beats four that can. Note that a child input's `disabled` **property** stays
+`false` under a disabled fieldset — it reflects its own attribute, not the inherited
+state — so a check has to ask `matches(':disabled')`. Measured rather than assumed:
+the inputs cannot be focused, the submit does nothing, and the provider buttons above
+are untouched.
 
 The token comes back in the URL **fragment**, which browsers never send to a server —
 that is what makes this work on GitHub Pages with nothing behind it. Every value
@@ -722,12 +737,33 @@ that is what makes this work on GitHub Pages with nothing behind it. Every value
 trailing slash**, and it is built from `location.origin` so localhost and the live site
 both work.
 
-**Linking a second provider is no longer offered on the page.** The *Ways in*
-panel is gone — with it the only route to `linkIdentity`, so an account keeps
-whichever provider opened it. `useAccount` still exports `linkProvider` and
-`unlinkProvider`, unused, because the reasoning below is still true and the panel
-is a component away if it comes back. What follows describes why it worked the
-way it did.
+**One address is one account, and Supabase already does that part.** Automatic
+identity linking is built in and has **no switch**: when a sign-in arrives whose
+email matches an existing user *and that user's email is verified*, it links rather
+than making a second account, and it drops any unconfirmed identity on the way —
+which is the pre-account-takeover defence, not a convenience. Google and Discord
+both verify, so the two of them on one address are one account. Do not go looking
+in the dashboard for a toggle. The one that **is** a toggle is *manual* linking:
+Authentication → Providers → allow manual linking.
+
+**A third way in cannot be policed by refusing it.** The obvious rule — if the
+address already exists under another provider, fail — is unimplementable and
+already happens. Unimplementable because nothing may ask "is this address
+registered?" from the browser: that is an enumeration oracle, and the anon key is
+denied it on purpose. Already happening because Supabase answers a sign-up on a
+taken address with an **obfuscated success and no mail at all**, so the person sees
+"check your inbox", nothing arrives, and they conclude the site is broken. We may
+not say the account exists. What we can do is write the confirmation line so it
+survives the case, which is why it names Discord and Google as the thing to try.
+
+**Linking a second provider is not offered on the page, and the code stays.** The
+*Ways in* panel is gone — with it the only route to `linkIdentity`, so an account
+keeps whichever provider opened it. `useAccount` still returns `linkProvider` and
+`unlinkProvider`, uncalled, and they are the answer for the case automatic linking
+cannot reach: two accounts on **different** addresses. Note that restoring the panel
+now needs its CSS back too — `.account-providers-list` went in a dead-rule sweep,
+and the comment on it pointed at `SignInMethods`, a component that no longer exists.
+What follows describes why it worked the way it did.
 
 **Two providers are two accounts until somebody links them.** Supabase gives a
 Discord sign-in and a Google sign-in different users even on one address, and that
@@ -793,9 +829,11 @@ telling the reader which command rebuilds the archive. The rule is the one this 
 keeps arriving at from the other direction: the eleventh prop would have been added
 four times, or three.
 
-**Still to do:** email and password sign-in stays hidden until a custom SMTP provider
-is configured — that is an account, not a code change, and everything else about it is
-already written.
+**Still to do:** email and password sign-in waits on a custom SMTP provider — an
+account to open, not a code change, and everything else about it is written. The form
+is on the account page now, disabled, carrying that to-do where it can be seen. Flip
+`NEXT_PUBLIC_AUTH_EMAIL=1` once the provider is set. Deferred until the site has a
+real domain, since the sender address wants one.
 
 ---
 

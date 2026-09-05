@@ -263,7 +263,61 @@
 
 .account-email {
   display: grid;
+  gap: 0.9rem;
+}
+
+/*
+ * A fieldset is a grid here, not a box: it exists so one `disabled` reaches every
+ * control, and the browser's own border and legend styling would draw a second
+ * frame inside the slab the form already is.
+ */
+.account-email-fields {
+  display: grid;
   gap: 0.6rem;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.account-email-fields:disabled .control,
+.account-email-fields:disabled .chip,
+.account-email-fields:disabled .account-link {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/*
+ * What is missing and who has to fix it, on the page rather than in a file.
+ *
+ * A reader needs the first sentence — this way in does not work, use another one.
+ * Whoever finishes it needs the second, which is why the two are one block and not
+ * a comment somewhere: a to-do nobody can see is a to-do nobody does, and this form
+ * sat written and unreachable behind a flag until it was read out of a stylesheet.
+ */
+.account-todo {
+  margin: 0;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--glyph-mid);
+  border: 1px dashed var(--edge-strong);
+  border-radius: var(--radius);
+  background: var(--groove);
+}
+
+.account-todo b {
+  color: var(--glyph);
+  font-weight: 500;
+}
+
+.account-todo-note {
+  display: block;
+  margin-top: 0.45rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid var(--edge);
+  color: var(--glyph-dim);
+  font-size: 0.74rem;
 }
 
 .account-actions {

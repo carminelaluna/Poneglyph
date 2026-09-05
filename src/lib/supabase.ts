@@ -36,9 +36,14 @@ export const accountsEnabled = Boolean(URL_BASE && ANON_KEY);
  * without it by turning confirmations off — but password reset cannot, and an
  * account whose password cannot be reset is a trap rather than a feature.
  *
- * So the email form appears when this says it should, and the flag goes on once a
- * custom SMTP provider is set (Resend's free tier is 3,000 a month, 100 a day, which
- * is far more than this needs).
+ * So the flag goes on once a custom SMTP provider is set (Resend's free tier is
+ * 3,000 a month, 100 a day, which is far more than this needs).
+ *
+ * What the flag no longer decides is whether the form is *drawn*. It is, always —
+ * with every field disabled and a line saying why, which is both the notice a
+ * reader needs and the reminder that this is unfinished. Hiding it made the gap
+ * invisible to everyone including whoever has to close it; leaving it working
+ * would hand somebody an account they could never recover.
  */
 export const emailAuthEnabled = process.env.NEXT_PUBLIC_AUTH_EMAIL === '1';
 
