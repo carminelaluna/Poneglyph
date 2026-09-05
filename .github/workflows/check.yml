@@ -12,7 +12,7 @@ name: Check
 # characters, reserved SQL column names, `tsc`, and the tests.
 on:
   push:
-    branches: [main-node]
+    branches: [prod, dev]
     # The ingest workflows commit only data. They run with GITHUB_TOKEN, which by
     # design starts no further workflow, so this is belt and braces — but it also
     # covers a data refresh pushed by hand.

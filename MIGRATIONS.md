@@ -247,7 +247,7 @@ workflow. There is no deploy step — the server reads the JSON at build time, s
 needs `npm run build` again afterwards.
 
 If you keep GitHub Actions doing the ingestion and only move the hosting, the machine
-pulls from `main-node` and rebuilds. That is the least work and keeps the data history
+pulls from `prod` and rebuilds. That is the least work and keeps the data history
 in one place.
 
 ---

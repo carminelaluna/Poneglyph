@@ -874,19 +874,37 @@ real domain, since the sender address wants one.
 
 ---
 
-## One repository, two branches
+## One repository, three branches
 
 [carminelaluna/Poneglyph](https://github.com/carminelaluna/Poneglyph), public — which is
 what makes Actions unmetered and Pages free.
 
-**`main-node`** holds the code, the ingests and the data. It is the default branch and
-the only history that matters. **`main-selfhost`** holds `out/` and nothing else, an
-orphan branch rebuilt from scratch each deploy: fresh `git init`, one commit, force push.
-That is safe precisely because nothing on it was ever authored. Roll back by checking out
-an older commit on `main-node` and building again.
+**`prod`** holds the code, the ingests and the data. It is the default branch, it is what
+the site is built from, and it is the only history that matters. **`dev`** is the same
+thing for work in progress. **`main-selfhost`** holds `out/` and nothing else, an orphan
+branch rebuilt from scratch each deploy: fresh `git init`, one commit, force push. That is
+safe precisely because nothing on it was ever authored. Roll back by checking out an older
+commit on `prod` and building again.
 
-The force push is aimed at a branch name, so `deploy-site.mjs` refuses `main-node`, `main`
-and `master` outright — pointing it at the source would delete the project.
+It was `main-node` until it was renamed through GitHub's own rename, which carries the
+redirects, the default-branch setting and any open pull request with it — a delete and
+recreate would have carried none of those.
+
+**The ingests commit to `prod`, and that is the constraint the whole arrangement bends
+around.** They name no branch: `actions/checkout` gives them the default one, so the
+archive refreshes twice a day on the branch the site is built from, which is the property
+worth keeping. The consequence is that `prod` moves ahead of `dev` by a data commit twice
+a day without anybody touching code, so **`dev` is rebased onto `prod`, never the other
+way**, and nothing on `dev` should ever write into `data/` or `public/data/` — a merge
+conflict in a 66 MB JSON file is not a thing anybody wants to resolve.
+
+`check.yml` runs on both, and on every pull request into either. `publish-site.yml` only
+ever deploys `prod`.
+
+The force push is aimed at a branch name, so `deploy-site.mjs` refuses `prod`, `dev`,
+`main-node`, `main` and `master` outright — pointing it at a source branch would delete
+the project. The two retired names stay in that list because a stale checkout or an old
+script may still hold them, and the cost of keeping them is a regex.
 
 ```
 PONEGLYPH_SITE_REMOTE=https://github.com/carminelaluna/Poneglyph.git
@@ -1425,12 +1443,12 @@ in the same run so a reveal does not wait six hours for the other schedule),
 cron has no timezone). Then `publish-site`.
 
 `check` is the other one, and it is not a schedule: `npm run verify` on every push to
-`main-node` and on every pull request. Before it existed, the first thing to notice a
+`prod` or `dev`, and on every pull request into them. Before it existed, the first thing to notice a
 type error was the production build, and the first thing to notice a rule that had
 stopped being true was a reader.
 
-**`publish-site` also runs on `push` now.** `workflow_run` covers commits made by the
-ingests; a commit made by a *person* triggers nothing else, so a change to the site
+**`publish-site` also runs on `push` to `prod`.** `workflow_run` covers commits made by
+the ingests; a commit made by a *person* triggers nothing else, so a change to the site
 itself used to sit undeployed until a scheduled ingest happened to finish. Markdown
 is ignored, since none of it is built into the site.
 
@@ -1466,10 +1484,10 @@ committed them, and the site went on serving a build that predated them — no r
 failed, because nothing ran. That list is the deploy trigger, and it is the third
 thing a new ingest needs after the schedule and the `git add` paths.
 
-`publish-site` runs on `workflow_run`, not `on: push`, because **a commit made with
-`GITHUB_TOKEN` does not trigger another workflow** — GitHub's own loop protection. Six
+`publish-site` also runs on `workflow_run`, because **a commit made with `GITHUB_TOKEN`
+does not trigger another workflow** — GitHub's own loop protection. Six
 schedules add up to twelve triggers a day and most find nothing, so it compares the tip of
-`main-node` against `out/.source` on the deployed branch and stops when they match: a
+`prod` against `out/.source` on the deployed branch and stops when they match: a
 skipped run takes 7 seconds against 2m20s for a real one.
 
 **Let CI do the deploying.** The build is deterministic for a given Node version but not

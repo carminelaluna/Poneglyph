@@ -15,7 +15,7 @@ name: Publish site
 #
 # `workflow_run` fires whether or not the ingest committed anything, and the
 # schedules add up to more than a dozen triggers a day. Most find nothing, so the
-# job first compares the tip of main-node against the commit the live site was built
+# job first compares the tip of prod against the commit the live site was built
 # from and stops there when they match.
 #
 # When it does build, only what changed is pushed: the build id is derived from the
@@ -29,7 +29,7 @@ on:
   # undeployed until the next scheduled ingest happened to finish. Markdown is
   # ignored because none of it is built into the site.
   push:
-    branches: [main-node]
+    branches: [prod]
     paths-ignore:
       - '**.md'
   workflow_run:
@@ -92,13 +92,13 @@ jobs:
       # started from rather than what it just committed.
       - uses: actions/checkout@v5
         with:
-          ref: main-node
+          ref: prod
           # Deep enough to read the published branch's marker file below.
           fetch-depth: 0
 
       # Five schedules finishing is twelve triggers a day, and an ingest that found
       # nothing still finishes successfully. build-static.mjs records the commit it
-      # built from; if that is still the tip of main-node, the output would be
+      # built from; if that is still the tip of prod, the output would be
       # identical to what is already live and there is nothing to do.
       - name: Has the source moved?
         id: moved

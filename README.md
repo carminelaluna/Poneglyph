@@ -181,7 +181,7 @@ changed:
 
 `publish-site` runs on `workflow_run` rather than on a push, because a commit made
 with `GITHUB_TOKEN` never triggers another workflow. Those five schedules add up to
-twelve triggers a day and most find nothing, so it compares the tip of `main-node`
+twelve triggers a day and most find nothing, so it compares the tip of `prod`
 against the commit the live site was built from and stops when they match.
 
 **Actions minutes are unmetered on a public repository.** A private one gets 2,000 a
@@ -235,8 +235,9 @@ npm run serve:static     # check it on :4322 before pushing
 npm run deploy:site      # -> the site repository
 ```
 
-One repository, two branches. **`main-node`** holds the code and the data and is
-where changes are made; **`main-selfhost`** holds `out/` and is what Pages serves.
+One repository, three branches. **`prod`** holds the code and the data and is what
+the site is built from; **`dev`** is the same for work in progress; **`main-selfhost`**
+holds `out/` and is what Pages serves.
 The second is an orphan branch, rebuilt from scratch each deploy and keeping no
 history — it is 24,000 generated files that change twice a day, and the history that
 matters is on the first.

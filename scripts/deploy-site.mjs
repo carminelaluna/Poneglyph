@@ -6,15 +6,16 @@
  *
  * One repository, two branches, one source.
  *
- *   main-node       the code, the ingests and the data — where changes are made
+ *   prod            the code, the ingests and the data — what the site is built from
+ *   dev             the same, for work in progress
  *   main-selfhost   nothing but the built site, which is what GitHub Pages serves
  *
- * The site branch is an orphan: it shares no history with main-node, and it is
+ * The site branch is an orphan: it shares no history with prod, and it is
  * rebuilt from scratch on every deploy — a fresh `git init`, one commit, a force
  * push. It keeps no history, deliberately. It is 28,000 generated files that change
  * twice a day, and a history of that is unreadable and grows without bound, while
  * the history that matters — of the source and the data the site was built from — is
- * on main-node. Rolling back means checking out an older commit there and building
+ * on prod. Rolling back means checking out an older commit there and building
  * again.
  *
  * Because it is a force push onto a branch that holds only generated output, it can
@@ -71,9 +72,9 @@ async function main() {
 
   /*
    * Refuse to overwrite the source. The branch this pushes to is replaced wholesale
-   * by generated output, and aiming that at main-node would delete the project.
+   * by generated output, and aiming that at a source branch would delete the project.
    */
-  if (/^main-node$|^main$|^master$/.test(branch)) {
+  if (/^prod$|^dev$|^main-node$|^main$|^master$/.test(branch)) {
     console.error(
       `[deploy] PONEGLYPH_SITE_BRANCH is "${branch}", which is a source branch.\n` +
         '         This force-pushes generated output and would erase it. Use main-selfhost.'
