@@ -488,6 +488,26 @@ are the one thing a reviewer has to actually read. `admin` is what the two new
 policies check, it is still granted by hand, and it is still checked against the
 reader's **own** profile row. Rejecting requires a note, and the organizer sees it.
 
+**A decision can be put back, and until now only the table editor could do it.**
+Approve and Reject render only while a row is `pending`, so an approval was final
+from the site — and an approved row is exactly what `ingest-submissions.mjs` reads
+on its next run, at 07:20 and 19:20 UTC, after which undoing it means editing the
+corpus rather than a row. *Reopen* is the operation `/review` was still sending
+people to the Supabase dashboard for, which is the thing that page exists to
+replace. The database always allowed it: `admins review submissions` is
+`using (has_role('admin'))` with no condition on the status, so this is the page
+catching up with the policy and not a widening of it.
+
+One click and no confirmation, matching the weight this page already gives Approve
+— and reopening is the milder of the two, since it undoes a decision rather than
+making one and the submitted decks are untouched. The verdict is cleared with the
+status, because a note reading *rejected: the placings do not add up* under a row
+that is waiting again describes a decision that no longer stands; the old text goes
+into the reviewer's note box rather than being thrown away with the column.
+
+Found by testing the admin-submit path end to end: approving a test tournament left
+it queued for the next ingest with no route back through the site.
+
 `supabase/` holds `schema.sql`, the whole thing for a new project, and `migrations/`,
 the same changes for one that already exists, **numbered in the order they must
 run**. All are safe to run twice. They were dated at first, until two landed on one

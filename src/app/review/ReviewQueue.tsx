@@ -10,6 +10,7 @@ import {
   decideOrganizerRequest,
   listForReview,
   listOrganizerRequests,
+  reopenSubmission,
   reviewSubmission,
   submittedDecks,
   useAccount,
@@ -282,6 +283,42 @@ export default function ReviewQueue() {
     }
   };
 
+  /*
+   * Back into the queue.
+   *
+   * One click and no confirmation, which is the same weight this page already
+   * gives Approve — and reopening is the milder of the two, since it undoes a
+   * decision rather than making one and the decks are untouched. What it is worth
+   * is the deadline: an approved row is read by the next submissions ingest, twice
+   * a day, and after that undoing it means editing the corpus rather than a row.
+   *
+   * The old note goes into the box rather than being thrown away with the column,
+   * so correcting a decision does not mean retyping the reason for it.
+   */
+  const reopen = async (row: Submission) => {
+    setBusy(row.id);
+    setError(null);
+    try {
+      await reopenSubmission(row.id);
+      if (row.review_note) {
+        setNotes((held) => ({ ...held, [row.id]: held[row.id] ?? row.review_note ?? '' }));
+      }
+      setRows((held) =>
+        (held ?? [])
+          .map((r) =>
+            r.id === row.id
+              ? { ...r, status: 'pending' as SubmissionStatus, review_note: null, reviewed_at: null }
+              : r
+          )
+          .filter((r) => tab === 'all' || r.status === tab)
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not reopen that.');
+    } finally {
+      setBusy(null);
+    }
+  };
+
   /* ------------------------------------------------------------- gates */
 
   if (!accountsEnabled) {
@@ -369,6 +406,17 @@ export default function ReviewQueue() {
               </button>
               {row.reviewed_at ? (
                 <span className="muted">Reviewed {day(row.reviewed_at)}</span>
+              ) : null}
+              {row.status !== 'pending' ? (
+                <button
+                  type="button"
+                  className="account-link"
+                  disabled={busy === row.id}
+                  onClick={() => reopen(row)}
+                  title="Put it back in the queue — it is left out of the next ingest"
+                >
+                  {busy === row.id ? 'Reopening…' : 'Reopen'}
+                </button>
               ) : null}
             </p>
 

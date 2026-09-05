@@ -522,3 +522,39 @@ export async function reviewSubmission(
     );
   }
 }
+
+/**
+ * Putting a decided submission back in the queue.
+ *
+ * A decision had no way back through the site. The buttons that make one render
+ * only while the row is `pending`, so an approval was final from here — and an
+ * approved row is what `ingest-submissions.mjs` reads on its next run, twice a
+ * day, after which it is in the corpus and the way out is a hand-edit in the
+ * Supabase table editor. That is the operation `/review` exists to replace.
+ *
+ * The database always allowed it: `admins review submissions` is
+ * `using (has_role('admin'))` with no condition on the status, so this is the
+ * page catching up with the policy rather than a widening of it.
+ *
+ * The verdict is cleared along with the status. A note reading "rejected because
+ * the placings do not add up" under a row that is waiting again describes a
+ * decision that no longer stands, and the reviewer writes a new one when they
+ * decide again — the caller keeps the old text in the box so nothing is retyped.
+ */
+export async function reopenSubmission(id: string) {
+  const client = supabase();
+  if (!client) throw new Error('Accounts are not configured.');
+  /* Read back for the same reason as above: RLS filtering is not an error. */
+  const { data, error } = await client
+    .from('submissions')
+    .update({ status: 'pending', review_note: null, reviewed_at: null })
+    .eq('id', id)
+    .select('id');
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) {
+    throw new Error(
+      'Nothing was updated — the database refused the change. Check that ' +
+        'supabase/migrations/0001-review.sql has been run.'
+    );
+  }
+}
