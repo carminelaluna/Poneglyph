@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T21:34:41.611Z",
+  "generatedAt": "2026-09-05T04:40:25.931Z",
   "releases": [
     {
       "code": "OP-17",
@@ -271,8 +271,8 @@
     {
       "id": "EN",
       "label": "English",
-      "decks": 64006,
-      "recent": 4500,
+      "decks": 64010,
+      "recent": 4504,
       "archived": 59506,
       "fieldDecks": 58399,
       "sampling": "mixed",
@@ -289,14 +289,14 @@
     {
       "id": "JP",
       "label": "Japanese",
-      "decks": 5920,
-      "recent": 613,
-      "archived": 5307,
+      "decks": 5937,
+      "recent": 624,
+      "archived": 5313,
       "fieldDecks": 0,
       "sampling": "winners",
       "window": {
         "from": "2022-07-09",
-        "to": "2026-09-01"
+        "to": "2026-09-03"
       },
       "eras": 46,
       "sources": [
