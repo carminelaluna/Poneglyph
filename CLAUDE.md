@@ -1483,8 +1483,8 @@ site.
 ## Current shape
 
 2,785 cards · 4,843 printings · 60 sets (17 boosters, 36 starter decks) · 2,172
-Standard-legal, 20 via the block exception · 2,770 priced · 69,921 decklists —
-English 63,984 from 2022-10, Japanese 5,937 from 2022-07 · 7,948 tournaments ·
+Standard-legal, 20 via the block exception · 2,770 priced · 69,920 decklists —
+English 63,983 from 2022-10, Japanese 5,937 from 2022-07 · 7,948 tournaments ·
 19,565 named players, 3,678 with five or more results · 152,890 recorded matches
 from 1,025 brackets · 44/46 release windows · 53 dated set releases · 67 announced
 official events across 6 types · 206 tests.
