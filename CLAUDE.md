@@ -318,6 +318,53 @@ importing from `cards.ts` would drag 4.4 MB of card JSON into the bundle.
 With `NEXT_PUBLIC_CDN_URL` unset the proxy answers instead, so a fresh checkout works
 with no CDN. `build:static` refuses to run without it — an export has no proxy.
 
+**`/compare` counts wins, because share is not the same measurement twice.** The
+one question a metagame page split by corpus cannot answer is what is winning in
+Japan and has not reached English — and subtracting one region's share from the
+other would be the worst kind of wrong number, the kind that looks right. English
+is `mixed`, 58,399 of its decks from whole Swiss fields; Japanese is `winners`,
+`fieldDecks: 0`, because Limitless is an English-corpus source and Top Decks
+publishes finishing lists. A share over winners reads high for whatever wins.
+
+First places are defined identically in both, so that is the whole of what the page
+counts: 4,639 Japanese and 3,513 English across the archive, 146 and 75 in a default
+window. Every row carries its sample and `MIN_WINS` holds back anything under two.
+
+**An empty cell there means two opposite things, so it says which.** The pools
+differ — five sets entered play in Japanese that never did in English, two the other
+way — so an archetype missing from a region may be unplayed or may not exist there.
+`index.leaders` is per corpus, so a Leader that region has never recorded at all
+reads *Not recorded* rather than 0%. Two of them do, over the full archive.
+
+It reuses `.matchup-bar`, the two-sided bar from the matchup table, for the same
+reason it exists there: a single left-to-right bar makes "ahead in Japan" and "ahead
+in English" differ only by length.
+
+**`robots.txt` carries content signals, and `build-static.mjs` is what writes
+them.** `MetadataRoute.Robots` has no field for a directive Next does not know, and
+the path rules and the sitemap URL are worth keeping in `robots.ts` — that URL comes
+from `NEXT_PUBLIC_SITE_URL` and changes the day this moves to a domain. So the export
+step inserts `Content-Signal: search=yes,ai-input=yes,ai-train=no` **into** the
+`User-agent: *` group Next already wrote, rather than prepending a second one: two
+groups with the same name is ambiguous, and parsers disagree about whether a repeat
+means merge or first-wins.
+
+What it asks for is the archive rather than the cards: the card text and art are
+Bandai's, but the recorded results, the 152,890 matches joined out of published
+brackets and the indexes over both are this project's work, and Article 4 of EU
+Directive 2019/790 permits mining them unless the reservation is machine-readable.
+`use` is left unset, which under the policy grants and restricts nothing — the
+honest answer for a distinction not thought through. Eight training crawlers are
+disallowed outright in `robots.ts`, `ClaudeBot` among them for consistency: this is
+the same request the project honours when it is on the other side of it, which is why
+nothing here ever fetches onepiece.gg.
+
+**A new top-level route needs a line in `sitemap.ts`, and nothing enforces it.**
+That file already carried a comment about five pages missing "for no reason other
+than having been added after this list was written"; `/compare` made it six. The 282
+archetype sub-pages went in at the same time, at a lower priority than the page they
+hang off — they are separate answers rather than a paginated view of one.
+
 **The metagame page opens with ten archetypes, and shows what it counted.** A
 window holds up to 141 and the tail is decks somebody brought once, so the table
 takes the top ten and the rest are one click away — which closes again whenever a

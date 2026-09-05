@@ -26,6 +26,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/banlist`, lastModified: updated, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${BASE}/spoilers`, lastModified: updated, changeFrequency: 'daily', priority: 0.7 },
     { url: `${BASE}/deckbuilder`, lastModified: updated, changeFrequency: 'monthly', priority: 0.6 },
+    /*
+     * And a sixth, missed the same way the five above were: added after the list,
+     * so the list did not know. That is twice now, which makes it the shape of this
+     * file rather than an accident — a new top-level route needs a line here, and
+     * nothing enforces it.
+     */
+    { url: `${BASE}/compare`, lastModified: updated, changeFrequency: 'daily', priority: 0.7 },
     { url: `${BASE}/data`, lastModified: updated, changeFrequency: 'daily', priority: 0.3 },
     { url: `${BASE}/legal`, lastModified: updated, changeFrequency: 'yearly', priority: 0.3 },
     /* Linked from the footer only, but they are the URLs given to OAuth providers,
@@ -45,6 +52,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
           changeFrequency: 'daily' as const,
           priority: 0.8,
         }))
+      : []),
+    /*
+     * The two sub-pages of each archetype, at a lower priority than the page they
+     * hang off. They are real pages with their own titles and their own answer —
+     * every recorded matchup, every recorded list — rather than a paginated view of
+     * one, which is the distinction worth spending 282 URLs on.
+     */
+    ...(hasDeckData
+      ? archetypes.flatMap((a) =>
+          ['matchups', 'decklists'].map((view) => ({
+            url: `${BASE}/decks/${a.slug}/${view}`,
+            lastModified: updated,
+            changeFrequency: 'daily' as const,
+            priority: 0.5,
+          }))
+        )
       : []),
     // Only the notable finishes are worth a crawl budget.
     ...(hasDeckData

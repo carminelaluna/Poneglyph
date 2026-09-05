@@ -50,6 +50,7 @@ export default function Footer() {
           <div>
             <h3>Browse</h3>
             <ul>
+              <li><Link href="/compare">Japanese vs English</Link></li>
               <li><Link href="/tournaments">Tournaments</Link></li>
               <li><Link href="/players">Players</Link></li>
               <li><Link href="/sets">Sets</Link></li>

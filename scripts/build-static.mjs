@@ -160,6 +160,95 @@ async function flattenPrefetchPayloads() {
   );
 }
 
+/**
+ * Prepend the content signals to the exported robots.txt.
+ *
+ * Not in `src/app/robots.ts` because `MetadataRoute.Robots` has no field for a
+ * directive Next does not know about, and the path rules and the sitemap URL are
+ * worth keeping there — the URL is built from `NEXT_PUBLIC_SITE_URL`, which changes
+ * the day this moves to a domain, and a hand-written robots.txt would not.
+ *
+ * ## What the signals are
+ *
+ * A vocabulary layered on robots.txt: a crawler that reads it learns not only which
+ * paths it may fetch but what it may then *do* with what it fetched. Three of them
+ * are declared here and one is deliberately left out.
+ *
+ *   search=yes    index it and return links and short excerpts. That is how anybody
+ *                 finds a card archive, and there is no version of this project that
+ *                 wants to be harder to find.
+ *   ai-input=yes  read it to answer a question now — retrieval, grounding, a cited
+ *                 answer. That is search wearing a different coat, and a free public
+ *                 archive is not made worse by being quoted accurately.
+ *   ai-train=no   do not train on it. What is original here is not the card text,
+ *                 which is Bandai's; it is the derived corpus — 152,890 matches
+ *                 joined out of published brackets, 19,565 player records, the
+ *                 sampling discipline. That took work and is not a training set.
+ *
+ * `use` is left unset. The policy defines it as how a system may consume the
+ * content — immediate, reference or full — and unset means neither granted nor
+ * restricted, which is the honest answer for a distinction this project has not
+ * thought through. Saying nothing is a position; guessing is not.
+ *
+ * ## Why it is worth writing down at all
+ *
+ * Article 4 of EU Directive 2019/790 allows text and data mining **unless the
+ * rightsholder has expressly reserved it in a machine-readable form**. The reservation
+ * is the whole mechanism: without one the exception applies by default. That is why
+ * the block is worded as a condition of access rather than as a polite request, and
+ * why the `Disallow` lines in robots.ts sit beside it — those are the half a crawler
+ * obeys today, this is the half that says why.
+ */
+/** Named once, so the file and the line logged about it cannot disagree. */
+const SIGNALS = 'search=yes,ai-input=yes,ai-train=no';
+
+async function writeRobotsSignals() {
+  const file = path.join(OUT, 'robots.txt');
+  if (!existsSync(file)) {
+    console.log('[static] no robots.txt to sign — skipped');
+    return;
+  }
+
+  const preamble = [
+    '# As a condition of accessing this website, you agree to the content signals',
+    '# below. A signal set to `yes` grants the corresponding use; `no` withholds it;',
+    '# a use with no signal is neither granted nor restricted.',
+    '#',
+    '#   search    building a search index and returning links and short excerpts.',
+    '#   ai-input  reading the content to answer a question now — retrieval,',
+    '#             grounding, a cited answer. Not the same as training.',
+    '#   ai-train  training or fine-tuning a model on the content.',
+    '#',
+    '# ANY RESTRICTION EXPRESSED HERE IS AN EXPRESS RESERVATION OF RIGHTS UNDER',
+    '# ARTICLE 4 OF EU DIRECTIVE 2019/790 ON COPYRIGHT IN THE DIGITAL SINGLE MARKET.',
+    '#',
+    '# Poneglyph is an unofficial fan project. The card names, card text and artwork',
+    "# are Bandai's and are reproduced for identification and reference; what is asked",
+    '# for here is the archive built around them — the recorded results, the matchup',
+    '# data joined out of published brackets, and the indexes derived from both.',
+    '# See /legal.',
+    '',
+  ].join('\n');
+
+  /*
+   * Inserted into the group Next already wrote, rather than prepended as a second
+   * one. Two `User-agent: *` groups in one file is ambiguous: parsers disagree
+   * about whether a repeated name means "merge these" or "the first one wins".
+   * MTGGoldfish's own robots.txt has exactly that shape. One group cannot be read
+   * two ways.
+   */
+  const held = await readFile(file, 'utf8');
+  const signed = held.replace(/^(User-Agent: \*\r?\n)/im, `$1Content-Signal: ${SIGNALS}\n`);
+  if (signed === held) {
+    console.log('[static] ::warning::robots.txt has no `User-agent: *` group — not signed');
+    return;
+  }
+  /* A blank line between the note and the rules, so both read as what they are. */
+  await writeFile(file, `${preamble}
+${signed}`);
+  console.log(`[static] robots.txt signed — ${SIGNALS}`);
+}
+
 async function main() {
   if (!process.env.NEXT_PUBLIC_CDN_URL) {
     console.error(
@@ -216,6 +305,8 @@ async function main() {
 
   /* Jekyll would otherwise drop _next/ and take the whole application with it. */
   await writeFile(path.join(OUT, '.nojekyll'), '');
+
+  await writeRobotsSignals();
 
   /*
    * The custom domain, if there is one.

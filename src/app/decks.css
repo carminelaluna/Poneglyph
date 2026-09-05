@@ -588,3 +588,16 @@
 .matchup-thin {
   opacity: 0.6;
 }
+
+/*
+ * Which side of the bar won, in two letters.
+ *
+ * `.matchup-bar` centres a percentage; here the number is already in the two
+ * columns to the left and repeating it would be the third time the same figure
+ * appeared in one row. What the bar adds is the direction, so that is all it says.
+ */
+.compare-side {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--glyph-dim);
+}

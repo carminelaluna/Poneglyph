@@ -65,6 +65,18 @@ export default function MetaBrowser() {
       <WindowBar {...bar} index={index} count={decks.length} />
 
       {/*
+        The one question a page split by corpus cannot answer, so it is a link out
+        rather than a control here: the comparison counts something else entirely —
+        first places, the only figure the two regions define the same way.
+      */}
+      <p className="muted source-line" style={{ margin: '0.9rem 0 0' }}>
+        <Link href="/compare" className="inline-link">
+          Japanese and English side by side
+        </Link>{' '}
+        — what wins in one and not the other.
+      </p>
+
+      {/*
         Conditional, and therefore still here rather than on /data with the rest of
         the caveats: it explains the table in front of you right now — why a column
         is missing, or which decks the one you can see was counted from. A line, not
