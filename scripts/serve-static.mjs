@@ -13,9 +13,10 @@
  * So this is the only local way to find out whether the deploy will actually work.
  */
 
-import { createReadStream, existsSync, readFileSync, statSync } from 'node:fs';
+import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import path from 'node:path';
+import { readEnv } from './env.mjs';
 
 const args = process.argv.slice(2);
 const at = args.indexOf('--port');
@@ -31,17 +32,7 @@ const ROOT = path.resolve('out');
  * would be worse than no test. The prefix is stripped here instead, so this mounts
  * out/ exactly where Pages mounts it.
  */
-function basePath() {
-  if (process.env.NEXT_PUBLIC_BASE_PATH) return process.env.NEXT_PUBLIC_BASE_PATH;
-  for (const file of ['.env.local', '.env']) {
-    if (!existsSync(file)) continue;
-    const found = /^\s*NEXT_PUBLIC_BASE_PATH\s*=\s*(.*)$/m.exec(readFileSync(file, 'utf8'));
-    if (found) return found[1].trim().replace(/^["']|["']$/g, '');
-  }
-  return '';
-}
-
-const RAW_BASE = basePath();
+const RAW_BASE = readEnv('NEXT_PUBLIC_BASE_PATH');
 const BASE = RAW_BASE ? `/${RAW_BASE.replace(/^\/+|\/+$/g, '')}` : '';
 
 const TYPES = {

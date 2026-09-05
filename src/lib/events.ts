@@ -45,12 +45,6 @@ for (const deck of decks as EventDeck[]) {
   byEvent.set(deck.eventId, list);
 }
 
-/** How many lists we hold for an event — the link only appears when it is worth a page. */
-export const eventSize = (eventId: string | undefined) =>
-  eventId ? (byEvent.get(eventId)?.length ?? 0) : 0;
-
-export const hasEventPage = (eventId: string | undefined) => eventSize(eventId) >= 2;
-
 function build(id: string, list: Deck[]): TcgEvent {
   const ordered = list
     .slice()
@@ -106,13 +100,3 @@ export function prerenderableEvents(minDecks = 8) {
     .filter(([, list]) => list.length >= minDecks)
     .map(([id]) => id);
 }
-
-/** Biggest recorded events, for the metagame page's footer. */
-export function largestEvents(limit = 10) {
-  return [...byEvent.entries()]
-    .map(([id, list]) => build(id, list))
-    .sort((a, b) => b.recorded - a.recorded || b.date.localeCompare(a.date))
-    .slice(0, limit);
-}
-
-export const eventCount = byEvent.size;

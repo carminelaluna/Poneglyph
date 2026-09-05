@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Matchups from '../Matchups';
 import { filterDecks, windowEnd, windowStart } from '@/lib/meta';
-import { WindowBar, useMetaIndex, useWindow, windowHref } from '../../useMeta';
+import { IndexError, WindowBar, useMetaIndex, useWindow, windowHref } from '../../useMeta';
 
 /**
  * Every recorded matchup for one archetype, uncapped.
@@ -17,27 +17,10 @@ import { WindowBar, useMetaIndex, useWindow, windowHref } from '../../useMeta';
  * costs a navigation and no payload.
  */
 export default function MatchupsView({ leaderId, slug }: { leaderId: string; slug: string }) {
-  const {
-    window: window_,
-    setWindow,
-    venues,
-    setVenues,
-    tiers,
-    setTiers,
-    region,
-    setRegion,
-    query,
-  } = useWindow();
+  const { window: window_, venues, tiers, region, bar, query } = useWindow();
   const { index, error } = useMetaIndex(region, window_);
 
-  if (error) {
-    return (
-      <p className="empty">
-        The deck index did not load ({error}). Run <code className="mono">npm run ingest:decks</code>{' '}
-        to build it.
-      </p>
-    );
-  }
+  if (error) return <IndexError error={error} />;
   if (!index) return <p className="empty">Reading recorded pairings…</p>;
 
   /* The same count the archetype page shows, so the bar does not disagree with it. */
@@ -45,19 +28,7 @@ export default function MatchupsView({ leaderId, slug }: { leaderId: string; slu
 
   return (
     <>
-      <WindowBar
-        window={window_}
-        onChange={setWindow}
-        venues={venues}
-        onVenues={setVenues}
-        tiers={tiers}
-        onTiers={setTiers}
-        region={region}
-        onRegion={setRegion}
-        index={index}
-        count={decks}
-        noun="decks of this archetype"
-      />
+      <WindowBar {...bar} index={index} count={decks} noun="decks of this archetype" />
 
       <Matchups
         leaderId={leaderId}

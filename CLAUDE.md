@@ -111,6 +111,7 @@ two runs before the answer is refused.
 
 ```
 sources.mjs          every upstream, with its role and limits
+env.mjs              .env.local as Next reads it, for the three scripts that must
 corpus-guard.mjs     when an answer is too small to overwrite what is recorded
 refusal.mjs          an upstream that will not talk, told apart from a bug of ours
 limitless.mjs        the rate limiter and request helper, shared by two ingests
@@ -120,6 +121,7 @@ submissions.mjs      an organizer's answer -> corpus rows
 ingest.mjs           cards     -> data/cards|sets|filters|meta.json + cards-index
                                  + data/price-history.json (one point per change)
 ingest-decks.mjs     Limitless -> data/decks|tournaments|decks-state.json
+                                 (nothing under public/ — build-indexes owns those)
 ingest-matchups.mjs  Limitless -> data/matchups.json (pairings, resumable)
 ingest-topdecks.mjs  Top Decks -> data/decks-{en,jp}.json (guarded, writes nothing else)
 ingest-spoilers.mjs  leaks     -> data/spoilers.json (two categories, see below)
@@ -749,6 +751,47 @@ turn up in the wild and strips the `_pN` suffix — two entries for one playset 
 look under the copy limit. **The form checks and refuses nothing**: review is the gate,
 and rejecting a real result because our archive is behind would be strict in the wrong
 direction.
+
+**Dead code found by counting, not by reading.** A pass over every exported symbol
+against every other file turned up eleven that nothing imported and that their own
+file did not use either — `latestSets`, `pigmentGlow`, `archetypeDecks`,
+`recentResults`, `largestEvents`, `eventCount`, `playerCount`, `hasEventPage` and
+`eventSize` behind it, `CardColor`, `LANGUAGES` — plus seven CSS rule blocks whose
+classes nothing renders, left behind by the *Ways in* panel, the four-format export
+dialog and an older decklist layout. Removing one made the next visible: `eventSize`
+had exactly one caller, `hasEventPage`, and became dead the moment it went.
+
+Two false positives are worth knowing before running that scan again. `onRequest` in
+`build-cdn.mjs` sits inside a template literal — it is the Cloudflare Functions entry
+point, called by the platform. And a class built as `` `sub-status sub-${row.status}` ``
+is invisible to a scanner reading string literals, which covers `.sub-approved`,
+`.sub-rejected`, `.price-move`, `.build-total`, `.event-row` and `.to-top`.
+
+**`ingest-decks.mjs` spent every run deriving release eras that were thrown away.**
+It carried its own copy of the adoption scan — the one its comment calls the slowest
+part of a rebuild — and fed it to `writeBrowserIndex`, which wrote
+`public/data/decks-index.json` and `public/data/decks/*.json`. `build-indexes.mjs`
+**deletes both** on every run, thirty lines from its end. The eras also went into
+`decks-meta.json`, where `DecksMeta` does not declare them and nothing reads them.
+
+The two copies had already drifted: the minimum sample for a 7-day adoption stretch
+was `total < 30` in one and `total < 40` in the other. Nothing surfaced it because
+the answer was discarded. That is 227 lines gone from an ingest that runs twice a
+day, and the same lesson `ingest-topdecks.mjs` learned: **one writer per payload**.
+
+**`loadEnvFiles` existed three times**, byte-identical in `build-static.mjs` and
+`deploy-site.mjs` and as a partial re-implementation in `serve-static.mjs` that read
+one variable with the same quote-stripping and the same file order. `env.mjs` holds
+it now, with `parseEnv` split out pure so a test can reach it — the same split
+`price-history.mjs` and `matchups.mjs` already make. What it decides is not cosmetic:
+a variable this misses is a build refusing a correctly configured checkout, or a
+deploy pointed at the wrong CDN.
+
+**Four views render `WindowBar` and all four wrote out its ten props.** `useWindow`
+returns `bar` for that now, and `IndexError` replaces the fourth copy of a paragraph
+telling the reader which command rebuilds the archive. The rule is the one this file
+keeps arriving at from the other direction: the eleventh prop would have been added
+four times, or three.
 
 **Still to do:** email and password sign-in stays hidden until a custom SMTP provider
 is configured — that is an account, not a code change, and everything else about it is

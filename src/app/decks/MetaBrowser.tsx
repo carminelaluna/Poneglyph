@@ -14,7 +14,7 @@ import {
   withTrend,
   type MetaIndex,
 } from '@/lib/meta';
-import { Trend, WindowBar, WinRate, useMetaIndex, useWindow } from './useMeta';
+import { IndexError, Trend, WindowBar, WinRate, useMetaIndex, useWindow } from './useMeta';
 
 /** A deck this rare in the chosen window is a one-off, not a metagame position. */
 const MIN_DECKS = 3;
@@ -32,7 +32,7 @@ const HEAD = 10;
 const RECENT = 12;
 
 export default function MetaBrowser() {
-  const { window: window_, setWindow, venues, setVenues, tiers, setTiers, region, setRegion } = useWindow();
+  const { window: window_, setWindow, venues, tiers, region, bar } = useWindow();
   const { index, error, loadingArchive } = useMetaIndex(region, window_);
   const [all, setAll] = useState(false);
 
@@ -51,14 +51,7 @@ export default function MetaBrowser() {
     return { decks, rows };
   }, [index, window_, venues, tiers]);
 
-  if (error) {
-    return (
-      <p className="empty">
-        The deck index did not load ({error}). Run <code className="mono">npm run ingest:decks</code>{' '}
-        to build it.
-      </p>
-    );
-  }
+  if (error) return <IndexError error={error} />;
 
   if (!index || !view) return <p className="empty">Reading tournament results…</p>;
 
@@ -69,18 +62,7 @@ export default function MetaBrowser() {
 
   return (
     <>
-      <WindowBar
-        window={window_}
-        onChange={setWindow}
-        venues={venues}
-        onVenues={setVenues}
-        tiers={tiers}
-        onTiers={setTiers}
-        region={region}
-        onRegion={setRegion}
-        index={index}
-        count={decks.length}
-      />
+      <WindowBar {...bar} index={index} count={decks.length} />
 
       {/*
         Conditional, and therefore still here rather than on /data with the rest of

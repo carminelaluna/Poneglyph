@@ -18,7 +18,9 @@
  * archive fills in on its own.
  *
  * Writes data/tournaments.json, data/decks.json, data/archetypes.json,
- * data/card-play.json, data/decks-meta.json and public/data/decks-index.json.
+ * data/card-play.json and data/decks-meta.json. It writes nothing under
+ * public/data: build-indexes.mjs owns every browser payload, which is the rule
+ * ingest-topdecks.mjs learned by leaving a 0 KB index behind.
  */
 
 import { writeFile, readFile, mkdir, readdir, rm } from 'node:fs/promises';
@@ -548,230 +550,6 @@ function venueOf(details) {
 }
 
 // ---------------------------------------------------------------------------
-// format eras
-// ---------------------------------------------------------------------------
-
-/**
- * When each set actually entered competitive play, derived from the corpus rather
- * than from a printed release date.
- *
- * Two things have to be true before a date can be claimed, because either alone
- * gives nonsense:
- *
- *  1. The set's first appearance is later than the corpus starts. Otherwise all we
- *     have measured is the edge of our own data — ST-01 shipped in 2022, so a
- *     "first seen" inside a 2026 corpus says nothing about its release.
- *  2. The set reaches real adoption. A single stray card from an old set turning
- *     up mid-corpus is not a release; a genuine one goes from nothing to a large
- *     share of decks within days. OP-17 peaks at 92% of decks, while the sets that
- *     merely trickle in never pass 2%.
- *  3. Several distinct cards from the set arrive, not one. This is what separates a
- *     release from a single card becoming fashionable: ST-01 shipped in 2022, but
- *     exactly one of its cards (ST01-011) entered play mid-corpus and reached 17%
- *     of decks. One card is a deckbuilding trend; a release brings a whole sheet.
- *
- * The date reported is the first appearance, not the paper release: OP-17 released
- * on 2026-08-28 in English but was being played on simulators from 2026-08-17, and
- * for a metagame tool the second date is the one that matters.
- */
-const ADOPTION_THRESHOLD = 10;
-const ADOPTION_WINDOW_DAYS = 7;
-const MIN_DISTINCT_CARDS = 3;
-
-function buildEras(decks) {
-  if (decks.length < 100) return [];
-
-  const rows = decks
-    .map((d) => {
-      const ids = [d.leaderId, ...d.cards.map((c) => c.id)];
-      return {
-        day: d.date.slice(0, 10),
-        ids,
-        sets: new Set(ids.map((id) => id.split('-')[0])),
-      };
-    })
-    .sort((a, b) => a.day.localeCompare(b.day));
-
-  const corpusStart = rows[0].day;
-
-  const firstSeen = new Map();
-  const distinctCards = new Map();
-  for (const row of rows) {
-    for (const set of row.sets) if (!firstSeen.has(set)) firstSeen.set(set, row.day);
-    for (const id of row.ids) {
-      const set = id.split('-')[0];
-      if (!distinctCards.has(set)) distinctCards.set(set, new Set());
-      distinctCards.get(set).add(id);
-    }
-  }
-
-  /*
-   * Deck counts per day, and per (set, day). Bucketing once turns the adoption
-   * scan from a filter over every deck for every set and every day into a slide
-   * over a few hundred days — it was the slowest part of a rebuild by far.
-   */
-  const days = [...new Set(rows.map((r) => r.day))].sort();
-  const dayIndex = new Map(days.map((d, i) => [d, i]));
-  const dayMs = days.map((d) => Date.parse(`${d}T00:00:00Z`));
-  const totalByDay = new Array(days.length).fill(0);
-  const hitsBySet = new Map();
-
-  for (const row of rows) {
-    const i = dayIndex.get(row.day);
-    totalByDay[i]++;
-    for (const set of row.sets) {
-      let hits = hitsBySet.get(set);
-      if (!hits) {
-        hits = new Array(days.length).fill(0);
-        hitsBySet.set(set, hits);
-      }
-      hits[i]++;
-    }
-  }
-
-  /** Highest share of decks holding the set across any 7-day stretch. */
-  const peakAdoption = (set) => {
-    const hits = hitsBySet.get(set);
-    if (!hits) return 0;
-    let peak = 0;
-    for (let start = 0; start < days.length; start++) {
-      const cutoff = dayMs[start] + ADOPTION_WINDOW_DAYS * 86_400_000;
-      let total = 0;
-      let hit = 0;
-      for (let i = start; i < days.length && dayMs[i] < cutoff; i++) {
-        total += totalByDay[i];
-        hit += hits[i];
-      }
-      if (total < 40) continue;
-      const share = (hit / total) * 100;
-      if (share > peak) peak = share;
-    }
-    return peak;
-  };
-
-  return [...firstSeen.entries()]
-    .filter(([set, day]) => /^(OP|EB|PRB|ST)\d+$/.test(set) && day > corpusStart)
-    .filter(([set]) => (distinctCards.get(set)?.size ?? 0) >= MIN_DISTINCT_CARDS)
-    .map(([set, day]) => ({ set, day, peak: peakAdoption(set), cards: distinctCards.get(set).size }))
-    .filter((e) => e.peak >= ADOPTION_THRESHOLD)
-    .map(({ set, day, peak, cards }) => ({
-      // `OP17` -> `OP-17`, matching how sets are labelled everywhere else.
-      code: set.replace(/^([A-Z]+)(\d+)$/, '$1-$2'),
-      set,
-      from: day,
-      kind: set.startsWith('ST') ? 'Starter deck' : 'Expansion',
-      peak: +peak.toFixed(1),
-      cards,
-    }))
-    .reduce(groupSameDay, [])
-    .map((era) => ({
-      ...era,
-      decks: decks.filter((d) => d.date.slice(0, 10) >= era.from).length,
-    }))
-    .sort((a, b) => b.from.localeCompare(a.from));
-}
-
-/**
- * Starter decks ship in waves — ST-31, ST-32 and ST-34 all entered play on the same
- * day. Three identical dates in a dropdown are three ways to ask one question, so
- * releases sharing a date become a single window.
- */
-function groupSameDay(eras, era) {
-  const existing = eras.find((e) => e.from === era.from && e.kind === era.kind);
-  if (!existing) return [...eras, { ...era, codes: [era.code] }];
-  existing.codes.push(era.code);
-  existing.code = existing.codes.join(', ');
-  existing.cards += era.cards;
-  existing.peak = Math.max(existing.peak, era.peak);
-  return eras;
-}
-
-// ---------------------------------------------------------------------------
-// browser index
-// ---------------------------------------------------------------------------
-
-/**
- * The metagame is recomputed in the page for whatever window the reader picks, so
- * the deck corpus ships to the browser — but in two pieces.
- *
- * The table needs only a light row per deck (leader, date, placing, record). The
- * card lists are five times heavier and are needed by exactly one view, the
- * archetype page, and only for one archetype at a time. Shipping them together
- * cost every visitor ~400 KB gzipped; split, the table costs ~130 KB and an
- * archetype page adds 6-15 KB of its own.
- */
-async function writeBrowserIndex(decks, cardsById, eras, meta, venueById = new Map(), tierById = new Map()) {
-  const dir = path.resolve('public', 'data');
-  const deckDir = path.join(dir, 'decks');
-  await mkdir(deckDir, { recursive: true });
-
-  const leaders = {};
-  const cardNames = {};
-  const byLeader = new Map();
-
-  for (const deck of decks) {
-    if (!leaders[deck.leaderId]) {
-      leaders[deck.leaderId] = { n: deck.leaderName, c: deck.colors };
-    }
-    for (const card of deck.cards) {
-      if (!cardNames[card.id]) {
-        const info = cardsById.get(card.id);
-        cardNames[card.id] = [info?.name ?? card.id, card.category];
-      }
-    }
-    if (!byLeader.has(deck.leaderId)) byLeader.set(deck.leaderId, {});
-    byLeader.get(deck.leaderId)[deck.id] = deck.cards.map((c) => [c.id, c.count]);
-  }
-
-  const index = {
-    generatedAt: meta.generatedAt,
-    window: {
-      from: meta.coverage.oldest?.slice(0, 10) ?? null,
-      to: meta.coverage.newest?.slice(0, 10) ?? null,
-    },
-    /* Full Swiss fields: all but one of these decks carries a win-loss record. */
-    sampling: 'field',
-    eras,
-    tiers: TIER_ORDER.map((id) => ({ id, label: TIER_LABELS[id] })),
-    leaders,
-    cards: cardNames,
-    decks: decks.map((d) => ({
-      i: d.id,
-      l: d.leaderId,
-      d: d.date.slice(0, 10),
-      p: d.placing,
-      w: d.record.wins ?? 0,
-      s: d.record.losses ?? 0,
-      t: d.record.ties ?? 0,
-      n: d.tournamentPlayers,
-      e: d.tournamentName,
-      v: venueById.get(d.tournamentId) ?? 'unknown',
-      k: tierById.get(d.tournamentId) ?? 'local',
-    })),
-  };
-
-  const json = JSON.stringify(index);
-  await writeFile(path.join(dir, 'decks-index.json'), json);
-
-  /* Stale archetype files would silently serve last week's lists. */
-  const existing = await readdir(deckDir).catch(() => []);
-  const wanted = new Set([...byLeader.keys()].map((id) => `${id}.json`));
-  await Promise.all(
-    existing.filter((f) => f.endsWith('.json') && !wanted.has(f)).map((f) => rm(path.join(deckDir, f)))
-  );
-
-  await Promise.all(
-    [...byLeader.entries()].map(([leaderId, lists]) =>
-      writeFile(path.join(deckDir, `${leaderId}.json`), JSON.stringify(lists))
-    )
-  );
-
-  const kb = (Buffer.byteLength(json) / 1024).toFixed(0);
-  log(`browser index -> public/data/decks-index.json (${kb} KB, ${eras.length} eras)`);
-  log(`card lists    -> public/data/decks/*.json (${byLeader.size} archetypes)`);
-}
-
-// ---------------------------------------------------------------------------
 
 async function main() {
   const started = Date.now();
@@ -815,8 +593,6 @@ async function main() {
       tier: tierOf(t.name),
     };
   });
-  const venueById = new Map(tournaments.map((t) => [t.id, t.venue]));
-  const tierById = new Map(tournaments.map((t) => [t.id, t.tier]));
   const decks = dedupe([...collected.decks, ...newDecks], (d) => d.id)
     .map((d) => (d.cards.length === new Set(d.cards.map((c) => c.id)).size
       ? d
@@ -826,7 +602,6 @@ async function main() {
 
   const archetypes = buildArchetypes(decks, cardsById);
   const cardPlay = buildCardPlay(decks);
-  const eras = buildEras(decks);
 
   const meta = {
     generatedAt: new Date().toISOString(),
@@ -852,7 +627,6 @@ async function main() {
       tally[t.tier] = (tally[t.tier] ?? 0) + 1;
       return tally;
     }, {}),
-    eras,
     durationMs: Date.now() - started,
   };
 
@@ -865,7 +639,6 @@ async function main() {
     writeFile(path.join(DATA, 'card-play.json'), JSON.stringify(cardPlay)),
     writeFile(path.join(DATA, 'decks-meta.json'), JSON.stringify(meta, null, 2)),
   ]);
-  await writeBrowserIndex(decks, cardsById, eras, meta, venueById, tierById);
 
   log(`done in ${((Date.now() - started) / 1000).toFixed(1)}s using ${budget.spent} requests`);
   console.table(meta.counts);

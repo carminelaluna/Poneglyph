@@ -240,63 +240,6 @@
   color: var(--glyph-faint);
 }
 
-/* ------------------------------------------------------------ decklist */
-
-.decklist {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.5rem;
-  align-items: start;
-}
-
-.decklist-group h3 {
-  margin: 0 0 0.6rem;
-  font-family: var(--font-display), 'Arial Narrow', sans-serif;
-  font-size: 0.66rem;
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--glyph-dim);
-  padding-bottom: 0.45rem;
-  border-bottom: 1px solid var(--edge);
-}
-
-.deck-row {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.28rem 0.35rem;
-  border-radius: 2px;
-  transition: background 0.14s var(--ease);
-}
-
-.deck-row:hover {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.deck-row b {
-  font-family: var(--font-mono), monospace;
-  font-size: 0.78rem;
-  font-weight: 500;
-  color: var(--glyph-mid);
-  min-width: 1.4rem;
-}
-
-.deck-row-name {
-  flex: 1;
-  min-width: 0;
-  font-size: 0.84rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.deck-row-id {
-  font-family: var(--font-mono), monospace;
-  font-size: 0.66rem;
-  color: var(--glyph-faint);
-  flex-shrink: 0;
-}
 
 
 
@@ -420,15 +363,6 @@
     flex: 1;
     min-width: 0;
   }
-}
-
-/* Export controls sit above the textarea, wrapping on narrow screens. */
-.export-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-  margin-bottom: 0.7rem;
 }
 
 /* The sample a win rate was computed from, shown inline so the number is checkable. */
@@ -574,46 +508,6 @@
 
 
 
-/* One row per format, so the choice explains itself rather than needing a legend. */
-.export-formats {
-  display: grid;
-  gap: 0.4rem;
-}
-
-.export-format {
-  display: grid;
-  gap: 0.15rem;
-  padding: 0.6rem 0.8rem;
-  border: 1px solid var(--edge);
-  border-radius: var(--radius);
-  background: var(--groove);
-  text-align: left;
-  cursor: pointer;
-  transition: border-color 0.14s var(--ease), background 0.14s var(--ease);
-}
-
-.export-format:hover {
-  border-color: var(--edge-strong);
-}
-
-.export-format[aria-checked='true'] {
-  border-color: var(--rune);
-  background: var(--slab);
-}
-
-.export-format b {
-  font-family: var(--font-display), 'Arial Narrow', sans-serif;
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--glyph);
-}
-
-.export-format span {
-  font-size: 0.76rem;
-  color: var(--glyph-dim);
-}
 
 
 

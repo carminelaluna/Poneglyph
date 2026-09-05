@@ -176,27 +176,6 @@ export const getArchetype = (slug: string) => archetypeBySlug.get(slug.toLowerCa
 export const getDeck = (id: string) => deckById.get(id);
 export const getPlay = (cardId: string): CardPlay | null => cardPlay[cardId] ?? null;
 
-/** Decks for one archetype, best finishes first. */
-export function archetypeDecks(leaderId: string, limit?: number) {
-  const list = (decksByLeader.get(leaderId) ?? [])
-    .slice()
-    .sort(
-      (a, b) =>
-        (a.placing ?? 999) - (b.placing ?? 999) ||
-        b.date.localeCompare(a.date) ||
-        b.record.wins - a.record.wins
-    );
-  return limit ? list.slice(0, limit) : list;
-}
-
-/** Notable finishes across the whole field — the front page's "what won" list. */
-export function recentResults(limit = 20) {
-  return decks
-    .filter((d) => d.placing !== null && d.placing <= 8)
-    .sort((a, b) => b.date.localeCompare(a.date) || (a.placing ?? 999) - (b.placing ?? 999))
-    .slice(0, limit);
-}
-
 /** Which archetypes play a given card, and how heavily. */
 export function cardArchetypes(cardId: string, limit = 8) {
   return archetypes

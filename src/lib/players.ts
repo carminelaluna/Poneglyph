@@ -128,5 +128,3 @@ export function prerenderablePlayers(minResults = 5) {
     .filter(([, e]) => e.decks.length >= minResults)
     .map(([slug]) => slug);
 }
-
-export const playerCount = bySlug.size;

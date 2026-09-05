@@ -199,6 +199,13 @@ export function useWindow(): {
   setRegion: (r: Region) => void;
   /** This view as a query string, for linking to a page that shows the same one. */
   query: string;
+  /**
+   * The same state, named the way `WindowBar` wants it, so a caller spreads it
+   * rather than restating ten props. Four views render that bar and all four had
+   * written the list out; the tenth prop added to it would have been added four
+   * times, or three.
+   */
+  bar: WindowBarControls;
 } {
   const [window_, setWindow] = useState<Window>(DEFAULT);
   const [venues, setVenues] = useState<Venue[]>([]);
@@ -260,7 +267,45 @@ export function useWindow(): {
     region,
     setRegion: changeRegion,
     query,
+    bar: {
+      window: window_,
+      onChange: setWindow,
+      venues,
+      onVenues: setVenues,
+      tiers,
+      onTiers: setTiers,
+      region,
+      onRegion: changeRegion,
+    },
   };
+}
+
+/** The controls half of the bar — what `useWindow` hands back as `bar`. */
+export type WindowBarControls = {
+  window: Window;
+  onChange: (w: Window) => void;
+  venues: Venue[];
+  onVenues: (v: Venue[]) => void;
+  tiers: string[];
+  onTiers: (t: string[]) => void;
+  region: Region;
+  onRegion: (r: Region) => void;
+};
+
+/**
+ * The archive did not load, said once.
+ *
+ * Four views fetch this index and all four carried the same paragraph, naming the
+ * same command. A message telling somebody how to fix their checkout is exactly the
+ * kind that should not exist in four slightly different versions.
+ */
+export function IndexError({ error }: { error: string }) {
+  return (
+    <p className="empty">
+      The deck index did not load ({error}). Run{' '}
+      <code className="mono">npm run ingest:decks</code> to build it.
+    </p>
+  );
 }
 
 export function WindowBar({
@@ -275,15 +320,7 @@ export function WindowBar({
   index,
   count,
   noun = 'decks',
-}: {
-  window: Window;
-  onChange: (w: Window) => void;
-  venues: Venue[];
-  onVenues: (v: Venue[]) => void;
-  tiers: string[];
-  onTiers: (t: string[]) => void;
-  region: Region;
-  onRegion: (r: Region) => void;
+}: WindowBarControls & {
   index: MetaIndex;
   count: number;
   noun?: string;

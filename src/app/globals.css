@@ -206,14 +206,6 @@ select {
 
 /* --------------------------------------------------------------- rule */
 
-/* A carved groove: dark channel with a lit lower lip, the page's only divider. */
-.groove {
-  height: 2px;
-  border: 0;
-  margin: 0;
-  background: linear-gradient(180deg, var(--groove), var(--groove) 50%, rgba(255, 255, 255, 0.05) 50%);
-}
-
 /* -------------------------------------------------------------- header */
 
 .masthead {

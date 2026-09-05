@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import DeckTable from '../DeckTable';
 import { filterDecks } from '@/lib/meta';
-import { WindowBar, useMetaIndex, useWindow, windowHref } from '../../useMeta';
+import { IndexError, WindowBar, useMetaIndex, useWindow, windowHref } from '../../useMeta';
 
 /**
  * Every recorded list for one archetype, ordered three ways.
@@ -29,29 +29,12 @@ const ORDERS = [
 const PAGE = 100;
 
 export default function DecklistsView({ leaderId, slug }: { leaderId: string; slug: string }) {
-  const {
-    window: window_,
-    setWindow,
-    venues,
-    setVenues,
-    tiers,
-    setTiers,
-    region,
-    setRegion,
-    query,
-  } = useWindow();
+  const { window: window_, setWindow, venues, tiers, region, bar, query } = useWindow();
   const { index, error } = useMetaIndex(region, window_);
   const [order, setOrder] = useState<'finish' | 'newest' | 'oldest'>('finish');
   const [limit, setLimit] = useState(PAGE);
 
-  if (error) {
-    return (
-      <p className="empty">
-        The deck index did not load ({error}). Run <code className="mono">npm run ingest:decks</code>{' '}
-        to build it.
-      </p>
-    );
-  }
+  if (error) return <IndexError error={error} />;
   if (!index) return <p className="empty">Reading tournament results…</p>;
 
   const decks = filterDecks(index, window_, venues, tiers)
@@ -73,19 +56,7 @@ export default function DecklistsView({ leaderId, slug }: { leaderId: string; sl
 
   return (
     <>
-      <WindowBar
-        window={window_}
-        onChange={setWindow}
-        venues={venues}
-        onVenues={setVenues}
-        tiers={tiers}
-        onTiers={setTiers}
-        region={region}
-        onRegion={setRegion}
-        index={index}
-        count={decks.length}
-        noun="decks of this archetype"
-      />
+      <WindowBar {...bar} index={index} count={decks.length} noun="decks of this archetype" />
 
       {decks.length === 0 ? (
         <div className="empty">

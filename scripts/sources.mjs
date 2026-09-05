@@ -220,13 +220,3 @@ export const SPOILER_SOURCES = {
       `https://onepiecetopdecks.com/wp-json/wp/v2/posts?categories=${category}&per_page=${perPage}&_fields=id,date,link,title,content`,
   },
 };
-
-/** Languages punk-records publishes. Only `english` is wired into the site today. */
-export const LANGUAGES = [
-  'english',
-  'english-asia',
-  'japanese',
-  'chinese-hongkong',
-  'korean',
-  'thai',
-];

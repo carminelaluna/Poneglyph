@@ -17,7 +17,7 @@ import {
   type DeckCardLists,
   type MetaCard,
 } from '@/lib/meta';
-import { WindowBar, WinRate, useMetaIndex, useWindow, windowHref } from '../useMeta';
+import { IndexError, WinRate, WindowBar, useMetaIndex, useWindow, windowHref } from '../useMeta';
 
 /**
  * Everything about an archetype that depends on the chosen window: its share and
@@ -49,17 +49,7 @@ export default function ArchetypeView({
   slug: string;
   glow: string;
 }) {
-  const {
-    window: window_,
-    setWindow,
-    venues,
-    setVenues,
-    tiers,
-    setTiers,
-    region,
-    setRegion,
-    query,
-  } = useWindow();
+  const { window: window_, setWindow, venues, tiers, region, bar, query } = useWindow();
   const { index, error, loadingArchive } = useMetaIndex(region, window_);
   const [lists, setLists] = useState<DeckCardLists | null>(null);
 
@@ -112,33 +102,14 @@ export default function ArchetypeView({
     return { mine, decks, built, span };
   }, [index, window_, venues, tiers, leaderId, lists]);
 
-  if (error) {
-    return (
-      <p className="empty">
-        The deck index did not load ({error}). Run <code className="mono">npm run ingest:decks</code>{' '}
-        to build it.
-      </p>
-    );
-  }
+  if (error) return <IndexError error={error} />;
   if (!index || !view) return <p className="empty">Reading tournament results…</p>;
 
   const { mine, decks, built, span } = view;
 
   return (
     <>
-      <WindowBar
-        window={window_}
-        onChange={setWindow}
-        venues={venues}
-        onVenues={setVenues}
-        tiers={tiers}
-        onTiers={setTiers}
-        region={region}
-        onRegion={setRegion}
-        index={index}
-        count={decks.length}
-        noun="decks of this archetype"
-      />
+      <WindowBar {...bar} index={index} count={decks.length} noun="decks of this archetype" />
 
       {!mine || decks.length === 0 ? (
         <div className="empty">

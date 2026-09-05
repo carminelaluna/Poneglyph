@@ -23,32 +23,15 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { loadEnvFiles } from './env.mjs';
 
-/**
- * `.env.local`, as Next would read it.
- *
- * Next loads those files itself, so the build gets the variables either way — but
- * this script checks for NEXT_PUBLIC_CDN_URL *before* handing over, and plain Node
- * does not read them. Without this the guard below fires on a correctly configured
- * checkout, which is a confusing way to be told nothing is wrong.
- *
- * Real environment variables win, so CI can set them without a file.
+/*
+ * Before handing over to Next, because the guard below reads NEXT_PUBLIC_CDN_URL
+ * and plain Node does not read `.env.local` — see scripts/env.mjs.
  */
-function loadEnvFiles() {
-  for (const file of ['.env.local', '.env']) {
-    if (!existsSync(file)) continue;
-    for (const line of readFileSync(file, 'utf8').split('\n')) {
-      const match = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/.exec(line);
-      if (!match) continue;
-      const value = match[2].trim().replace(/^["']|["']$/g, '');
-      process.env[match[1]] ??= value;
-    }
-  }
-}
-
 loadEnvFiles();
 
 const ART = path.resolve('src', 'app', 'art');

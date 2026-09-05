@@ -374,17 +374,6 @@
   font-weight: 500;
 }
 
-.row-effect {
-  color: var(--glyph-dim);
-  font-size: 0.76rem;
-  line-height: 1.45;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  max-width: 62ch;
-}
-
 .empty {
   padding: 4rem 1rem;
   text-align: center;

@@ -30,22 +30,12 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import path from 'node:path';
+import { loadEnvFiles } from './env.mjs';
 
 const OUT = path.resolve('out');
-
-function loadEnvFiles() {
-  for (const file of ['.env.local', '.env']) {
-    if (!existsSync(file)) continue;
-    for (const line of readFileSync(file, 'utf8').split('\n')) {
-      const match = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/.exec(line);
-      if (!match) continue;
-      process.env[match[1]] ??= match[2].trim().replace(/^["']|["']$/g, '');
-    }
-  }
-}
 
 loadEnvFiles();
 

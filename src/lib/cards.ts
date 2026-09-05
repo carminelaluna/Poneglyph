@@ -132,11 +132,7 @@ export const getCard = (id: string) => byId.get(id.toLowerCase());
 export const getSet = (slug: string) => sets.find((s) => s.slug === slug.toLowerCase());
 export const getSetCards = (code: string) => bySetCode.get(code) ?? [];
 
-/** Newest first, boosters before starter decks — the order the sets list already carries. */
-export const latestSets = (n: number) => sets.filter((s) => s.group === 'Booster Set').slice(0, n);
-
 export const CARD_COLORS = ['Red', 'Green', 'Blue', 'Purple', 'Black', 'Yellow'] as const;
-export type CardColor = (typeof CARD_COLORS)[number];
 
 /** Cards per colour, in the game's own colour order — drives the spectrum band. */
 export function colorSpectrum() {
