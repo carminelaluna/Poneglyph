@@ -1,0 +1,8 @@
+User-Agent: *
+Allow: /
+Disallow: /art/
+Disallow: /account/
+Disallow: /submit/
+Disallow: /review/
+
+Sitemap: https://carminelaluna.github.io/Poneglyph/sitemap.xml
