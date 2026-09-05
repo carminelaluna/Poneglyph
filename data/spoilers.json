@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-04T11:38:54.792Z",
+  "generatedAt": "2026-09-05T04:33:20.189Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,11 +8,11 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 20,
-    "named": 15,
+    "cards": 21,
+    "named": 16,
     "articles": 3
   },
-  "durationMs": 2096,
+  "durationMs": 2569,
   "sets": [
     {
       "set": "OP18",
@@ -71,7 +71,7 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 14,
+      "revealed": 15,
       "cards": [
         {
           "id": "EB05-005",
@@ -152,6 +152,13 @@
           "image": null,
           "thumb": "EB05-045.webp",
           "text": "Black Character C"
+        },
+        {
+          "id": "EB05-051",
+          "name": "Ahiru",
+          "image": null,
+          "thumb": "EB05-051.webp",
+          "text": "Yellow Character C @Card Reveals"
         },
         {
           "id": "EB05-054",
