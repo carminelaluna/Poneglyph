@@ -913,6 +913,33 @@ telling the reader which command rebuilds the archive. The rule is the one this 
 keeps arriving at from the other direction: the eleventh prop would have been added
 four times, or three.
 
+**Still to do — merge `dev` into `prod`.** `/compare`, the content signals and the
+two sitemap gaps are committed to `dev` and are not live. `git checkout prod && git
+merge --ff-only dev && git push origin prod` when they are wanted, and expect the
+fast-forward to fail if an ingest has committed since — rebase `dev` first, never the
+other way.
+
+**Still to do — a contact address, and it is the one real hole.** `/legal`, `/privacy`
+and `/terms` each say to *"use the contact address published in the project
+repository"*, and the repository publishes none. It is a circular reference pointing
+at nothing, and three separate things depend on it: a privacy policy has to make its
+controller reachable, `/legal` invites requests from rights holders and gives them no
+route, and the OAuth providers were handed those two URLs. It needs an address a
+person chooses to publish — not one inferred from a git config.
+
+**Still to do — the share image is square.** `/brand/share-1024.png` is 1024×1024 and
+link previews are built for 1200×630, so every unfurl crops or letterboxes it. It is
+the picture that goes into every search result and chat paste.
+
+**Deliberately absent, so nobody adds them by reflex.** There is no analytics and no
+cookie banner, and both are choices rather than gaps: `document.cookie` is empty,
+the only browser storage is `poneglyph:notice:1` and Supabase's own session, and
+`/privacy` and `/legal` both promise in writing that nothing is collected. Installing
+any analytics makes two published pages false, which is a content change before it is
+a technical one. There is also no sticky mobile call to action — the two on the home
+page are above the fold at 375×812, measured, and a bar that follows a reader down a
+card list is a conversion pattern on a site with nothing to convert.
+
 **Still to do:** email and password sign-in waits on a custom SMTP provider — an
 account to open, not a code change, and everything else about it is written. The form
 is on the account page now, disabled, carrying that to-do where it can be seen. Flip
