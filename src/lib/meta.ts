@@ -36,16 +36,23 @@ export type MetaDeck = {
   /** 1 when this deck came from a whole-field sample, 0 when it only placed. */
   f: 0 | 1;
   /**
-   * 1 when the result came from Top Decks rather than Limitless, and the page it
-   * came from. Absent on Limitless rows.
+   * Which source the result came from: 1 Top Decks, 2 an organizer's submission.
+   * Absent on Limitless rows, which are the bulk, so they pay nothing for it.
    *
-   * `f` implies this today, since every Limitless row is a whole field and every
-   * Top Decks row is winners-only, but that is a fact about the two upstreams we
-   * happen to have rather than a rule — so attribution is recorded rather than
-   * inferred from a sampling flag.
+   * It was a boolean — `1` or absent — for as long as there were two sources, and
+   * the day a third arrived every submitted tournament read as Limitless: absent
+   * meant "not Top Decks", which the reader turned into "Limitless". A flag that
+   * says what a thing is *not* only works while there are two things.
+   *
+   * `f` implies none of this. Every Limitless row happens to be a whole field and
+   * every Top Decks row winners-only, but that is a fact about those upstreams
+   * rather than a rule — an organizer answers the sampling question themselves —
+   * so attribution is recorded rather than inferred from a sampling flag.
    */
-  o?: 1;
+  o?: 1 | 2;
   u?: string;
+  /** Who ran it, on a submitted event. Absent everywhere else. */
+  z?: string;
 };
 
 export type Venue = 'simulator' | 'webcam' | 'offline' | 'unknown';

@@ -89,7 +89,7 @@ async function fromSupabase() {
   const query =
     'submissions?status=eq.approved&select=' +
     encodeURIComponent(
-      'id,event_name,event_date,venue,tier,region,sampling,players,' +
+      'id,event_name,event_date,venue,tier,region,sampling,players,organizer_id,' +
         'submission_decks(id,player,place,wins,losses,ties,leader_id,cards)'
     );
 
@@ -100,7 +100,38 @@ async function fromSupabase() {
   if (!res.ok) {
     throw new Error(`Supabase answered ${res.status}: ${(await res.text()).slice(0, 200)}`);
   }
-  return res.json();
+  const submissions = await res.json();
+  return withOrganizers(submissions);
+}
+
+/**
+ * The display name behind each `organizer_id`, in one more request.
+ *
+ * It is a second request rather than an embed because `submissions.organizer_id`
+ * references `auth.users`, not `public.profiles` — there is no foreign key between
+ * those two tables for PostgREST to follow, so `select=…,profiles(display_name)`
+ * has nothing to join on and answers with an error rather than a name.
+ *
+ * A failure here is not a failure of the ingest. The names are attribution on the
+ * event page; the results are the point, and an event that says who ran it is
+ * better than no event. So this warns and returns the submissions unchanged.
+ */
+async function withOrganizers(submissions) {
+  const ids = [...new Set(submissions.map((s) => s.organizer_id).filter(Boolean))];
+  if (ids.length === 0) return submissions;
+
+  try {
+    const query = `profiles?id=in.(${ids.join(',')})&select=id,display_name`;
+    const res = await fetch(`${URL_BASE}/rest/v1/${query}`, {
+      headers: { apikey: KEY, authorization: `Bearer ${KEY}`, accept: 'application/json' },
+    });
+    if (!res.ok) throw new Error(`Supabase answered ${res.status}`);
+    const names = new Map((await res.json()).map((p) => [p.id, p.display_name]));
+    return submissions.map((s) => ({ ...s, organizer: names.get(s.organizer_id) ?? null }));
+  } catch (err) {
+    console.log(`::warning::could not read organizer names: ${err.message}`);
+    return submissions;
+  }
 }
 
 async function main() {

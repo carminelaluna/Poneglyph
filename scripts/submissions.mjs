@@ -65,6 +65,14 @@ export function toDecks(submission, cardsById) {
       sampling: submission.sampling === 'field' ? 'field' : 'winners',
       region: submission.region === 'JP' ? 'JP' : 'EN',
       source: 'community',
+      /*
+       * Who ran it, which the two automated sources cannot answer and this one
+       * can. It is the display name on the account that sent it — attribution of
+       * the same kind the other corpora get by being named, and the reason an
+       * organizer submits rather than a reason to keep them anonymous. Absent
+       * when the profile has no name set, and named rather than blanked below.
+       */
+      organizer: named(submission.organizer, null),
     };
   });
 }

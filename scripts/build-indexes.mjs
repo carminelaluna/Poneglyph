@@ -325,19 +325,25 @@ async function writeRegion(region, decks, cardsById) {
     /*
      * Source and its permalink, for the event page's attribution.
      *
-     * `f` happens to imply this today — every Limitless row is a whole field and
-     * every Top Decks row is winners-only — but that is a coincidence of the two
-     * upstreams we have, not a rule. Deriving attribution from a sampling flag
-     * would credit the wrong site the day a source publishes full fields.
+     * `f` happens to imply this for two of the three — every Limitless row is a
+     * whole field and every Top Decks row is winners-only — but that is a
+     * coincidence of those upstreams, not a rule: an organizer answers the
+     * sampling question themselves, and either answer is allowed.
      *
-     * Both are omitted on Limitless rows, and JSON.stringify drops undefined, so
-     * they cost nothing there. The 11,636 Top Decks rows share just 40 distinct
+     * It was `1` or absent while there were two sources, which made "absent" mean
+     * Limitless. The day submissions arrived, every submitted tournament read as
+     * a Limitless event on its own page — a flag saying what a row is *not* only
+     * works while there are two things it can be. It carries the source now.
+     *
+     * All three are omitted on Limitless rows, and JSON.stringify drops undefined,
+     * so they cost nothing there. The 11,636 Top Decks rows share just 40 distinct
      * URLs; they are written inline rather than interned because interning event
      * and player names made these files *larger* — gzip already collapses
      * repetition, and a lookup table only adds indirection.
      */
-    o: d.source === 'topdecks' ? 1 : undefined,
+    o: d.source === 'topdecks' ? 1 : d.source === 'community' ? 2 : undefined,
     u: d.sourceUrl || undefined,
+    z: d.organizer || undefined,
   }));
 
   const index = {

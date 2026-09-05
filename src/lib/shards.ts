@@ -123,8 +123,10 @@ export type ShardEvent = {
   players: number;
   recorded: number;
   region: Region;
-  source: 'limitless' | 'topdecks';
+  source: 'limitless' | 'topdecks' | 'community';
   sourceUrl?: string;
+  /** Who ran it, when an organizer submitted it. */
+  organizer?: string;
   tier: string;
   venue: string;
   decks: ShardRow[];
@@ -159,8 +161,13 @@ export async function getEvent(id: string): Promise<ShardEvent | null> {
     players: Math.max(...decks.map((d) => d.n ?? 0), 0),
     recorded: decks.length,
     region: head.g,
-    source: head.o ? 'topdecks' : 'limitless',
+    /*
+     * Three sources, so `o` carries which one rather than saying "not Limitless".
+     * As a boolean this read every submitted tournament as a Limitless event.
+     */
+    source: head.o === 2 ? 'community' : head.o === 1 ? 'topdecks' : 'limitless',
     sourceUrl: head.u,
+    organizer: head.z,
     tier: head.k ?? 'local',
     venue: head.v ?? 'unknown',
     decks,

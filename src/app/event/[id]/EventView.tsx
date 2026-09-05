@@ -97,6 +97,12 @@ export default function EventView({ id }: { id: string }) {
   }
 
   const withPlacing = event.decks.filter((d) => d.p !== null).length;
+  /*
+   * Sampling is per deck — `f` — and every corpus carries it, so it is read off
+   * the rows rather than guessed from which site the rows came from. That guess
+   * held only while the two automated sources happened to disagree about it.
+   */
+  const wholeField = event.decks.every((d) => d.f === 1);
 
   return (
     <div className="shell" style={{ paddingBlock: '2rem 3rem' }}>
@@ -147,23 +153,42 @@ export default function EventView({ id }: { id: string }) {
         Lists held is not the size of the field. Limitless publishes whole Swiss
         fields; Top Decks publishes the decks that placed. Saying "17 decks" without
         that distinction would read as a 17-player event.
+
+        Both halves of this line used to be decided by `source === 'limitless'`,
+        which was a two-way question asked of three corpora: a submitted tournament
+        fell through to the Limitless branch and was credited to a site that had
+        never seen it, under a sentence claiming whole-field results it had not
+        been asked about. Attribution comes from the source now, and the sampling
+        from the rows themselves — where an organizer's own answer already lives.
       */}
       <p className="muted" style={{ fontSize: '0.76rem', marginTop: '0.9rem', maxWidth: '74ch' }}>
         {event.recorded} decklist{event.recorded === 1 ? '' : 's'} on record
-        {event.players ? ` from a field of ${event.players}` : ''}, via{' '}
-        {event.source === 'limitless' ? (
-          'Limitless'
-        ) : event.sourceUrl ? (
-          <a href={event.sourceUrl} target="_blank" rel="noreferrer noopener">
-            One Piece Top Decks
-          </a>
+        {event.players ? ` from a field of ${event.players}` : ''},{' '}
+        {event.source === 'community' ? (
+          <>
+            submitted{event.organizer ? ` by ${event.organizer}` : ''} and checked before
+            publishing
+          </>
         ) : (
-          'One Piece Top Decks'
+          <>
+            via{' '}
+            {event.source === 'topdecks' ? (
+              event.sourceUrl ? (
+                <a href={event.sourceUrl} target="_blank" rel="noreferrer noopener">
+                  One Piece Top Decks
+                </a>
+              ) : (
+                'One Piece Top Decks'
+              )
+            ) : (
+              'Limitless'
+            )}
+          </>
         )}
         .{' '}
-        {event.source === 'limitless'
+        {wholeField
           ? 'Whole-field results, so the standings below are the tournament.'
-          : 'Only decks that placed are published, so this is the top of the standings rather than the whole field.'}
+          : 'Only decks that placed are recorded, so this is the top of the standings rather than the whole field.'}
       </p>
 
       {event.winner ? (

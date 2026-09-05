@@ -30,6 +30,8 @@ export type TcgEvent = {
   venue: string;
   eventType?: string;
   sourceUrl?: string;
+  /** Who ran it, when an organizer submitted it. */
+  organizer?: string;
   decks: Deck[];
   winner: Deck | null;
   archetypes: { leaderId: string; leaderName: string; colors: string[]; count: number }[];
@@ -86,6 +88,7 @@ function build(id: string, list: Deck[]): TcgEvent {
     venue: head.venue ?? 'unknown',
     eventType: head.eventType,
     sourceUrl: head.sourceUrl,
+    organizer: head.organizer,
     decks: ordered,
     winner: ordered.find((d) => d.placing === 1) ?? null,
     archetypes: [...archetypes.values()].sort((a, b) => b.count - a.count),

@@ -37,6 +37,7 @@ type Deck = {
   sampling: 'field' | 'winners';
   region: 'EN' | 'JP';
   source: string;
+  organizer: string | null;
 };
 
 const map = toDecks as (submission: unknown, cardsById?: Map<string, unknown>) => Deck[];
@@ -184,6 +185,18 @@ describe('identity and shape', () => {
   it('carries a Japanese submission as JP and anything else as EN', () => {
     assert.equal(map(submission({ region: 'JP' }), archive)[0].region, 'JP');
     assert.equal(map(submission({ region: 'jp' }), archive)[0].region, 'EN');
+  });
+
+  /*
+   * Who ran it, which is the one thing this source can say and the two automated
+   * ones cannot. The event page prints it, so a placeholder reaching the corpus
+   * would be published as somebody's name.
+   */
+  it('carries the organizer through, and names a missing one as null', () => {
+    assert.equal(map(submission({ organizer: 'Rialto TO' }), archive)[0].organizer, 'Rialto TO');
+    assert.equal(map(submission({ organizer: null }), archive)[0].organizer, null);
+    assert.equal(map(submission({ organizer: '  ' }), archive)[0].organizer, null);
+    assert.equal(map(submission({ organizer: 'unknown' }), archive)[0].organizer, null);
   });
 });
 

@@ -26,6 +26,8 @@ export type Deck = {
   source?: string;
   eventType?: string;
   sourceUrl?: string;
+  /** Who ran it, on a submitted event. Absent on the two automated sources. */
+  organizer?: string;
   /** Which event this list came from — see lib/events.ts. */
   eventId?: string;
   /** How the event was played, and what kind of event it was. */
@@ -117,6 +119,7 @@ type MergedDeck = {
   source?: string;
   eventType?: string;
   sourceUrl?: string;
+  organizer?: string;
   eventId: string;
   /* Written by build-indexes in place of the card list itself. */
   total: number;
@@ -146,6 +149,7 @@ export const decks: Deck[] = merged.map((d) => ({
   source: d.source,
   eventType: d.eventType,
   sourceUrl: d.sourceUrl,
+  organizer: d.organizer,
   eventId: d.eventId,
   venue: d.venue,
   tier: d.tier,

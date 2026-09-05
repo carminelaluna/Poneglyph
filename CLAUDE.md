@@ -644,6 +644,33 @@ still pending — all through the `read own submissions` policy, which had been 
 schema from the first version with nothing ever calling it. The form was write-only
 until then: you sent a tournament and the site never mentioned it again.
 
+**A flag that says what a row is *not* only works while there are two things.**
+`o` on a deck row was `1` for Top Decks and absent otherwise, and the reader turned
+absent into Limitless. That held for exactly as long as there were two sources: the
+first submitted tournament rendered its own event page as *via Limitless*, crediting
+a site that had never seen it. It carries the source now — 1 Top Decks, 2 community,
+absent Limitless — so the bulk still pays nothing and the reader is not inferring.
+Found by the first real submission, not by a test, which is the shape of this bug:
+the wrong answer was the *default* answer.
+
+**Sampling is read off the rows, not off which site they came from.** The same line
+picked its second sentence with `source === 'limitless'`, so that test event was
+also announced as *whole-field results, so the standings below are the tournament*
+— while the organizer had answered **winners only**, and `f: 0` in the payload said
+so. Every corpus carries `f` per deck precisely because sampling is per deck; the
+page now asks the decks. Two upstreams happening to agree (Limitless whole fields,
+Top Decks winners-only) is what made a guess look like a rule for three years.
+
+**An event says who ran it, when somebody did.** That is the one thing this source
+can answer and the two automated ones cannot, and it is the same attribution the
+others get by being named. It is the display name on the account that sent it, and
+it costs `ingest-submissions.mjs` a **second request**: `submissions.organizer_id`
+references `auth.users`, not `public.profiles`, so there is no foreign key for
+PostgREST to follow and `select=…,profiles(display_name)` answers with an error
+rather than a name. That request failing warns and writes the results anyway — the
+results are the point, and an event that does not say who ran it is better than no
+event.
+
 **Submissions do not reach the site directly.** `ingest-submissions.mjs` reads only rows
 marked `approved`; `build-indexes.mjs` folds them in as a **third corpus**,
 `source: 'community'`, carrying the organizer's own answer about field versus winners.
