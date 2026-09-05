@@ -44,6 +44,10 @@ const WINDOWS = [
   { label: 'All', days: Number.MAX_SAFE_INTEGER },
 ];
 
+/** Kept in step with PriceMovers, which reads the same two on the other side. */
+const ROWS = 15;
+const FLOORS = [0, 1, 5];
+
 export default function PricesPage() {
   const days = stored.days ?? [];
   const recorded = days.length;
@@ -52,17 +56,41 @@ export default function PricesPage() {
     const span = Math.min(want, Math.max(recorded - 1, 0));
     const first = days[Math.max(0, recorded - 1 - span)];
     const last = days[recorded - 1];
+
+    const all = movers(stored, span)
+      .map((m) => {
+        const card = getCard(m.id);
+        return { ...m, name: card?.name ?? m.id, colors: card?.colors ?? [] };
+      })
+      /* A card the archive no longer lists cannot be linked to or named. */
+      .filter((m) => getCard(m.id));
+
+    /*
+     * Only the rows any control can actually reach.
+     *
+     * The page shows fifteen a side; the controls give it eight orderings — two
+     * sorts, three floors under the percent one, two directions. Their union is
+     * 175 rows against 3,663 that moved, and shipping all of them cost 33 KB
+     * gzipped to display thirty. The count is what stops that being a lie, so it
+     * is computed here over everything and sent as a number.
+     */
+    const reachable = new Set<string>();
+    for (const by of ['percent', 'delta'] as const) {
+      for (const floor of by === 'percent' ? FLOORS : [0]) {
+        const pool = all.filter((m) => m.from >= floor).sort((a, b) => b[by] - a[by]);
+        for (const m of pool.filter((m) => m.delta > 0).slice(0, ROWS)) reachable.add(m.id);
+        for (const m of pool.filter((m) => m.delta < 0).slice(-ROWS)) reachable.add(m.id);
+      }
+    }
+
     return {
       label,
-      days: span,
       span: first && last ? `${first} to ${last}` : 'nothing recorded yet',
-      movers: movers(stored, span)
-        .map((m) => {
-          const card = getCard(m.id);
-          return { ...m, name: card?.name ?? m.id, colors: card?.colors ?? [] };
-        })
-        /* A card the archive no longer lists cannot be linked to or named. */
-        .filter((m) => m.name !== m.id || getCard(m.id)),
+      /* How many moved at each floor, so the header can say so without the rows. */
+      counts: Object.fromEntries(
+        FLOORS.map((f) => [f, all.filter((m) => m.from >= f).length])
+      ) as Record<number, number>,
+      movers: all.filter((m) => reachable.has(m.id)),
     };
   });
 

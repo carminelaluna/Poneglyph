@@ -41,7 +41,13 @@ export default function PriceMovers({
   currency = '$',
 }: {
   /** Keyed by the label the control shows: recorded days -> the movers over them. */
-  windows: { label: string; days: number; span: string; movers: Named[] }[];
+  windows: {
+    label: string;
+    span: string;
+    /** How many moved at each floor, counted over every row rather than these. */
+    counts: Record<number, number>;
+    movers: Named[];
+  }[];
   currency?: string;
 }) {
   const [windowAt, setWindowAt] = useState(0);
@@ -50,7 +56,7 @@ export default function PriceMovers({
 
   const chosen = windows[windowAt] ?? windows[0];
 
-  const { risers, fallers, counted } = useMemo(() => {
+  const { risers, fallers } = useMemo(() => {
     const pool = by === 'percent' ? chosen.movers.filter((m) => m.from >= floor) : chosen.movers;
     const sorted = [...pool].sort((a, b) => b[by] - a[by]);
     return {
@@ -59,9 +65,15 @@ export default function PriceMovers({
         .filter((m) => m.delta < 0)
         .slice(-ROWS)
         .reverse(),
-      counted: pool.length,
     };
   }, [chosen, by, floor]);
+
+  /*
+   * From the server's count over every row, not from `pool.length`. Only the rows
+   * a control can reach are sent, so counting what arrived would report 90 cards
+   * moved when 1,809 did.
+   */
+  const counted = chosen.counts[by === 'percent' ? floor : 0] ?? 0;
 
   return (
     <>

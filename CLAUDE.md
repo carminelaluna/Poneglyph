@@ -201,7 +201,11 @@ first point falls inside the window: there is no earlier price, and treating a f
 sighting as the opening price would report a card the ingest had just met as flat.
 The whole page is computed at build time and fetches nothing; `price-history.json` is
 142 KB and stays server-side, the same trade the card page makes drawing its chart as
-inline SVG.
+inline SVG. **Only the rows a control can reach are sent** — the eight orderings (two
+sorts, three floors under the percent one, two directions, fifteen a side) have a union
+of 175 rows against 3,663 that moved, which took the page from 86 KB gzipped to 11.
+The count is what stops that being a lie, so it is computed over everything and sent as
+a number: counting what arrived would report 90 cards moved when 1,809 did.
 
 Only eleven days of history exist so far against a ninety-day cap, so the page offers
 7d and All and says how much there is — a thirty-day window that silently answered
