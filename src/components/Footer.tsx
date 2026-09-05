@@ -55,6 +55,7 @@ export default function Footer() {
               <li><Link href="/players">Players</Link></li>
               <li><Link href="/sets">Sets</Link></li>
               <li><Link href="/cards?sort=price-desc">Most valuable</Link></li>
+              <li><Link href="/prices">Price movers</Link></li>
             </ul>
           </div>
           <div>

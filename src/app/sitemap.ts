@@ -33,6 +33,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
      * nothing enforces it.
      */
     { url: `${BASE}/compare`, lastModified: updated, changeFrequency: 'daily', priority: 0.7 },
+    { url: `${BASE}/prices`, lastModified: updated, changeFrequency: 'daily', priority: 0.7 },
     { url: `${BASE}/data`, lastModified: updated, changeFrequency: 'daily', priority: 0.3 },
     { url: `${BASE}/legal`, lastModified: updated, changeFrequency: 'yearly', priority: 0.3 },
     /* Linked from the footer only, but they are the URLs given to OAuth providers,

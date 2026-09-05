@@ -155,3 +155,72 @@ export function listPrice(
   /* Rounded once, at the end: adding cents and rounding per card drifts. */
   return { total: Math.round(total * 100) / 100, unpriced };
 }
+
+/** One card's movement across a window, with both ways of reading it. */
+export type Mover = {
+  id: string;
+  from: number;
+  to: number;
+  /** Cash. What you gained or lost per copy. */
+  delta: number;
+  /** Ratio. What the market did to it, which is a different question. */
+  percent: number;
+};
+
+/**
+ * Every card whose price changed across the last `days` **recorded** days.
+ *
+ * Recorded, not calendar: `days` in the store holds the days something moved on,
+ * not the days the ingest ran, so counting back through the array is counting back
+ * through real observations. Asking for more than exist gives the whole span rather
+ * than an error, because the history is ninety days at its cap and starts empty.
+ *
+ * A card whose first recorded point falls *inside* the window is skipped. There is
+ * no earlier price to compare it to, and treating the first sighting as the opening
+ * price would report a card the ingest had just met as flat.
+ *
+ * No floor is applied here. That is a decision about the percentage view — below
+ * about a dollar a one-cent tick is a double-digit percentage, so a ranking by
+ * percent with no floor measures the source's rounding rather than the market —
+ * and it belongs where it can be seen and stated, not buried in this.
+ */
+export function movers(source: Stored, days: number): Mover[] {
+  const all = source.days ?? [];
+  if (all.length < 2) return [];
+
+  const last = all.length - 1;
+  const from = Math.max(0, last - days);
+  const out: Mover[] = [];
+
+  for (const [id, points] of Object.entries(source.prices ?? {})) {
+    if (!points?.length) continue;
+    /*
+     * First seen after the window opened: nothing to compare against.
+     *
+     * Redundant, and deliberately kept. If no point sits at or before `from` then
+     * `before` stays null and the check below drops the card anyway — proved by
+     * mutation, deleting this line changes no test and no answer. It is here
+     * because it states the rule at the top of the loop, where a reader meets it,
+     * rather than leaving it to be inferred from a null three lines down.
+     */
+    if (points[0][0] > from) continue;
+
+    let before: number | null = null;
+    let after: number | null = null;
+    for (const [day, price] of points) {
+      if (day <= from) before = price;
+      if (day <= last) after = price;
+    }
+    if (before === null || after === null || before === after || before <= 0) continue;
+
+    out.push({
+      id,
+      from: before,
+      to: after,
+      delta: Math.round((after - before) * 100) / 100,
+      percent: Math.round(((after - before) / before) * 1000) / 10,
+    });
+  }
+
+  return out;
+}

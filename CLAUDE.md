@@ -182,6 +182,31 @@ tournament read as Limitless. It carries the source now — 1 Top Decks, 2 commu
 absent Limitless. Sampling is likewise read off the rows (`f`), never from which site
 they came from.
 
+**`/prices` ranks two ways because one would be a lie by omission.** A common going
+$0.24 → $2.75 is +1046% and $2.51; a chase card gaining $8.61 is +46%. Percent answers
+"what is the market doing", cash answers "what is this worth now", and neither is the
+real one — so both are controls and every row prints both figures whichever it is
+sorted by. No blended score: a number nobody can check against the two columns beside
+it is worse than two numbers.
+
+The **floor exists only under the percent view**, because below about a dollar a
+one-cent tick is a double-digit move and the ranking measures the source's rounding
+rather than a market. It defaults to $1 (1,809 movers become 402) and is a control
+rather than a constant, since what it hides is sometimes the thing worth seeing. The
+cash view needs none: it selects for expensive cards on its own.
+
+Windows are **recorded days, not calendar days** — `days` holds the days something
+moved on. `movers()` is in `lib/prices.ts` beside `readSeries`, and skips a card whose
+first point falls inside the window: there is no earlier price, and treating a first
+sighting as the opening price would report a card the ingest had just met as flat.
+The whole page is computed at build time and fetches nothing; `price-history.json` is
+142 KB and stays server-side, the same trade the card page makes drawing its chart as
+inline SVG.
+
+Only eleven days of history exist so far against a ninety-day cap, so the page offers
+7d and All and says how much there is — a thirty-day window that silently answered
+with eleven would be the wrong kind of confident.
+
 **`/compare` counts wins, not share.** English is `mixed` (58,399 whole-field decks);
 Japanese is `winners`, `fieldDecks: 0`. Subtracting one share from the other would be
 a wrong number that looks right. First places are defined identically in both. An
@@ -602,7 +627,7 @@ across them: CI pins 22, and building the same commit on 26 produced five differ
 2,785 cards · 4,843 printings · 60 sets · 2,172 Standard-legal, 20 via the block exception ·
 2,770 priced · 69,920 decklists — English 63,983 from 2022-10, Japanese 5,937 from 2022-07 ·
 7,936 tournaments · 19,546 named players, 3,677 with five or more results · 152,890 recorded
-matches from 1,025 brackets · 44/46 release windows · 67 announced official events · 206
+matches from 1,025 brackets · 44/46 release windows · 67 announced official events · 219
 tests.
 
 These drift daily and are a snapshot, not an invariant.

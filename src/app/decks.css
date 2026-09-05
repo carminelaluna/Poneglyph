@@ -601,3 +601,31 @@
   letter-spacing: 0.08em;
   color: var(--glyph-dim);
 }
+
+/*
+ * Up and Down, side by side where there is room and stacked where there is not.
+ *
+ * Two columns rather than one table with a sign column: the question is almost
+ * always one direction or the other, and a reader scanning for risers should not
+ * be reading past fallers to find them.
+ */
+.movers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
+  gap: 0 2.5rem;
+  align-items: start;
+}
+
+/*
+ * The same pair the card page already spends on a price move: the accent for up,
+ * the card-red for down. Not green and red — this palette has no green outside the
+ * colour pips, and introducing one here would make two pages disagree about what a
+ * rising price looks like.
+ */
+.mover-change.up {
+  color: var(--rune-lit);
+}
+
+.mover-change.down {
+  color: var(--c-red);
+}
