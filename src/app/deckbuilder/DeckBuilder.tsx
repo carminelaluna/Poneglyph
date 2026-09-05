@@ -329,8 +329,17 @@ export default function DeckBuilder() {
 
   if (!rows) return <p className="muted">Loading the card archive…</p>;
 
-  const errors = problems.filter((p) => p.kind === 'error');
+  /*
+   * Everything except "you need N more cards", which the running `12 / 50` two
+   * lines above already says — and says better, since it is a count rather than a
+   * red box telling somebody who has just picked a Leader that they are wrong.
+   * The rule is untouched in `validate()`, so "Legal in Standard" still means
+   * fifty cards; it is only kept out of this list.
+   */
+  const errors = problems.filter((p) => p.kind === 'error' && p.rule !== 'size');
   const warnings = problems.filter((p) => p.kind === 'warning');
+  /* Including the size, so an unfinished deck is never announced as legal. */
+  const legal = problems.length === 0;
 
   return (
     <div className="build">
@@ -565,7 +574,7 @@ export default function DeckBuilder() {
               </li>
             ))}
           </ul>
-        ) : leader ? (
+        ) : leader && legal ? (
           <p className="build-legal">Legal in {format}.</p>
         ) : null}
 

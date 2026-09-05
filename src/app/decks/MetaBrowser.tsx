@@ -6,7 +6,6 @@ import Link from 'next/link';
 import EventLink from './EventLink';
 import PlayerLink from './PlayerLink';
 import { pigment } from '@/lib/colors';
-import { tierLabel, venueLabel } from '@/lib/directory';
 import {
   aggregate,
   filterDecks,
@@ -29,16 +28,8 @@ const MIN_DECKS = 3;
  */
 const HEAD = 10;
 
-/** Events and winners are lists to glance at, not tables to read through. */
+/** The winners are a list to glance at, not a table to read through. */
 const RECENT = 12;
-
-const day = (iso: string) =>
-  new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    timeZone: 'UTC',
-  });
 
 export default function MetaBrowser() {
   const { window: window_, setWindow, venues, setVenues, tiers, setTiers, region, setRegion } = useWindow();
@@ -220,7 +211,6 @@ export default function MetaBrowser() {
       ) : null}
 
       <RecentWinners index={index} decks={decks} />
-      <EventsInWindow index={index} decks={decks} region={region} />
     </>
   );
 }
@@ -313,169 +303,3 @@ function RecentWinners({ index, decks }: { index: MetaIndex; decks: MetaDeck[] }
   );
 }
 
-/** One event, rebuilt from the deck rows recorded at it. */
-type WindowEvent = {
-  key: string;
-  id?: string;
-  name: string;
-  date: string;
-  tier: string;
-  venue: string;
-  /** How many lists this archive holds from it, which is not how many played. */
-  recorded: number;
-  /** Entrants, when a source reported one. Top Decks does not. */
-  entrants: number;
-  winner: string | null;
-};
-
-/**
- * The events the numbers above were counted from.
- *
- * Every figure on this page is an aggregate, and until this section existed the
- * page never said what it was an aggregate *of*: 1,575 decks in the last thirty
- * days is a number you either take on trust or leave. `/tournaments` lists the
- * whole corpus, which is a different question — this one is scoped to the window,
- * the region and the filters chosen right here, so a share that looks surprising
- * can be traced to the events that produced it.
- *
- * Rebuilt from the deck rows rather than fetched: they are downloaded already and
- * they carry the event id, its name, its kind and its field size. Rows from before
- * the event id existed are grouped by day and name, which is the key the ingest
- * deduplicates on.
- */
-function EventsInWindow({
-  index,
-  decks,
-  region,
-}: {
-  index: MetaIndex;
-  decks: MetaDeck[];
-  region: 'en' | 'jp';
-}) {
-  const [all, setAll] = useState(false);
-  useEffect(() => setAll(false), [decks]);
-
-  const events = useMemo(() => {
-    const byEvent = new Map<string, WindowEvent>();
-    for (const deck of decks) {
-      const key = deck.x ?? `${deck.d}|${deck.e}`;
-      let event = byEvent.get(key);
-      if (!event) {
-        event = {
-          key,
-          id: deck.x,
-          name: deck.e,
-          date: deck.d,
-          tier: deck.k,
-          venue: deck.v,
-          recorded: 0,
-          entrants: 0,
-          winner: null,
-        };
-        byEvent.set(key, event);
-      }
-      event.recorded++;
-      /* Sources disagree about the field size; the largest is the one reported. */
-      event.entrants = Math.max(event.entrants, deck.n ?? 0);
-      if (deck.p === 1) event.winner = deck.l;
-      /* A round can be recorded past midnight; the first day is the event's. */
-      if (deck.d < event.date) event.date = deck.d;
-    }
-
-    return [...byEvent.values()].sort(
-      (a, b) => b.date.localeCompare(a.date) || b.recorded - a.recorded
-    );
-  }, [decks]);
-
-  if (events.length === 0) return null;
-
-  const shown = all ? events : events.slice(0, RECENT);
-
-  return (
-    <>
-      <div className="section-head" style={{ marginTop: '2.75rem' }}>
-        <h2 className="display">Events in this window</h2>
-        <span className="muted" style={{ fontSize: '0.78rem' }}>
-          {events.length.toLocaleString('en-US')} recorded ·{' '}
-          <Link href="/tournaments" className="inline-link">
-            every tournament on record
-          </Link>
-        </span>
-      </div>
-
-      {/*
-        One line, because CLAUDE.md allows a browse page one line of provenance and
-        this page already spends its exception on the two conditional sampling
-        warnings above. The one thing a reader cannot work out unaided is the last
-        two columns disagreeing: a 128-player Regional is four rows here when the
-        source published only what placed.
-      */}
-      <p className="muted source-line" style={{ margin: '0 0 0.8rem', maxWidth: '70ch' }}>
-        What the table above was counted from. <em>Decks</em> is how many lists this
-        archive holds from an event, not how many people played.
-      </p>
-
-      <div className="table-scroll">
-        <table className="meta-table dir-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Tournament</th>
-              <th>Won by</th>
-              <th style={{ textAlign: 'right' }}>Decks</th>
-              <th style={{ textAlign: 'right' }}>Entrants</th>
-            </tr>
-          </thead>
-          <tbody>
-            {shown.map((event) => (
-              <tr key={event.key}>
-                <td className="mono muted dir-date">{day(event.date)}</td>
-                <td>
-                  {event.id ? (
-                    <Link href={`/event/${event.id}`} className="dir-name">
-                      {event.name}
-                    </Link>
-                  ) : (
-                    <span className="dir-name muted">{event.name}</span>
-                  )}
-                  <span className="dir-tags">
-                    {tierLabel(event.tier)} · {venueLabel(event.venue)} ·{' '}
-                    {region === 'jp' ? 'Japanese' : 'English'}
-                  </span>
-                </td>
-                <td>
-                  {event.winner ? (
-                    <Link href={`/decks/${event.winner.toLowerCase()}`} className="meta-leader">
-                      <img src={art(event.winner, 96)} alt="" loading="lazy" />
-                      <span className="meta-leader-name">
-                        {index.leaders[event.winner]?.n ?? event.winner}
-                      </span>
-                    </Link>
-                  ) : (
-                    <span className="muted small">Not recorded</span>
-                  )}
-                </td>
-                <td className="mono" style={{ textAlign: 'right' }}>
-                  {event.recorded}
-                </td>
-                <td className="mono muted" style={{ textAlign: 'right' }}>
-                  {event.entrants || '—'}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {events.length > RECENT ? (
-        <p style={{ marginTop: '1rem' }}>
-          <button type="button" className="chip" onClick={() => setAll(!all)}>
-            {all
-              ? `Show only the latest ${RECENT}`
-              : `Show the other ${(events.length - RECENT).toLocaleString('en-US')} events`}
-          </button>
-        </p>
-      ) : null}
-    </>
-  );
-}

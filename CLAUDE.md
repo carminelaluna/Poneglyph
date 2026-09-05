@@ -57,10 +57,9 @@ against entrants, spellings never merged, what a matchup is — is on `/data` un
 on `/privacy` and `/terms`. A browse page keeps at most one line of provenance
 (`.source-line`) and a link. The exception is `MetaBrowser`, whose two warnings are
 conditional: they describe the table in front of you right now, so they stay, as a
-line rather than a box. Its events section spends the one plain line the rule
-allows, on the only thing a reader cannot work out unaided — *Decks* and *Entrants*
-disagreeing, because a 128-player Regional is four rows when the source published
-only what placed.
+line rather than a box. Its events section spent the one plain line the rule allowed
+on *Decks* and *Entrants* disagreeing; the section is gone, and the fact is on
+`/data` and on `/tournaments`, which are the pages that exist for it.
 
 Moving to a domain, another CDN, or a real machine: **[MIGRATIONS.md](MIGRATIONS.md)**.
 
@@ -284,13 +283,32 @@ with no CDN. `build:static` refuses to run without it — an export has no proxy
 window holds up to 141 and the tail is decks somebody brought once, so the table
 takes the top ten and the rest are one click away — which closes again whenever a
 control above it changes, since every one of those changes what the top ten *are*.
-Below it, *Latest winners* replaced a top-eight list (eight rows of one Regional is
+Below it, *Latest winners* replaced a top-eight list: eight rows of one Regional is
 a standings page, and the placing column went with the change because every row now
-reads 1st), and *Events in this window* is the section the page had been missing:
-every figure above it is an aggregate and nothing said what of. It is rebuilt from
-the deck rows already downloaded — they carry the event id, name, kind and field
-size — so it costs no request, and it is scoped to the window, region and filters
-chosen right here, which is what makes it a different question from `/tournaments`.
+reads 1st.
+
+*Events in this window* sat under that and has gone. It was added because every
+figure on the page is an aggregate and nothing said what of, which was true — but
+answered by a table listing the same recent events *Latest winners* already lists,
+keyed on the same winners, read a second way. Two tables saying one thing is worse
+than the gap. What it had that the winners list does not is *Entrants* beside
+*Decks*, and that pair belongs to `/tournaments`, which is the page for the
+question and is linked from the footer of every page.
+
+**The deck builder does not print a rule the counter above it already shows.**
+*50 more cards needed — a deck is 50 plus the Leader* met a reader in a red box the
+moment they picked a Leader, three lines under a running `0 / 50` that turns green
+at fifty. The rule stays in `validate()` — it is tagged `rule: 'size'` and filtered
+out of the list rather than removed, because *Legal in Standard* has to keep meaning
+fifty cards wherever it is asked, and `deck-rules.ts` is shared with the submission
+form and the tests.
+
+Hiding it moved a second thing. *Legal in {format}* used to render whenever the
+displayed list was empty, so filtering the size out would have announced a twelve
+card deck as legal — the exact failure this file keeps finding, where suppressing a
+message turns a true page into a confidently wrong one. It is gated on `problems`
+being empty, size included, so an unfinished deck now says nothing at all and the
+counter does the work.
 
 **An archetype page shows ten of each, and the rest have their own pages.** The
 matchup table ran to every opponent on record and the decklist table to sixty rows

@@ -34,6 +34,13 @@ export type Problem = {
   kind: 'error' | 'warning';
   /** What it is about, so the builder can point at the offending card. */
   cardId?: string;
+  /**
+   * Which rule it came from, for a caller that already says this in its own way.
+   * The builder prints a running `12 / 50` above the list and does not need the
+   * same fact again as a red box; the rule itself stays, because "legal" has to
+   * keep meaning fifty cards wherever it is asked.
+   */
+  rule?: 'size';
   message: string;
 };
 
@@ -120,6 +127,7 @@ export function validate(
   if (total !== DECK_SIZE) {
     problems.push({
       kind: 'error',
+      rule: 'size',
       message:
         total < DECK_SIZE
           ? `${DECK_SIZE - total} more card${DECK_SIZE - total === 1 ? '' : 's'} needed — a deck is ${DECK_SIZE} plus the Leader.`
