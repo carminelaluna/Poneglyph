@@ -62,8 +62,26 @@ export const metadata: Metadata = {
      * The mark, not card art. Card images are Bandai's and this is the picture that
      * gets copied into every link preview, chat unfurl and search result — the one
      * place where using theirs would look like a claim to be them.
+     *
+     * 1200x630, because that is what every unfurl is built for. It was the square
+     * 1024 until an audit noticed: a square is cropped top and bottom or
+     * letterboxed at the sides by every platform that shows it. The square is still
+     * the right shape for an avatar, so it stays in the folder — it is simply not
+     * what a link preview should be handed. Built by scripts/build-share-image.mjs.
      */
-    images: [{ url: '/brand/share-1024.png', width: 1024, height: 1024, alt: 'Poneglyph' }],
+    images: [
+      { url: '/brand/share-1200x630.png', width: 1200, height: 630, alt: 'Poneglyph' },
+    ],
+  },
+  /*
+   * Without this Twitter shows a small square thumbnail beside the text and the
+   * 1200x630 is wasted on the one platform most likely to be handed it.
+   */
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Poneglyph — ONE PIECE CARD GAME archive',
+    description: 'Every card, every printing, every stat. An unofficial fan archive.',
+    images: ['/brand/share-1200x630.png'],
   },
   robots: { index: true, follow: true },
 };

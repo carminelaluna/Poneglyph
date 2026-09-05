@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { CONTACT_EMAIL, CONTACT_MAILTO } from '@/lib/contact';
 
 /**
  * Terms of use.
@@ -111,7 +112,9 @@ export default function TermsPage() {
         </p>
         <p>
           For anything here — including a takedown request, which is actioned before anything
-          else — use the contact address published in the project repository.
+          else — write to <a href={CONTACT_MAILTO} className="inline-link">
+            {CONTACT_EMAIL}
+          </a>.
         </p>
         <p className="muted" style={{ fontSize: '0.8rem' }}>
           See also the <Link href="/privacy">privacy policy</Link> and the{' '}

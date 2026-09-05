@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { CONTACT_EMAIL, CONTACT_MAILTO } from '@/lib/contact';
 
 export const metadata: Metadata = {
   title: 'Legal notice',
@@ -130,9 +131,11 @@ export default function LegalPage() {
 
       <Section title="Contact">
         <p>
-          For corrections, takedown requests, or questions about how this site sources its data,
-          use the contact address published in the project repository. Requests from rights holders
-          are actioned before anything else.
+          For corrections, takedown requests, or questions about how this site sources its
+          data, write to <a href={CONTACT_MAILTO} className="inline-link">
+            {CONTACT_EMAIL}
+          </a>. Requests from rights holders are actioned before anything
+          else.
         </p>
       </Section>
     </div>

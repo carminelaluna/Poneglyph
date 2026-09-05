@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { CONTACT_EMAIL, CONTACT_MAILTO } from '@/lib/contact';
 
 /**
  * Privacy policy.
@@ -113,7 +114,9 @@ export default function PrivacyPage() {
         <p>
           If this changes in a way that matters, the page changes with it and the date below
           moves. For anything on this page — a request, a correction, or a question about what
-          is held — use the contact address published in the project repository.
+          is held — write to <a href={CONTACT_MAILTO} className="inline-link">
+            {CONTACT_EMAIL}
+          </a>.
         </p>
         <p className="muted" style={{ fontSize: '0.8rem' }}>
           See also the <Link href="/terms">terms of use</Link> and the{' '}
