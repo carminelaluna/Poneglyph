@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-05T04:33:20.189Z",
+  "generatedAt": "2026-09-06T04:42:47.211Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,11 +8,11 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 21,
-    "named": 16,
+    "cards": 22,
+    "named": 17,
     "articles": 3
   },
-  "durationMs": 2569,
+  "durationMs": 11150,
   "sets": [
     {
       "set": "OP18",
@@ -71,7 +71,7 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 15,
+      "revealed": 16,
       "cards": [
         {
           "id": "EB05-005",
@@ -138,6 +138,13 @@
           "image": null,
           "thumb": "EB05-036.webp",
           "text": "Purple Character 4 Cost / 0 Power +1000 Counter Navy"
+        },
+        {
+          "id": "EB05-038",
+          "name": "Russian",
+          "image": null,
+          "thumb": "EB05-038.webp",
+          "text": "Purple Character C @Card Reveals"
         },
         {
           "id": "EB05-042",
