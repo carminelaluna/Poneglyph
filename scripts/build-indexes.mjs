@@ -30,6 +30,7 @@ import { writeFile, readFile, mkdir, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { indexOf, withoutRecorded } from './dedupe.mjs';
 import { flip } from './matchups.mjs';
+import { readDecks } from './deck-corpus.mjs';
 
 const DATA = path.resolve('data');
 const PUBLIC = path.resolve('public', 'data');
@@ -773,7 +774,8 @@ async function main() {
   const cards = await load('cards.json', []);
   const cardsById = new Map(cards.map((c) => [c.id, c]));
 
-  const limitless = await load('decks.json', []);
+  /* A year at a time now — see scripts/deck-corpus.mjs for why. */
+  const limitless = await readDecks(DATA);
   const tournaments = await load('tournaments.json', []);
   const venueById = new Map(tournaments.map((t) => [t.id, t.venue ?? 'unknown']));
   const tierById = new Map(tournaments.map((t) => [t.id, t.tier ?? 'local']));

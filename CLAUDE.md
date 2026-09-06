@@ -60,6 +60,7 @@ derives release eras, shards the matchups, and writes both the browser payloads 
 
 ```
 sources.mjs          every upstream, with its role and limits
+deck-corpus.mjs      the deck archive, a file per year — read and write
 env.mjs              .env.local as Next reads it, for the scripts that must
 corpus-guard.mjs     when an answer is too small to overwrite what is recorded
 dedupe.mjs           one deck in two sources: same fifty cards, or same event
@@ -71,7 +72,7 @@ submissions.mjs      an organizer's answer -> corpus rows
 discord.mjs          messages -> cards, pure so a test needs no bot token
 ingest.mjs           cards     -> data/cards|sets|filters|meta.json + cards-index
                                   + data/price-history.json (one point per change)
-ingest-decks.mjs     Limitless -> data/decks|tournaments|decks-state.json
+ingest-decks.mjs     Limitless -> data/decks/{YYYY}.json, tournaments, decks-state
                                   (nothing under public/ — build-indexes owns those)
 ingest-matchups.mjs  Limitless -> data/matchups.json (pairings, resumable)
 ingest-topdecks.mjs  Top Decks -> data/decks-{en,jp}.json (guarded)
@@ -518,9 +519,31 @@ exactly like a collapse.
 `resolveJsonModule` infers a literal type for every key — fine at 26 MB and fatal at 83,
 where `tsc --noEmit` dies with *Ineffective mark-compacts near heap limit*.
 
-**`data/decks.json` is 66 MB and GitHub warns on every push.** The hard limit is 100 MB and
-a push over it is rejected. Measured: ~1.6 MB a month, so about 21 months. Splitting by year
-is the way out, and `build-indexes.mjs` is the only reader.
+**The deck corpus is a file per year, and used to be one 66 MB file.** GitHub warned
+on every push at 50 MB; the **hard limit is 100 MB and a push over it is rejected
+outright**, which is the day the archive stops updating rather than a day it looks
+untidy. At 1.61 MB a month the single file reached it in about 21 months.
+
+A year makes the problem stop rather than move: a closed year never grows again, and
+the current one gains ~19 MB before it closes. The largest, 2024, is 32.7 MB.
+`scripts/deck-corpus.mjs` owns the layout because three scripts touch the corpus —
+`ingest-decks` writes it and reads it back as its own cache, `build-indexes` merges
+it, `ingest-matchups` joins against it.
+
+`readDecks` reads the legacy `decks.json` **as well as** the years, so a checkout
+that has not re-ingested is not read as an empty archive — which would have
+`build-indexes` write empty payloads over live ones. The first write removes it.
+Rows are sorted within a year by date then id, so two runs produce identical bytes:
+`substantive-change.mjs` decides whether to commit by diffing, and an unstable order
+would rebuild the whole site to reshuffle a file. A year that empties loses its file,
+or `readDecks` keeps returning rows nothing wrote.
+
+The migration was verified before the old file was deleted: 58,399 rows in and out,
+identical ids and identical bodies by hash. The derived payloads changed order only —
+same set of decks, zero rows with different content.
+
+`data/decks-merged.json` is the next one to watch at 30.9 MB. It is derived, so
+losing it costs a rebuild rather than an archive.
 
 **`decks-state.json` holds `details`.** That map is the only copy of each event's venue. An
 earlier "slimming" dropped it and a rebuild reclassified 275 tournaments as `unknown`.
@@ -631,7 +654,7 @@ across them: CI pins 22, and building the same commit on 26 produced five differ
 2,785 cards · 4,843 printings · 60 sets · 2,172 Standard-legal, 20 via the block exception ·
 2,770 priced · 69,920 decklists — English 63,983 from 2022-10, Japanese 5,937 from 2022-07 ·
 7,936 tournaments · 19,546 named players, 3,677 with five or more results · 152,890 recorded
-matches from 1,025 brackets · 44/46 release windows · 67 announced official events · 219
+matches from 1,025 brackets · 44/46 release windows · 67 announced official events · 230
 tests.
 
 These drift daily and are a snapshot, not an invariant.

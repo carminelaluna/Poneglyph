@@ -32,6 +32,7 @@ import path from 'node:path';
 import { DECK_SOURCES } from './sources.mjs';
 import { Budget, apiGet } from './limitless.mjs';
 import { toRows } from './matchups.mjs';
+import { readDecks } from './deck-corpus.mjs';
 
 const args = process.argv.slice(2);
 const flag = (name, fallback = null) => {
@@ -59,8 +60,7 @@ async function main() {
   const started = Date.now();
 
   const tournaments = await read('tournaments.json', []);
-  const decksFile = await read('decks.json', []);
-  const decks = Array.isArray(decksFile) ? decksFile : (decksFile.decks ?? []);
+  const decks = await readDecks(DATA);
 
   if (tournaments.length === 0 || decks.length === 0) {
     console.error('[matchups] no tournaments or decks on record — run ingest:decks first');

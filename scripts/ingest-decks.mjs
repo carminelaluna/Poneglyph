@@ -17,7 +17,7 @@
  * run, and picks up where it left off next time. Run it on a schedule and the
  * archive fills in on its own.
  *
- * Writes data/tournaments.json, data/decks.json, data/archetypes.json,
+ * Writes data/tournaments.json, data/decks/{YYYY}.json, data/archetypes.json,
  * data/card-play.json and data/decks-meta.json. It writes nothing under
  * public/data: build-indexes.mjs owns every browser payload, which is the rule
  * ingest-topdecks.mjs learned by leaving a 0 KB index behind.
@@ -27,6 +27,7 @@ import { writeFile, readFile, mkdir, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { DECK_SOURCES } from './sources.mjs';
 import { Budget, apiGet } from './limitless.mjs';
+import { readDecks, writeDecks } from './deck-corpus.mjs';
 
 const args = process.argv.slice(2);
 const flag = (name, fallback = null) => {
@@ -131,7 +132,7 @@ async function loadState() {
 async function loadCollected() {
   const [tournaments, decks] = await Promise.all([
     loadJson(path.join(DATA, 'tournaments.json'), []),
-    loadJson(path.join(DATA, 'decks.json'), []),
+    readDecks(DATA),
   ]);
   if (has('reset')) return { tournaments: [], decks: [] };
   return { tournaments, decks };
@@ -634,11 +635,18 @@ async function main() {
   await Promise.all([
     writeFile(STATE_FILE, JSON.stringify(state)),
     writeFile(path.join(DATA, 'tournaments.json'), JSON.stringify(tournaments)),
-    writeFile(path.join(DATA, 'decks.json'), JSON.stringify(decks)),
     writeFile(path.join(DATA, 'archetypes.json'), JSON.stringify(archetypes)),
     writeFile(path.join(DATA, 'card-play.json'), JSON.stringify(cardPlay)),
     writeFile(path.join(DATA, 'decks-meta.json'), JSON.stringify(meta, null, 2)),
   ]);
+
+  /*
+   * After the rest, and on its own: this is the corpus, and a crash between the
+   * two is a state where the metadata claims decks the year files do not hold.
+   * Written second means the worse outcome is metadata that is one run behind.
+   */
+  const years = await writeDecks(DATA, decks);
+  log(`decks -> ${years.map((y) => `${y.year}:${y.decks}`).join(' ')}`);
 
   log(`done in ${((Date.now() - started) / 1000).toFixed(1)}s using ${budget.spent} requests`);
   console.table(meta.counts);
