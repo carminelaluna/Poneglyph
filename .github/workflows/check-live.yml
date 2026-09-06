@@ -1,0 +1,60 @@
+name: Check the live site
+
+# Somebody looking at the site is currently the only thing that would notice it
+# was broken. That is not a hypothetical gap: `update-spoilers` once ran green for
+# five days while writing nothing, and what surfaced it was a person opening the
+# page and asking.
+#
+# This is not a ping. The site is static, so if Pages serves anything it serves
+# HTML — "is it up" is the question it does not fail at. What it fails at is
+# quieter: a deploy that succeeded and published nothing, a payload written empty
+# by two racing writers, an archive that stopped moving behind a wall of green
+# ticks. scripts/check-live.mjs asks about those instead.
+#
+# **On the schedule being fiction.** GitHub delays scheduled workflows, and four
+# hours is an ordinary delay on this repository — measured, repeatedly. A run can
+# also be dropped outright. So `*/30` is not "every thirty minutes", it is "often
+# enough that a fault is noticed the same day". Do not tighten it expecting
+# precision; tightening it only adds runs that arrive late together.
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  # After a deploy, where it can check the commit as well as the health.
+  workflow_run:
+    workflows: [Publish site]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Require the site to be built from this commit'
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-live
+  cancel-in-progress: true
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Ask the published site
+        env:
+          PONEGLYPH_SITE_URL: https://carminelaluna.github.io/Poneglyph
+        run: |
+          # The commit is only checked when we know which one to expect. On a
+          # schedule we do not: the site may legitimately be a few minutes behind
+          # prod while Pages builds, and failing on that would be a red tick for
+          # something that is working.
+          if [ -n "${{ inputs.commit }}" ]; then
+            node scripts/check-live.mjs --commit "${{ inputs.commit }}"
+          else
+            node scripts/check-live.mjs
+          fi
