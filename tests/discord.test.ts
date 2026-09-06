@@ -17,6 +17,7 @@ import { promisify } from 'node:util';
 import {
   cardIds,
   cardsFromMessage,
+  cleanMarkup,
   describe as describeCard,
   newestId,
   revealsFromMessages,
@@ -183,6 +184,47 @@ describe('a batch of messages', () => {
  * before it is the card's name, which is the half the articles almost never give
  * and which the page had been printing as "Name not listed" under every one.
  */
+describe('mentions do not become card text', () => {
+  /*
+   * Two reveals were published carrying `@Card Reveals` — the channel's own role
+   * ping, sitting in the card's description on the live page. `<@&123>` was already
+   * stripped; the resolved form was not, and that is what arrives when the poster
+   * typed it or when a forward carries the snapshot's rendered text.
+   */
+  it('strips a mention already resolved to its name', () => {
+    assert.equal(cleanMarkup('Purple Character C @Card Reveals'), 'Purple Character C');
+    assert.equal(cleanMarkup('Yellow Character C @Card Reveals'), 'Yellow Character C');
+  });
+
+  it('still strips the raw form, and the two together', () => {
+    assert.equal(cleanMarkup('Red Character C <@&1370648885474889869>'), 'Red Character C');
+    assert.equal(cleanMarkup('Red C <@&137> @Card Reveals'), 'Red C');
+  });
+
+  it('strips the broadcast pings', () => {
+    assert.equal(cleanMarkup('OP18-021 Red Character SR @everyone'), 'OP18-021 Red Character SR');
+    assert.equal(cleanMarkup('New set @here'), 'New set');
+  });
+
+  /*
+   * The rule is only safe because card text in this game contains no `@`. These
+   * are the lines it must not touch — a real ability, and a stray `@` that is not
+   * a mention because nothing follows it.
+   */
+  it('leaves real card text alone', () => {
+    const rules = 'Draw 1 card. Then, if you have 5 or more cards, K.O. 1 Character.';
+    assert.equal(cleanMarkup(rules), rules);
+    assert.equal(cleanMarkup('Monkey.D.Luffy Red Leader L'), 'Monkey.D.Luffy Red Leader L');
+    assert.equal(cleanMarkup('Gum-Gum @ Giant'), 'Gum-Gum @ Giant');
+  });
+
+  /* A post that is only a ping has nothing left, and must not become a name. */
+  it('leaves nothing behind when the post was only a ping', () => {
+    assert.equal(cleanMarkup('@Card Reveals'), '');
+    assert.deepEqual(describeCard('@Card Reveals', 'EB05-038'), { name: null, text: null });
+  });
+});
+
 describe('the text a reveal carries', () => {
   it('splits the name off at the colour', () => {
     const r = describeCard('``` Belo Betty Red Character C``` <@&137>', 'EB05-005');

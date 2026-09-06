@@ -178,7 +178,19 @@ export function cleanMarkup(text) {
   return String(text ?? '')
     .replace(/```+/g, ' ')
     .replace(/<a?:\w+:\d+>/g, ' ')
+    /* `<@123>`, `<@!123>`, `<@&123>`, `<#123>` — a mention Discord sent raw. */
     .replace(/<[@#][&!]?\d+>/g, ' ')
+    /*
+     * And the same mention already resolved to its name: `@Card Reveals`, which
+     * is what arrives when the poster typed it or when a forward carries the
+     * snapshot's rendered text. Two of the stored reveals ended with the channel's
+     * own role ping sitting in the card's description.
+     *
+     * `@` plus a word, plus any capitalised words after it, because a role name
+     * has spaces in it. Safe here in a way it would not be generally: card text in
+     * this game contains no `@` at all.
+     */
+    .replace(/@\w[\w'’-]*(?:\s+[A-Z][\w'’-]*)*/g, ' ')
     .replace(/[*_~`|]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();

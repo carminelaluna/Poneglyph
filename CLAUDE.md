@@ -594,6 +594,19 @@ zero-width characters — `decode()` strips U+200B/C/D, U+FEFF and U+00A0, **wri
 escapes rather than literals**. Registration dates are published as a *guideline*, and that
 caveat travels with the data.
 
+**A mention is text by the time it reaches the page.** `cleanMarkup` stripped
+`<@&123>` and not `@Card Reveals` — the same ping already resolved to its name,
+which is what arrives when the poster typed it or a forward carries the snapshot's
+rendered text. Two reveals went out with the channel's own role ping sitting in the
+card's description. The rule is `@` plus a word plus any capitalised words after it,
+safe only because card text in this game contains no `@` at all.
+
+It is applied **again** where `ingest-spoilers.mjs` folds the Discord corpus in,
+not only where the text was captured. The stored corpus is somebody else's writing
+kept as it arrived; tidying it belongs at the point of use, so a better rule fixes
+what is already on record at the next scheduled run — without re-reading Discord and
+without a bot token, which the publish path does not have.
+
 **A Discord channel needs a bot** — automating a user account is against Discord's terms —
 with the **Message Content** privileged intent, without which `content`, `embeds` and
 `attachments` all come back empty. **A forward is empty at the top level**: the real message
@@ -712,7 +725,7 @@ across them: CI pins 22, and building the same commit on 26 produced five differ
 2,785 cards · 4,843 printings · 60 sets · 2,172 Standard-legal, 20 via the block exception ·
 2,770 priced · 69,920 decklists — English 63,983 from 2022-10, Japanese 5,937 from 2022-07 ·
 7,936 tournaments · 19,546 named players, 3,677 with five or more results · 152,890 recorded
-matches from 1,025 brackets · 44/46 release windows · 67 announced official events · 239
+matches from 1,025 brackets · 44/46 release windows · 67 announced official events · 244
 tests.
 
 These drift daily and are a snapshot, not an invariant.

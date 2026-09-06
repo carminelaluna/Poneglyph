@@ -23,6 +23,7 @@
 
 import { writeFile, readFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
+import { cleanMarkup } from './discord.mjs';
 import { SPOILER_SOURCES } from './sources.mjs';
 import { BACKOFF, exitOnFailure, finalError, refusal, TURNED_AWAY, writtenAt } from './refusal.mjs';
 
@@ -330,8 +331,16 @@ async function main() {
            * translation for a reveal that is not English — a Japanese card arrives
            * as a photo and a person writing out its text — so this is the only
            * thing on the page that says what an unreleased card does.
+           *
+           * Cleaned again on the way through, not only when it was captured. The
+           * stored corpus is somebody else's text kept as it arrived, and the rules
+           * for tidying it keep improving — two reveals were published carrying
+           * `@Card Reveals`, the channel's own role ping, because the resolved form
+           * of a mention was not being stripped. Cleaning here means a better rule
+           * fixes what is already on record at the next scheduled run, without
+           * re-reading Discord and without a bot token.
            */
-          text: card.text ?? null,
+          text: card.text ? cleanMarkup(card.text) || null : null,
         });
         added++;
       }

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-06T04:42:47.211Z",
+  "generatedAt": "2026-09-06T12:04:28.025Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -12,7 +12,7 @@
     "named": 17,
     "articles": 3
   },
-  "durationMs": 11150,
+  "durationMs": 2102,
   "sets": [
     {
       "set": "OP18",
@@ -144,7 +144,7 @@
           "name": "Russian",
           "image": null,
           "thumb": "EB05-038.webp",
-          "text": "Purple Character C @Card Reveals"
+          "text": "Purple Character C"
         },
         {
           "id": "EB05-042",
@@ -165,7 +165,7 @@
           "name": "Ahiru",
           "image": null,
           "thumb": "EB05-051.webp",
-          "text": "Yellow Character C @Card Reveals"
+          "text": "Yellow Character C"
         },
         {
           "id": "EB05-054",
