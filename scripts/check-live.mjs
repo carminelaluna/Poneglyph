@@ -35,8 +35,21 @@ const BASE = (
   'https://carminelaluna.github.io/Poneglyph'
 ).replace(/\/+$/, '');
 
-/** The commit that ought to be live. Skipped when not given. */
-const WANT = flag('commit', process.env.GITHUB_SHA ?? null);
+/**
+ * The commit that ought to be live, and **only when asked**.
+ *
+ * It used to fall back to `GITHUB_SHA`, which Actions always sets — so the check
+ * compared on every run and went red the first time it ran after a deploy, when
+ * Pages was still building and the site being one commit behind was simply true.
+ * That is the failure this whole workflow is supposed to avoid: a job that is red
+ * for something that is working teaches people to stop reading it.
+ *
+ * There is no honest way to check this on a schedule either. Pages can take an
+ * hour, so "behind" and "broken" look identical from here. What catches a deploy
+ * that stopped happening is the staleness check below: if nothing is publishing,
+ * the archive passes 48 hours and says so.
+ */
+const WANT = flag('commit');
 
 /**
  * How old the deck archive may be before something is wrong.

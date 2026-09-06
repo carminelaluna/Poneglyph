@@ -604,6 +604,15 @@ Nothing here fetches. A suite that hammered Limitless and Top Decks on every pus
 would be a worse citizen than the ingests are, and would go red for their bad
 mornings rather than for our bugs.
 
+**The live check does not compare commits on a schedule, and learning that cost one
+red tick.** `check-live.mjs` fell back to `GITHUB_SHA`, which Actions always sets, so
+it compared on every run — and the first one fired seconds after a deploy, while
+Pages was still building, and correctly reported the site as one commit behind. True,
+fine, and red. The commit is opt-in now (`--commit`), because Pages can take an hour
+and from outside "behind" and "broken" are the same picture. What catches a deploy
+that stopped happening is the staleness check: nothing publishing means the archive
+passes 48 hours and says so.
+
 **A script's own guards need a test that runs the script.** `--fixture` evaluates neither
 `CONFIGURED` nor `fromSupabase`; `node --check` parses and sees nothing; `tsc` does not read
 `.mjs`. `tests/ingest-submissions.test.ts` spawns it and reads the exit code.

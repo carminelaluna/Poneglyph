@@ -49,10 +49,15 @@ jobs:
         env:
           PONEGLYPH_SITE_URL: https://carminelaluna.github.io/Poneglyph
         run: |
-          # The commit is only checked when we know which one to expect. On a
-          # schedule we do not: the site may legitimately be a few minutes behind
-          # prod while Pages builds, and failing on that would be a red tick for
-          # something that is working.
+          # The commit is checked only when a person names one. The first run of
+          # this workflow went red because the script fell back to GITHUB_SHA,
+          # which Actions always sets: it fired right after a deploy, while Pages
+          # was still building, and correctly reported that the site was one
+          # commit behind — which was true and fine. A job red for something that
+          # is working is the thing this workflow exists to avoid becoming.
+          #
+          # A deploy that stopped happening is caught by the staleness check
+          # instead: nothing publishing means the archive passes 48 hours.
           if [ -n "${{ inputs.commit }}" ]; then
             node scripts/check-live.mjs --commit "${{ inputs.commit }}"
           else
