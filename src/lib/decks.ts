@@ -102,6 +102,8 @@ export const archetypes = archetypesJson as Archetype[];
  */
 type MergedDeck = {
   id: string;
+  /* Present in the file, and not the same thing as `id`. */
+  tournamentId: string | null;
   date: string;
   leaderId: string;
   leaderName: string;
@@ -113,7 +115,19 @@ type MergedDeck = {
   player: string;
   venue: string;
   tier: string;
-  cards: DeckCard[];
+  /*
+   * No `cards`. This file carries no card lists — build-indexes.mjs strips them,
+   * because `resolveJsonModule` infers a literal type for every key and the whole
+   * corpus with its fifties was 83 MB, where `tsc --noEmit` dies with *Ineffective
+   * mark-compacts near heap limit*. Every page that shows the fifty fetches them.
+   *
+   * It was declared here as required anyway, and typechecked for months because
+   * the shape TypeScript infers from a generated file depends on which optional
+   * fields happen to appear in it. A Top Decks refresh changed that mix and the
+   * build stopped — a data refresh failing a typecheck, which is the wrong thing
+   * to be possible. The contract says what the file holds now, checked against all
+   * 69,952 rows rather than read off one of them.
+   */
   sampling: string;
   region?: string;
   source?: string;

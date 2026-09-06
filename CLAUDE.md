@@ -544,6 +544,16 @@ exactly like a collapse.
 `resolveJsonModule` infers a literal type for every key — fine at 26 MB and fatal at 83,
 where `tsc --noEmit` dies with *Ineffective mark-compacts near heap limit*.
 
+**A hand-written type over a generated file breaks on a data refresh, not on a
+change.** `MergedDeck` declared `cards` as required. The file has never held it — 0 of
+69,952 rows — and the mapping supplies `[]` regardless, so nothing was wrong at
+runtime and it typechecked for months. What TypeScript compares against is the shape
+it infers from the file, and that shape is a union of whichever optional fields happen
+to appear; a Top Decks refresh changed the mix and `Verify` started failing, so the
+site stopped deploying with nothing having been edited. Every declared field is now
+checked against every row rather than read off the first one. When adding one, check
+it the same way — a field present on 99% of rows is not required.
+
 **The deck corpus is a file per year, and used to be one 66 MB file.** GitHub warned
 on every push at 50 MB; the **hard limit is 100 MB and a push over it is rejected
 outright**, which is the day the archive stops updating rather than a day it looks
