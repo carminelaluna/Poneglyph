@@ -1,0 +1,90 @@
+name: Back up Supabase
+
+# The only data on this project that is not in git, and the Free plan takes none of
+# its own: daily backups start at Pro. Accounts, saved decks, organizer requests and
+# submissions have no copy anywhere else, so a deleted or corrupted project takes
+# them with it. Everything else here is either in the repository or re-derivable
+# from what is.
+#
+# **The dump is an artifact, never a commit.** This repository is public, and
+# `organizer_requests` holds text people wrote about who they are, while a
+# submission is somebody's work before it has been reviewed. An artifact is private
+# to the repository, kept for ninety days, and free.
+#
+# Read the limit in scripts/export-supabase.mjs before relying on this: `auth.users`
+# is not exposed by PostgREST, so email addresses are not in the dump. It restores
+# data, not accounts.
+on:
+  schedule:
+    # Sunday, early. Nothing else runs then, and the schedule is delayed by hours on
+    # this repository anyway — which for a weekly copy does not matter at all.
+    - cron: '30 3 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup-supabase
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Read every table
+        env:
+          # Written in the open, as update-decks.yml and publish-site.yml do: the
+          # URL is not a secret, it ships in the browser bundle under its
+          # NEXT_PUBLIC_ name. `secrets.SUPABASE_URL` has never existed, and
+          # referencing it once made a step exit 1 on every run for a day while
+          # the job stayed green — this workflow was one line from repeating it.
+          SUPABASE_URL: https://wftkmhvxrlmyvaxdpegs.supabase.co
+          # Bypasses every row-level policy. Secrets only — never NEXT_PUBLIC_.
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/export-supabase.mjs --out backup
+
+      # The script exits 0 when no project is configured, which is right for a
+      # checkout that has none. Here it is not: unconfigured means misconfigured,
+      # and a backup that quietly does not happen is worse than no backup at all,
+      # because it looks like one. So this fails rather than warns.
+      - name: Refuse a run that copied nothing
+        run: |
+          if [ ! -f backup/manifest.json ]; then
+            echo '::error::no dump was written — the project is not configured, so nothing was backed up'
+            exit 1
+          fi
+          node -e "
+            const m = require('./backup/manifest.json');
+            const total = Object.values(m.tables).reduce((n, c) => n + c, 0);
+            console.log('[backup] ' + total + ' rows across ' + Object.keys(m.tables).length + ' tables');
+          "
+
+      - name: Keep it
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-${{ github.run_started_at }}
+          path: backup/
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Say what was in it
+        run: |
+          {
+            echo "### Supabase backup"
+            echo ""
+            echo "| table | rows |"
+            echo "| --- | --- |"
+            node -e "
+              const m = require('./backup/manifest.json');
+              for (const [t, n] of Object.entries(m.tables)) console.log(\`| \${t} | \${n} |\`);
+            "
+            echo ""
+            echo "Kept for 90 days as an artifact. Does not include \`auth.users\`:"
+            echo "email addresses are not exported, so this restores data rather than accounts."
+          } >> "$GITHUB_STEP_SUMMARY"

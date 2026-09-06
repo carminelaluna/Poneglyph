@@ -14,3 +14,9 @@ cdn/
 
 # Parked by build-static.mjs while the export runs
 .art-route-parked/
+
+# A Supabase dump, if one was taken locally. This repository is public and
+# organizer_requests holds text people wrote about themselves — the workflow keeps
+# it as a private Actions artifact, and a local run must not be one `git add -A`
+# away from publishing it.
+backup/
