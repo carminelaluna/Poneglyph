@@ -1,0 +1,7 @@
+:HL["/Poneglyph/_next/static/media/1a4aa50920b5315c-s.p.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/Poneglyph/_next/static/media/558ca1a6aa3cb55e-s.p.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/Poneglyph/_next/static/media/f39fb73de5e89135.p.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/Poneglyph/_next/static/css/f205b886bc526f7b.css","style"]
+:HL["/Poneglyph/_next/static/css/9282aa0b4a33dad3.css","style"]
+:HL["/Poneglyph/_next/static/css/23ee64ea3d4c0d16.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":4176,"slots":{"children":{"name":"cards","param":null,"prefetchHints":4192,"slots":{"children":{"name":"id","param":{"type":"d","key":"op02-045","siblings":[]},"prefetchHints":4192,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":4256,"slots":null}}}}}}},"staleTime":300,"buildId":"XWcAjeIyuOYkStva3ZQOq"}
