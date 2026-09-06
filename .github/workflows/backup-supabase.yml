@@ -54,6 +54,7 @@ jobs:
       # and a backup that quietly does not happen is worse than no backup at all,
       # because it looks like one. So this fails rather than warns.
       - name: Refuse a run that copied nothing
+        id: dump
         run: |
           if [ ! -f backup/manifest.json ]; then
             echo '::error::no dump was written — the project is not configured, so nothing was backed up'
@@ -64,11 +65,18 @@ jobs:
             const total = Object.values(m.tables).reduce((n, c) => n + c, 0);
             console.log('[backup] ' + total + ' rows across ' + Object.keys(m.tables).length + ' tables');
           "
+          # The day it was taken, for the artifact's name. `github.run_started_at`
+          # came back empty here and every weekly copy was called `supabase-`,
+          # which is a list nobody can read. This comes from the dump itself.
+          node -e "
+            const m = require('./backup/manifest.json');
+            console.log('day=' + m.takenAt.slice(0, 10));
+          " >> "$GITHUB_OUTPUT"
 
       - name: Keep it
         uses: actions/upload-artifact@v4
         with:
-          name: supabase-${{ github.run_started_at }}
+          name: supabase-${{ steps.dump.outputs.day }}-${{ github.run_id }}
           path: backup/
           retention-days: 90
           if-no-files-found: error
