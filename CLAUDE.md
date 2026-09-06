@@ -590,6 +590,20 @@ why the directory fetches sit in `shards.ts`. Tests are TypeScript run straight 
 `node --test` (Node strips the types from 22.18, which CI pins) and the glob must be
 quoted: a bare directory argument makes Node load `tests` as a module.
 
+**The ingests are tested for the two things testable without a network**, and they
+are the two that have broken. `tests/ingests.test.ts` checks that every relative
+import in `scripts/` resolves — four modules have been extracted out of these files
+and an extraction that moves one leaves a script that parses and dies on its first
+scheduled run, hours later, after spending a request budget — and that the extracted
+modules are still *imported* rather than re-inlined. Then it runs
+`ingest-decks --rebuild` against a fixture in a temp directory, spawned with its own
+cwd so it can never reach the real `data/`: no network, and the whole write path
+including `deck-corpus.mjs`.
+
+Nothing here fetches. A suite that hammered Limitless and Top Decks on every push
+would be a worse citizen than the ingests are, and would go red for their bad
+mornings rather than for our bugs.
+
 **A script's own guards need a test that runs the script.** `--fixture` evaluates neither
 `CONFIGURED` nor `fromSupabase`; `node --check` parses and sees nothing; `tsc` does not read
 `.mjs`. `tests/ingest-submissions.test.ts` spawns it and reads the exit code.
@@ -654,7 +668,7 @@ across them: CI pins 22, and building the same commit on 26 produced five differ
 2,785 cards · 4,843 printings · 60 sets · 2,172 Standard-legal, 20 via the block exception ·
 2,770 priced · 69,920 decklists — English 63,983 from 2022-10, Japanese 5,937 from 2022-07 ·
 7,936 tournaments · 19,546 named players, 3,677 with five or more results · 152,890 recorded
-matches from 1,025 brackets · 44/46 release windows · 67 announced official events · 230
+matches from 1,025 brackets · 44/46 release windows · 67 announced official events · 236
 tests.
 
 These drift daily and are a snapshot, not an invariant.
