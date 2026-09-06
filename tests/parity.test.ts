@@ -1,7 +1,7 @@
 /**
  * The three functions that exist twice, checked against each other.
  *
- * `shardOf`, `playerSlugOf` and the not-a-player list are written once in
+ * `shardOf`, `playerSlugOf`, the not-a-player list and `cdnShardOf` are written once in
  * `scripts/build-indexes.mjs` (which writes the payloads) and again in
  * `src/lib/shards.ts` / `src/lib/meta.ts` (which read them). They are duplicated on
  * purpose — a build script cannot import a browser module here — and CLAUDE.md says
@@ -93,6 +93,64 @@ async function sampleKeys(): Promise<string[]> {
 }
 
 /* ------------------------------------------------------------------ tests */
+
+describe('cdnShardOf', () => {
+  /*
+   * Which of the two art bundles a printing lives in, written once in
+   * scripts/cdn-shard.mjs (which builds them) and again as `bundleOf` in
+   * src/lib/art.ts (which links to them). Duplicated for the same reason as
+   * shardOf: a build script cannot import TypeScript, and art.ts ships to the
+   * browser so it stays small.
+   *
+   * Drift here is louder than a wrong bucket but just as silent to a build: every
+   * image in one half of the archive 404s, and nothing fails — the pages render
+   * with holes where the art should be.
+   */
+  it('agrees between the build script and the browser copy', async () => {
+    const script = await read('scripts/cdn-shard.mjs');
+    const lib = await read('src/lib/art.ts');
+
+    const fromScript = compile<(id: string) => number>(
+      functionBody(script, 'cdnShardOf').replace(/CDN_BUNDLES/g, '2'),
+      'printingId'
+    );
+    const fromLib = compile<(id: string) => number>(
+      functionBody(lib, 'bundleOf').replace(/CDN_BUNDLES/g, '2'),
+      'printingId'
+    );
+
+    for (const key of await sampleKeys()) {
+      assert.equal(fromScript(key), fromLib(key), `the two disagree about ${JSON.stringify(key)}`);
+    }
+  });
+
+  it('splits the archive roughly in half rather than into one heap', async () => {
+    const script = await read('scripts/cdn-shard.mjs');
+    const shard = compile<(id: string) => number>(
+      functionBody(script, 'cdnShardOf').replace(/CDN_BUNDLES/g, '2'),
+      'printingId'
+    );
+    const keys = await sampleKeys();
+    const inFirst = keys.filter((k) => shard(k) === 0).length;
+    const share = inFirst / keys.length;
+    /*
+     * The point of splitting is that neither bundle reaches 20,000 files. A hash
+     * that put 90% on one side would move the wall rather than remove it.
+     */
+    assert.ok(share > 0.4 && share < 0.6, `one bundle would hold ${Math.round(share * 100)}%`);
+  });
+
+  it('keeps a printing’s three widths together', async () => {
+    const script = await read('scripts/cdn-shard.mjs');
+    const shard = compile<(id: string) => number>(
+      functionBody(script, 'cdnShardOf').replace(/CDN_BUNDLES/g, '2'),
+      'printingId'
+    );
+    /* It hashes the printing, not the file, so the widths cannot be separated. */
+    assert.equal(shard('OP01-025'), shard('OP01-025'));
+    assert.notEqual(typeof shard('OP01-025'), 'undefined');
+  });
+});
 
 describe('shardOf', () => {
   it('agrees between the build script and the browser copy', async () => {

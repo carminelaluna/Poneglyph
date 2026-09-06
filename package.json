@@ -29,7 +29,9 @@
     "ingest:events": "node scripts/ingest-events.mjs",
     "build:cdn:lock": "node scripts/build-cdn.mjs --lock",
     "ingest:submissions": "node scripts/ingest-submissions.mjs",
-    "ingest:matchups": "node scripts/ingest-matchups.mjs"
+    "ingest:matchups": "node scripts/ingest-matchups.mjs",
+    "build:cdn:split": "node scripts/build-cdn.mjs --split",
+    "deploy:cdn:split": "wrangler pages deploy ./cdn/a --project-name poneglyph-art-a --branch poneglyph-art-a && wrangler pages deploy ./cdn/b --project-name poneglyph-art-b --branch poneglyph-art-b"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.4",

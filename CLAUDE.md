@@ -45,6 +45,7 @@ table in front of you right now; those stay.
 | `npm run build:indexes` | **Run after any deck ingest** — derives everything |
 | `npm run ingest:images` | Mirror card art into `public/cards` |
 | `npm run build:cdn` | That mirror to WebP at 3 widths, into `cdn/` |
+| `npm run build:cdn:split` | The same, split across two bundles — **read the note first** |
 | `npm run deploy:cdn` | Upload `cdn/` to Cloudflare Pages |
 | `npm run build:static` | `out/` for GitHub Pages — needs `NEXT_PUBLIC_CDN_URL` |
 | `npm run serve:static` | Serve `out/` on 4322 **the way Pages does** |
@@ -447,6 +448,30 @@ per deployment** on the free plan; `build-cdn.mjs` refuses to run past it.
 path, so `build:cdn:lock` means no request is static any more — all count against 100,000
 Functions requests a day, roughly 1,600 grid views. Plain `build:cdn` removes it again.
 
+**The 20,000 limit has a lever, and nothing is pulled until it is.** Three widths per
+printing means the bundle is three times the printing count: 4,843 printings is 14,529
+files, 73% of the limit, and a set adds 250–400 printings. `build-cdn.mjs` warns at 85%
+rather than only refusing at 100 — the answer is a change to how art is stored, not
+something to decide with a failed deploy open.
+
+The answer is **two Pages projects**, because every other way out costs a reader
+something, measured: dropping the 96px tier sends a 320px image to a 44px table row and
+takes a metagame table from 40 KB of thumbnails to 290 KB, and the card browser's list
+view from 200 KB to 1.45 MB. Dropping 600px softens the lightbox, the one place somebody
+is looking at the card. Moving a tier into the site build cannot work at all —
+`publish-site.yml` has no card art, which is 1.66 GB and not in git.
+
+`npm run build:cdn:split` writes `cdn/a` and `cdn/b`, each with its own `_headers`, split
+by FNV-1a over the printing id so a printing's three widths stay together — 2,420 and
+2,423 today, 4,243 printings of headroom each. Nothing about the site changes until
+`NEXT_PUBLIC_CDN_URL_B` is set: unset, `art.ts` resolves every printing to the first
+bundle exactly as before.
+
+That hash exists **twice**, in `scripts/cdn-shard.mjs` and as `bundleOf` in
+`src/lib/art.ts`, for the reason `shardOf` does — a build script cannot import
+TypeScript. Drift means every image in one half of the archive 404s while nothing fails,
+so `tests/parity.test.ts` runs both against every printing id.
+
 `wrangler` is a devDependency, and the deploy passes `--branch poneglyph-art` because that
 is the project's production branch.
 
@@ -677,7 +702,7 @@ across them: CI pins 22, and building the same commit on 26 produced five differ
 2,785 cards · 4,843 printings · 60 sets · 2,172 Standard-legal, 20 via the block exception ·
 2,770 priced · 69,920 decklists — English 63,983 from 2022-10, Japanese 5,937 from 2022-07 ·
 7,936 tournaments · 19,546 named players, 3,677 with five or more results · 152,890 recorded
-matches from 1,025 brackets · 44/46 release windows · 67 announced official events · 236
+matches from 1,025 brackets · 44/46 release windows · 67 announced official events · 239
 tests.
 
 These drift daily and are a snapshot, not an invariant.

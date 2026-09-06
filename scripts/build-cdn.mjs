@@ -25,6 +25,7 @@
 import { readdir, mkdir, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
+import { CDN_BUNDLES, bundleDir, cdnShardOf } from './cdn-shard.mjs';
 
 const args = process.argv.slice(2);
 const flag = (name, fallback = null) => {
@@ -48,6 +49,25 @@ const SIZES = [
 
 /** Cloudflare Pages refuses a deployment above this on the free plan. */
 const FILE_LIMIT = 20_000;
+
+/**
+ * Say something well before the wall rather than at it.
+ *
+ * The guard below refuses a deployment that cannot be uploaded, which is correct
+ * and also the worst moment to learn: the answer is a change to how the art is
+ * stored, not something to decide with a failed deploy open. At 85% there are
+ * still a couple of years to choose in.
+ */
+const WARN_AT = 0.85;
+
+/**
+ * `--split` writes two bundles instead of one, for two Pages projects.
+ *
+ * Off by default, and nothing about the site changes until `NEXT_PUBLIC_CDN_URL_B`
+ * is set as well — see scripts/cdn-shard.mjs for why two projects rather than
+ * fewer widths, and for what the alternatives cost a reader.
+ */
+const SPLIT = has('split');
 
 const log = (...m) => console.log('[cdn]', ...m);
 
@@ -151,8 +171,11 @@ async function convert(name) {
   let written = 0;
   let bytes = 0;
 
+  /* Split or not, a printing's three widths always land together. */
+  const into = SPLIT ? path.join(OUT, bundleDir(cdnShardOf(id))) : OUT;
+
   for (const { width, quality } of SIZES) {
-    const target = path.join(OUT, `${id}_${width}.webp`);
+    const target = path.join(into, `${id}_${width}.webp`);
     if (!FORCE && (await exists(target))) {
       bytes += (await stat(target)).size;
       continue;
@@ -184,15 +207,52 @@ async function main() {
   const planned = all.length * SIZES.length;
   log(`${all.length} cards x ${SIZES.length} widths = ${planned.toLocaleString('en-US')} files`);
 
-  if (planned > FILE_LIMIT && !ONLY) {
+  /*
+   * Split, the limit applies per project, so what matters is the fuller bundle
+   * rather than the total. The hash is even enough that the two are within a few
+   * printings of each other, but it is measured rather than assumed.
+   */
+  const perBundle = SPLIT
+    ? all.reduce((counts, name) => {
+        counts[cdnShardOf(path.basename(name, '.png'))] += SIZES.length;
+        return counts;
+      }, new Array(CDN_BUNDLES).fill(0))
+    : [planned];
+  const fullest = Math.max(...perBundle);
+
+  if (SPLIT) {
+    log(
+      `split across ${CDN_BUNDLES} bundles: ` +
+        perBundle.map((n, i) => `${bundleDir(i)}=${n.toLocaleString('en-US')}`).join(', ')
+    );
+  }
+
+  if (fullest > FILE_LIMIT * WARN_AT && fullest <= FILE_LIMIT) {
+    log(
+      `::warning::${fullest.toLocaleString('en-US')} files is ${Math.round((fullest / FILE_LIMIT) * 100)}% ` +
+        `of the ${FILE_LIMIT.toLocaleString('en-US')} Cloudflare Pages allows per deployment` +
+        (SPLIT ? '' : ' — `--split` writes two bundles, see scripts/cdn-shard.mjs')
+    );
+  }
+
+  if (fullest > FILE_LIMIT && !ONLY) {
     console.error(
-      `[cdn] ${planned} files exceeds the Cloudflare Pages free limit of ${FILE_LIMIT}. ` +
-        'Drop a width before deploying.'
+      `[cdn] ${fullest.toLocaleString('en-US')} files exceeds the Cloudflare Pages free limit ` +
+        `of ${FILE_LIMIT.toLocaleString('en-US')}. ` +
+        (SPLIT
+          ? 'Both bundles are full; a paid plan allows 100,000.'
+          : 'Run with `--split` to write two bundles — see scripts/cdn-shard.mjs.')
     );
     process.exit(1);
   }
 
   await mkdir(OUT, { recursive: true });
+  /* One directory per bundle when split, since convert() writes straight into it. */
+  if (SPLIT) {
+    for (let i = 0; i < CDN_BUNDLES; i++) {
+      await mkdir(path.join(OUT, bundleDir(i)), { recursive: true });
+    }
+  }
 
   let done = 0;
   let written = 0;
@@ -223,7 +283,14 @@ async function main() {
    * GitHub Pages, which does not let you set them. Every file is content-addressed
    * by card number and width and never changes, so it can be cached forever.
    */
-  await writeFile(path.join(OUT, '_headers'), headers());
+  /* One per bundle: each is its own Pages project and carries its own rules. */
+  if (SPLIT) {
+    for (let i = 0; i < CDN_BUNDLES; i++) {
+      await writeFile(path.join(OUT, bundleDir(i), '_headers'), headers());
+    }
+  } else {
+    await writeFile(path.join(OUT, '_headers'), headers());
+  }
 
   /*
    * With --lock, write the referrer check; without it, take any previous one away.
@@ -244,7 +311,15 @@ async function main() {
     'newly converted': written,
     'total MB': Math.round(bytes / 1024 / 1024),
   });
-  log('upload with:  npx wrangler pages deploy ./cdn --project-name poneglyph-art');
+  if (SPLIT) {
+    log('upload both:');
+    for (let i = 0; i < CDN_BUNDLES; i++) {
+      log(`  npx wrangler pages deploy ./cdn/${bundleDir(i)} --project-name poneglyph-art-${bundleDir(i)}`);
+    }
+    log('then set NEXT_PUBLIC_CDN_URL and NEXT_PUBLIC_CDN_URL_B to the two hosts');
+  } else {
+    log('upload with:  npx wrangler pages deploy ./cdn --project-name poneglyph-art');
+  }
 }
 
 main().catch((err) => {
