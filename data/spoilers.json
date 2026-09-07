@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-06T12:04:28.025Z",
+  "generatedAt": "2026-09-07T12:22:41.881Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,11 +8,11 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 22,
-    "named": 17,
+    "cards": 23,
+    "named": 18,
     "articles": 3
   },
-  "durationMs": 2102,
+  "durationMs": 10620,
   "sets": [
     {
       "set": "OP18",
@@ -71,7 +71,7 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 16,
+      "revealed": 17,
       "cards": [
         {
           "id": "EB05-005",
@@ -110,6 +110,13 @@
           "id": "EB05-016",
           "name": null,
           "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/EB05-016_p2.jpg"
+        },
+        {
+          "id": "EB05-022",
+          "name": "Octopako",
+          "image": null,
+          "thumb": "EB05-022.webp",
+          "text": "Blue Character C"
         },
         {
           "id": "EB05-023",
