@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-07T12:22:41.881Z",
+  "generatedAt": "2026-09-08T04:40:12.454Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,11 +8,11 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 23,
-    "named": 18,
+    "cards": 24,
+    "named": 19,
     "articles": 3
   },
-  "durationMs": 10620,
+  "durationMs": 2277,
   "sets": [
     {
       "set": "OP18",
@@ -71,7 +71,7 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 17,
+      "revealed": 18,
       "cards": [
         {
           "id": "EB05-005",
@@ -110,6 +110,13 @@
           "id": "EB05-016",
           "name": null,
           "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/EB05-016_p2.jpg"
+        },
+        {
+          "id": "EB05-017",
+          "name": "Mermaid Cafe Dancers",
+          "image": null,
+          "thumb": "EB05-017.webp",
+          "text": "Green Characters C"
         },
         {
           "id": "EB05-022",
