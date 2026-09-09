@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-08T04:40:12.454Z",
+  "generatedAt": "2026-09-09T07:24:34.988Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,11 +8,11 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 24,
-    "named": 19,
+    "cards": 25,
+    "named": 20,
     "articles": 3
   },
-  "durationMs": 2277,
+  "durationMs": 10234,
   "sets": [
     {
       "set": "OP18",
@@ -71,8 +71,15 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 18,
+      "revealed": 19,
       "cards": [
+        {
+          "id": "EB05-002",
+          "name": "Doll",
+          "image": null,
+          "thumb": "EB05-002.webp",
+          "text": "Red Character R"
+        },
         {
           "id": "EB05-005",
           "name": "Belo Betty",
