@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-09T12:23:12.716Z",
+  "generatedAt": "2026-09-09T21:46:02.137Z",
   "source": {
     "id": "limitless",
     "label": "Limitless TCG",
@@ -7,14 +7,14 @@
     "docs": "https://docs.limitlesstcg.com/developer.html"
   },
   "counts": {
-    "tournaments": 1028,
-    "decks": 58541,
+    "tournaments": 1029,
+    "decks": 58605,
     "archetypes": 141,
-    "cardsPlayed": 2319
+    "cardsPlayed": 2320
   },
   "thisRun": {
     "tournaments": 1,
-    "decks": 14,
+    "decks": 64,
     "empty": 0,
     "wrongSize": 0,
     "illegalCounts": 0,
@@ -23,22 +23,22 @@
     "requests": 8
   },
   "coverage": {
-    "tournamentsRead": 2364,
+    "tournamentsRead": 2365,
     "oldest": "2023-03-23T23:15:00.000Z",
-    "newest": "2026-09-08T22:00:00.000Z"
+    "newest": "2026-09-09T18:00:00.000Z"
   },
   "filters": {
     "minPlayers": 8,
     "since": "2026-06-09"
   },
   "venues": {
+    "simulator": 417,
     "offline": 225,
-    "simulator": 416,
     "webcam": 378,
     "online": 9
   },
   "tiers": {
-    "local": 946,
+    "local": 947,
     "finals": 9,
     "championship": 4,
     "qualifier": 12,
@@ -46,5 +46,5 @@
     "regional": 30,
     "treasure": 12
   },
-  "durationMs": 1669
+  "durationMs": 2173
 }
