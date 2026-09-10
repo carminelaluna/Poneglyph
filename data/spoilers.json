@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-09T07:24:34.988Z",
+  "generatedAt": "2026-09-10T07:20:26.967Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,11 +8,11 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 25,
-    "named": 20,
+    "cards": 26,
+    "named": 21,
     "articles": 3
   },
-  "durationMs": 10234,
+  "durationMs": 11103,
   "sets": [
     {
       "set": "OP18",
@@ -71,7 +71,7 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 19,
+      "revealed": 20,
       "cards": [
         {
           "id": "EB05-002",
@@ -180,6 +180,13 @@
           "image": null,
           "thumb": "EB05-045.webp",
           "text": "Black Character C"
+        },
+        {
+          "id": "EB05-047",
+          "name": "Ripley",
+          "image": null,
+          "thumb": "EB05-047.webp",
+          "text": "Black character 4 Cost / 4000 Power [+2000 Counter]"
         },
         {
           "id": "EB05-051",
