@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-10T07:20:26.967Z",
+  "generatedAt": "2026-09-11T11:12:53.184Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,11 +8,11 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 26,
-    "named": 21,
+    "cards": 27,
+    "named": 22,
     "articles": 3
   },
-  "durationMs": 11103,
+  "durationMs": 2511,
   "sets": [
     {
       "set": "OP18",
@@ -71,7 +71,7 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 20,
+      "revealed": 21,
       "cards": [
         {
           "id": "EB05-002",
@@ -208,6 +208,13 @@
           "image": null,
           "thumb": "EB05-056.webp",
           "text": "Yellow Character C"
+        },
+        {
+          "id": "EB05-057",
+          "name": "Nojiko",
+          "image": null,
+          "thumb": "EB05-057.webp",
+          "text": "Yellow Character 2 Cost / 0 Power [+2000 Counter]"
         }
       ],
       "articles": [
