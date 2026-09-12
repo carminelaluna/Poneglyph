@@ -1,0 +1,51 @@
+# As a condition of accessing this website, you agree to the content signals
+# below. A signal set to `yes` grants the corresponding use; `no` withholds it;
+# a use with no signal is neither granted nor restricted.
+#
+#   search    building a search index and returning links and short excerpts.
+#   ai-input  reading the content to answer a question now — retrieval,
+#             grounding, a cited answer. Not the same as training.
+#   ai-train  training or fine-tuning a model on the content.
+#
+# ANY RESTRICTION EXPRESSED HERE IS AN EXPRESS RESERVATION OF RIGHTS UNDER
+# ARTICLE 4 OF EU DIRECTIVE 2019/790 ON COPYRIGHT IN THE DIGITAL SINGLE MARKET.
+#
+# Poneglyph is an unofficial fan project. The card names, card text and artwork
+# are Bandai's and are reproduced for identification and reference; what is asked
+# for here is the archive built around them — the recorded results, the matchup
+# data joined out of published brackets, and the indexes derived from both.
+# See /legal.
+
+User-Agent: *
+Content-Signal: search=yes,ai-input=yes,ai-train=no
+Allow: /
+Disallow: /art/
+Disallow: /account/
+Disallow: /submit/
+Disallow: /review/
+
+User-Agent: Amazonbot
+Disallow: /
+
+User-Agent: Applebot-Extended
+Disallow: /
+
+User-Agent: Bytespider
+Disallow: /
+
+User-Agent: CCBot
+Disallow: /
+
+User-Agent: ClaudeBot
+Disallow: /
+
+User-Agent: Google-Extended
+Disallow: /
+
+User-Agent: GPTBot
+Disallow: /
+
+User-Agent: meta-externalagent
+Disallow: /
+
+Sitemap: https://carminelaluna.github.io/Poneglyph/sitemap.xml

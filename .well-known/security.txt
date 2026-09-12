@@ -1,0 +1,15 @@
+# How to report a security problem with Poneglyph.
+#
+# Unofficial fan project, run by one person. There is no bounty and no SLA;
+# there is somebody who reads the address below and will fix what you find.
+# What is worth reporting: anything that reaches data belonging to another
+# account, any way to publish a tournament result without review, anything
+# that mints a role. The site itself is static files and a JSON archive.
+#
+# Regenerated on every deploy, so Expires below is never stale by neglect.
+
+Contact: mailto:tdk8gb93@gmail.com
+Expires: 2027-09-12T21:32:34Z
+Preferred-Languages: en, it
+Canonical: https://carminelaluna.github.io/Poneglyph/.well-known/security.txt
+Canonical: https://carminelaluna.github.io/Poneglyph/security.txt
