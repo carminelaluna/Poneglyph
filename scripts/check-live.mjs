@@ -13,6 +13,8 @@ const BASE = (
 
 const WANT = flag('commit');
 
+const FRESH = args.includes('--just-deployed');
+
 const STALE_HOURS = 48;
 
 const PAGES = [
@@ -54,6 +56,8 @@ const DESCRIPTION_BUDGET = 160;
 const problems = [];
 const note = (m) => console.log(`[live] ${m}`);
 const warn = (m) => console.log(`[live] ::warning::${m}`);
+const shape = (m) =>
+  FRESH ? warn(`${m} — the site may still be mid-deploy`) : fail(m);
 const fail = (m) => {
   problems.push(m);
   console.log(`[live] ::error::${m}`);
@@ -136,12 +140,12 @@ async function main() {
 
       const href = head.match(/<link[^>]*rel="canonical"[^>]*href="([^"]+)"/)?.[1] ?? null;
       const want = `${BASE}${page}`;
-      if (!href) fail(`${page} declares no canonical URL`);
-      else if (href !== want) fail(`${page} says its canonical URL is ${href}, not ${want}`);
+      if (!href) shape(`${page} declares no canonical URL`);
+      else if (href !== want) shape(`${page} says its canonical URL is ${href}, not ${want}`);
       else canonical++;
 
       const description = head.match(/<meta name="description" content="([^"]*)"/)?.[1] ?? '';
-      if (!description) fail(`${page} carries no meta description`);
+      if (!description) shape(`${page} carries no meta description`);
       else if (description.length > DESCRIPTION_BUDGET) {
         warn(
           `${page} has a ${description.length}-character description; ` +
@@ -149,23 +153,23 @@ async function main() {
         );
       }
     } catch (err) {
-      fail(`could not read the head of ${page}: ${err.message}`);
+      shape(`could not read the head of ${page}: ${err.message}`);
     }
   }
   note(`${canonical}/${HEADS.length} pages declare their own canonical URL`);
 
   try {
     const res = await get('/.well-known/security.txt');
-    if (!res.ok) fail(`/.well-known/security.txt answered ${res.status}`);
+    if (!res.ok) shape(`/.well-known/security.txt answered ${res.status}`);
     else {
       const expires = Date.parse(res.body.match(/^Expires:[ \t]*(\S+)/m)?.[1] ?? '');
-      if (!Number.isFinite(expires)) fail('security.txt carries no readable Expires');
+      if (!Number.isFinite(expires)) shape('security.txt carries no readable Expires');
       else if (expires < Date.now()) {
-        fail('security.txt has expired — every deploy rewrites it, so nothing has deployed');
+        shape('security.txt has expired — every deploy rewrites it, so nothing has deployed');
       } else note(`security.txt in date until ${new Date(expires).toISOString().slice(0, 10)}`);
     }
   } catch (err) {
-    fail(`could not read security.txt: ${err.message}`);
+    shape(`could not read security.txt: ${err.message}`);
   }
 
   if (problems.length) {

@@ -58,8 +58,22 @@ jobs:
           #
           # A deploy that stopped happening is caught by the staleness check
           # instead: nothing publishing means the archive passes 48 hours.
+          #
+          # `--just-deployed` is the same lesson one step further out. The checks
+          # that read this build's own HTML — the canonical URL, the description
+          # length, security.txt — are true of the build we just made and not yet
+          # of the one Pages is still serving. Run seconds after a deploy they
+          # reported, correctly, that none of them were there: five errors and a
+          # red tick for a site that was working, which is what happened at 09:58
+          # on the deploy that added them. On this trigger they warn instead.
+          #
+          # They still fail on the schedule, which runs every thirty minutes and is
+          # never seconds after anything. A regression is caught within the hour;
+          # a deploy in flight is not mistaken for one.
           if [ -n "${{ inputs.commit }}" ]; then
             node scripts/check-live.mjs --commit "${{ inputs.commit }}"
+          elif [ "${{ github.event_name }}" = "workflow_run" ]; then
+            node scripts/check-live.mjs --just-deployed
           else
             node scripts/check-live.mjs
           fi
