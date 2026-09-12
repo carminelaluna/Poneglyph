@@ -42,9 +42,11 @@ export default function PrivacyPage() {
           tournament data they read is fetched from this same site.
         </p>
         <p>
-          Your browser keeps ordinary things it keeps for any site: cached files, and the
-          filter choices some pages put in the address bar so a view can be linked to. None of
-          that is sent anywhere.
+          No cookie is set, so there is no cookie to consent to. Your browser keeps the
+          ordinary things it keeps for any site — cached files, and the filter choices some
+          pages put in the address bar so a view can be linked to — plus two entries in local
+          storage: one recording that you have seen the first-visit notice, and, if you are
+          signed in, your session. Both stay in your browser and are sent nowhere.
         </p>
       </Section>
 
@@ -101,6 +103,15 @@ export default function PrivacyPage() {
         <p>
           You can also ask for a copy of what is stored about you, or for a correction. There
           is not much of it, so these are not difficult requests to answer.
+        </p>
+        <p>
+          Under the GDPR those are rights rather than favours — access, rectification,
+          erasure, portability and objection — and the address at the bottom of this page is
+          how to use any of them. If the answer you get is unsatisfactory, you can complain to
+          a data protection authority; in Italy that is the{' '}
+          <a href="https://www.garanteprivacy.it" target="_blank" rel="noreferrer noopener">
+            Garante per la protezione dei dati personali
+          </a>.
         </p>
         <p>
           Tournament results that have been approved and published are a separate matter:
