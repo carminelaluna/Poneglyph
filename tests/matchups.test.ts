@@ -1,15 +1,3 @@
-/**
- * Reading a bracket into Leader-against-Leader results.
- *
- * This is where a matchup goes quietly wrong. Every failure below produces a real
- * number on a real page — a deck that looks 60% against something it is even with,
- * a bye counted as a win, an archetype credited with a match it never played — and
- * none of them throws.
- *
- * The last suite checks the built payloads instead of the functions: a match is
- * stored twice, once from each side, and if the two ever disagreed the site would
- * report a matchup and its opposite as both winning.
- */
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -31,7 +19,6 @@ const read = toRows as (
   leaderByPlayer: Map<string, string>
 ) => { rows: [string, string, number][]; unknown: number; mirrors: number };
 
-/** Two players with decklists on record, and one without. */
 const field = new Map([
   ['aku01', 'OP13-001'],
   ['el_tom', 'OP09-051'],
@@ -49,11 +36,6 @@ describe('toRows', () => {
     assert.deepEqual(rows, [['OP13-001', 'OP09-051', B_WON]]);
   });
 
-  /*
-   * A timed round that ended level, a double loss, a result never published: both
-   * decks failed to win it, and that is what a draw is. Counting it as a loss for
-   * whoever happens to be player1 would bias every archetype by table position.
-   */
   it('counts anything that is not one of the two names as a draw', () => {
     for (const winner of [null, '', 'someone_else', undefined]) {
       const { rows } = read([{ player1: 'aku01', player2: 'el_tom', winner }], field);
@@ -66,11 +48,6 @@ describe('toRows', () => {
     assert.deepEqual(rows, [['OP13-001', 'OP09-051', A_WON]]);
   });
 
-  /*
-   * Limitless publishes pairings for everyone who turned up and decklists only for
-   * those who submitted one. The missing side is genuinely unknown, and inventing
-   * an archetype for it would put matches on a deck that never sat at that table.
-   */
   it('drops a match whose other side has no decklist on record', () => {
     const { rows, unknown } = read(
       [
@@ -83,14 +60,12 @@ describe('toRows', () => {
     assert.equal(unknown, 2);
   });
 
-  /* A bye has no opponent: nobody beat anybody. */
   it('drops a bye', () => {
     const { rows, unknown } = read([{ player1: 'aku01', player2: null, winner: 'aku01' }], field);
     assert.deepEqual(rows, []);
     assert.equal(unknown, 1);
   });
 
-  /* A deck beats itself half the time by construction. */
   it('drops a mirror', () => {
     const { rows, mirrors } = read(
       [{ player1: 'aku01', player2: 'nami22', winner: 'aku01' }],
@@ -131,7 +106,6 @@ describe('the matchup payloads', () => {
     const files = readdirSync(dir).filter((f) => f.endsWith('.json'));
     if (files.length === 0) return t.skip('no matchups built');
 
-    /* 'A|B' -> [wins, losses, draws], as A's own file reports them. */
     const tally = new Map<string, [number, number, number]>();
 
     for (const file of files) {

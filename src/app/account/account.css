@@ -1,32 +1,10 @@
-/* Account — see page.tsx and AccountView.tsx. */
-
-/*
- * The signed-in page is four bordered slabs — who you are, the ways in, the
- * organizer request, your decks — and none of them carried a margin, so they sat
- * edge to edge and read as one panel with lines drawn across it. A stack rather
- * than a margin on each, so a fifth section cannot arrive without the spacing.
- */
 .account-stack {
   display: grid;
-  /* Start of the row, so a small card stays small instead of filling the width. */
   justify-items: start;
   gap: 1.1rem;
-  /*
-   * Narrower than the 52rem shell. These panels hold a name, two provider rows
-   * and a short list; at the full width they were mostly empty and read as
-   * bigger than what is in them.
-   */
   max-width: 42rem;
 }
 
-/*
- * The signed-in page as a whole: a heading on the left, who you are beside it on
- * the right, and everything else across the full width beneath them both.
- *
- * The card has to be a direct child for this to work, which is why AccountView
- * renders it as a sibling of the stack rather than inside it — a grandchild
- * cannot be placed in a grid's second column.
- */
 .account-page {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -39,37 +17,13 @@
   min-width: 0;
 }
 
-/*
- * Everything below the two of them runs the full width. The heading shares its
- * row with the card; a list of decks has no reason to be narrowed by it.
- *
- * The margin is the menu's business. The title is one short line and the trigger
- * beside it is twice as tall, so the first row leaves almost nothing between the
- * chip and whatever the stack begins with — and an open menu, which floats rather
- * than pushing, then lands on top of it. This is the room for both.
- */
 .account-page > .account-stack {
   grid-column: 1 / -1;
   margin-top: 1.75rem;
 }
 
-/*
- * Who you are: a name, and a menu behind it.
- *
- * It was a bordered card holding a name and a Sign out button — a lot of furniture
- * for two facts, and square and heavy next to a page that is mostly a list. At
- * rest this is now one line of text; what you can do with the account lives in the
- * menu, which is also where it can grow without the page growing with it.
- *
- * It is shaped like the rest of the site and not like a phone app: the trigger is
- * a `.chip`, which is already what a small control looks like here, and the panel
- * takes the same `--radius` and the same edges as every slab. Only the shadow is
- * different, because a menu floating *over* the page is the one thing that is not
- * carved *into* it — and that is a lighting difference, not a shape one.
- */
 .account-who {
   grid-column: 2;
-  /* One row to sit beside now that the title is one line rather than two. */
   grid-row: 1;
   justify-self: end;
   position: relative;
@@ -80,7 +34,6 @@
   position: relative;
 }
 
-/* A `.chip` in the markup, so this only adds what a chip does not already say. */
 .who-name {
   max-width: 16rem;
   padding: 0.4rem 0.7rem;
@@ -90,15 +43,8 @@
   text-overflow: ellipsis;
 }
 
-/*
- * The shape of a name, before there is one. It holds the trigger's width so the
- * header does not jump when the row lands, and says nothing while it waits — the
- * page used to fill this gap with the name the OAuth provider had on file.
- */
 .who-waiting {
   display: block;
-  /* About the width a name settles at, so the jump when it lands is a pixel or
-     two rather than thirty — measured against `theripper17x`. */
   width: 5rem;
   height: 0.72rem;
   border-radius: 2px;
@@ -110,7 +56,6 @@
   border-color: var(--edge-strong);
 }
 
-/* Points down at rest and up when the menu it opens is on screen. */
 .who-caret {
   width: 0.6rem;
   flex-shrink: 0;
@@ -134,7 +79,6 @@
   border: 1px solid var(--edge-strong);
   border-radius: var(--radius);
   background: var(--slab-hi);
-  /* Floating, so it casts rather than being carved. The one difference. */
   box-shadow: var(--lift);
 }
 
@@ -160,11 +104,6 @@
   color: var(--glyph);
 }
 
-/*
- * Nothing to put beside a heading when there is no room for it. Below this the
- * card goes back to being the first thing under the title, which is where a
- * phone wants it anyway.
- */
 @media (max-width: 48rem) {
   .account-page {
     grid-template-columns: 1fr;
@@ -177,39 +116,25 @@
     margin-top: 1.25rem;
   }
 
-  /* Room on the left instead of running off the right edge. */
   .who-menu {
     right: auto;
     left: 0;
   }
 }
 
-/* Everything that is a list still wants the room. */
 .account-stack > .section,
 .account-stack > .account-ask {
   justify-self: stretch;
 }
 
-/* Less air than a content slab: every one of these is a handful of short rows. */
 .account-stack > .slab {
   padding: clamp(0.85rem, 1.5vw, 1.15rem);
 }
 
-/*
- * `.section` brings its own generous padding-block, so the saved-deck list would
- * otherwise sit twice as far down as the gap it shares with the slabs above it.
- */
 .account-stack > .section {
   padding-block: 0.6rem 0;
 }
 
-/*
- * One width for the stack. `.account-ask` caps itself at 34rem from when it was a
- * block on its own; in the stack that made the panels 750, 510 and 750 pixels
- * wide down the page, with right edges that did not line up. Prose inside them
- * is still held to a readable measure by `.account-ask-note`, which is where a
- * line length belongs — on the text, not on the panel around it.
- */
 .account-stack > .account-ask {
   max-width: none;
 }
@@ -221,13 +146,6 @@
   max-width: 26rem;
 }
 
-/*
- * The panel is a grid, so a direct child stretches to the column — which is what
- * the signed-out provider buttons want and the opposite of what Sign out wants.
- * It was rendering as a full-width bar across the whole panel. The provider
- * buttons sit inside `.account-providers`, so they are grandchildren and keep
- * their width.
- */
 .account > .chip {
   justify-self: start;
 }
@@ -237,7 +155,6 @@
   gap: 0.5rem;
 }
 
-/* Full width and plainly labelled: this is the decision the page exists for. */
 .account-provider {
   justify-content: center;
   gap: 0.6rem;
@@ -245,18 +162,12 @@
   font-size: 0.86rem;
 }
 
-/*
- * Each provider's own mark, at the size of the text beside it. Not a decoration:
- * a row of two identical buttons is read by its words, and the mark is what makes
- * one of them findable at a glance.
- */
 .provider-mark {
   width: 1.05em;
   height: 1.05em;
   flex-shrink: 0;
 }
 
-/* Dimmed with the label when the button is waiting on a redirect. */
 .account-provider:disabled .provider-mark {
   opacity: 0.6;
 }
@@ -266,11 +177,6 @@
   gap: 0.9rem;
 }
 
-/*
- * A fieldset is a grid here, not a box: it exists so one `disabled` reaches every
- * control, and the browser's own border and legend styling would draw a second
- * frame inside the slab the form already is.
- */
 .account-email-fields {
   display: grid;
   gap: 0.6rem;
@@ -287,14 +193,6 @@
   cursor: not-allowed;
 }
 
-/*
- * What is missing and who has to fix it, on the page rather than in a file.
- *
- * A reader needs the first sentence — this way in does not work, use another one.
- * Whoever finishes it needs the second, which is why the two are one block and not
- * a comment somewhere: a to-do nobody can see is a to-do nobody does, and this form
- * sat written and unreachable behind a flag until it was read out of a stylesheet.
- */
 .account-todo {
   margin: 0;
   padding: 0.7rem 0.85rem;
@@ -347,11 +245,6 @@
   color: var(--glyph);
 }
 
-/*
- * Errors from the auth provider land here as well as our own messages, so it is
- * deliberately neutral rather than red — "check your email to confirm" is not a
- * failure, and colouring it as one would read as though something went wrong.
- */
 .account-notice {
   margin: 0;
   padding: 0.55rem 0.7rem;
@@ -361,8 +254,6 @@
   border-radius: var(--radius);
   background: var(--slab);
 }
-
-/* ------------------------------------------------------------ saved decks */
 
 .saved-decks {
   list-style: none;
@@ -382,7 +273,6 @@
   background: linear-gradient(180deg, var(--slab-hi), var(--slab));
 }
 
-/* The whole row opens the deck; only Delete is a separate target. */
 .saved-deck-open {
   display: flex;
   align-items: center;
@@ -418,12 +308,10 @@
   color: var(--glyph-mid);
 }
 
-/* The border lives on the row, so that is what the hover has to reach. */
 .saved-deck:hover {
   border-color: var(--rune);
 }
 
-/* Renaming yourself — the one field on a profile its owner may change. */
 .account-rename {
   display: flex;
   flex-wrap: wrap;
@@ -437,13 +325,6 @@
   min-width: 0;
 }
 
-/* --------------------------------------------------- asking for the role */
-
-/*
- * Its own slab under the account block rather than a line inside it. Asking to
- * become an organizer is a thing you do once and then forget; giving it a box of
- * its own is also what lets the same space carry the answer afterwards.
- */
 .account-ask {
   display: grid;
   gap: 0.7rem;
@@ -470,11 +351,6 @@
   margin: 0.2rem 0 0;
 }
 
-/*
- * What was sent, once it has been. Read-only by construction — there is nothing on
- * this panel that changes the request, because the database has nothing that would
- * accept the change.
- */
 .account-sent {
   margin: 0.6rem 0 0;
   display: grid;
@@ -494,7 +370,6 @@
   white-space: pre-wrap;
 }
 
-/* Somebody pasted this; it may be long and it must not push the panel wide. */
 .account-sent-link {
   overflow-wrap: anywhere;
   color: var(--glyph-mid);

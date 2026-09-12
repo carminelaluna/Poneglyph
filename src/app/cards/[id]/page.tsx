@@ -48,18 +48,11 @@ export default async function CardPage({ params }: Params) {
     .map((p) => p.price?.market)
     .filter((n): n is number => typeof n === 'number');
 
-  /*
-   * "See also" anchors on the card's most specific trait. Anchoring on the first
-   * one would pull in every Straw Hat Crew card for a Supernova, so the trait with
-   * the fewest cards overall wins — it is the one that says something.
-   */
   const traitSize = new Map(filters.types.map((t) => [String(t.value), t.count]));
   const anchor = [...card.types].sort(
     (a, b) => (traitSize.get(a) ?? Infinity) - (traitSize.get(b) ?? Infinity)
   )[0];
 
-  /* How the competitive field actually uses this card, if deck data has been ingested. */
-  /* Build-time, from data/price-history.json — the browser fetches nothing. */
   const series = readSeries(priceHistory as unknown as Stored, card.id);
   const move = priceMove(series);
 
@@ -263,12 +256,6 @@ export default async function CardPage({ params }: Params) {
             </div>
           ) : null}
 
-          {/*
-            What the price has done, which the archive could not say at all until
-            it started keeping a series: a price was one number, overwritten twice
-            a day. Nothing is back-filled, so a card the ingest has only seen once
-            says so rather than drawing a flat line that reads as a steady price.
-          */}
           <div className="meta-block">
             <h2>Price</h2>
             {move && series.length >= MIN_POINTS ? (
@@ -291,13 +278,6 @@ export default async function CardPage({ params }: Params) {
                     )}
                   </span>
                 </div>
-                {/*
-                  The span in days and the number of points are different numbers and
-                  both are printed, because the archive records a day when a price
-                  moved rather than every day it looked: three points across sixty
-                  days is a price that sat still, and saying "3 days" would read as a
-                  chart of last week.
-                */}
                 <p className="muted" style={{ fontSize: '0.74rem', margin: '0.5rem 0 0' }}>
                   {formatPrice(move.low)}–{formatPrice(move.high)}, lowest listing.{' '}
                   {move.points} change{move.points === 1 ? '' : 's'} recorded over{' '}

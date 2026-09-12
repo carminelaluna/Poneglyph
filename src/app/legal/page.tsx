@@ -55,11 +55,6 @@ export default function LegalPage() {
         </p>
       </Section>
 
-      {/*
-        This used to be a boxed notice on /events. It is a statement about what this
-        site is and is not, which is what this page is for; the events page keeps
-        one line crediting the source.
-      */}
       <Section title="Events listed here">
         <p>
           Dates, venues, formats and registration details for official events are read from
@@ -112,11 +107,6 @@ export default function LegalPage() {
         </p>
       </Section>
 
-      {/*
-        The detail moved to /privacy, which is its own page because Discord and
-        Google ask for a privacy URL and want it to be about privacy. A pointer
-        stays here so this page is not the one place it is missing from.
-      */}
       <Section title="Your data">
         <p>
           <strong>Browsing this site collects nothing</strong> — no analytics, no advertising,

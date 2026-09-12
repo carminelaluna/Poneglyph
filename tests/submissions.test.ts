@@ -1,18 +1,3 @@
-/**
- * An organizer's tournament, becoming rows in the corpus.
- *
- * This is the only path into the metagame figures that a person types by hand, and
- * two of the mappings decide what the published numbers mean rather than how they
- * look. Both fail quietly:
- *
- * **sampling** carries "whole field" or "only the decks that placed" through to
- * every win rate. A winners-only event counted as a field reads near 100% and means
- * nothing at all.
- *
- * **placing** is read from a column called `place`, because PLACING is reserved in
- * PostgreSQL. Getting the rename wrong loses every finish in the event without
- * losing the event.
- */
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -73,11 +58,6 @@ describe('sampling', () => {
     assert.equal(map(submission({ sampling: 'field' }), archive)[0].sampling, 'field');
   });
 
-  /*
-   * Anything that is not exactly "field" is winners. The failure this guards runs
-   * one way only: a winners-only event counted as a field invents a win rate, while
-   * a field counted as winners merely declines to compute one.
-   */
   it('treats anything else as winners only', () => {
     for (const value of ['winners', 'Field', '', null, undefined, 'top cut']) {
       assert.equal(
@@ -187,11 +167,6 @@ describe('identity and shape', () => {
     assert.equal(map(submission({ region: 'jp' }), archive)[0].region, 'EN');
   });
 
-  /*
-   * Who ran it, which is the one thing this source can say and the two automated
-   * ones cannot. The event page prints it, so a placeholder reaching the corpus
-   * would be published as somebody's name.
-   */
   it('carries the organizer through, and names a missing one as null', () => {
     assert.equal(map(submission({ organizer: 'Rialto TO' }), archive)[0].organizer, 'Rialto TO');
     assert.equal(map(submission({ organizer: null }), archive)[0].organizer, null);
@@ -215,7 +190,6 @@ describe('the fixture the ingest is exercised with', () => {
       decks.every((d) => d.source === 'community'),
       'every submitted deck belongs to the community corpus'
     );
-    /* The row whose player is "NA" — the most common non-name in the raw data. */
     assert.equal(decks.filter((d) => d.player === 'Not recorded').length, 2);
   });
 });

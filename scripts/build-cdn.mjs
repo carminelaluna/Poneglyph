@@ -1,27 +1,4 @@
 #!/usr/bin/env node
-/**
- * Poneglyph — build the card-art CDN bundle.
- *
- *   node scripts/build-cdn.mjs [--force] [--only OP17] [--concurrency 8]
- *
- * Converts the mirrored PNGs in public/cards into WebP at the three widths the
- * interface actually renders, ready to upload to Cloudflare Pages as a static
- * asset project.
- *
- * The source PNGs average 370 KB and are 600x838 regardless of where they appear —
- * a list row renders one at 38 px. Serving the original there sends roughly 250
- * times the pixels needed, which is why a grid of 60 tiles weighed 18 MB.
- *
- *   96 px   list rows and small tables (rendered 38-44 px, so 2x)
- *   320 px  card grids (rendered ~158 px, so 2x) — this is the one that decides
- *           page weight, since a grid shows 60 of them
- *   600 px  card detail and the lightbox, at the source's own width; only ever
- *           one on screen, so it is encoded for legibility rather than for size
- *
- * Output goes to cdn/, which is gitignored: it is derived from public/cards and
- * rebuilt, never committed.
- */
-
 import { readdir, mkdir, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
@@ -40,55 +17,25 @@ const CONCURRENCY = Number(flag('concurrency', 8));
 const ONLY = flag('only');
 const FORCE = has('force');
 
-/** Width, and the quality that width is for. */
 const SIZES = [
   { width: 96, quality: 72 },
   { width: 320, quality: 72 },
   { width: 600, quality: 80 },
 ];
 
-/** Cloudflare Pages refuses a deployment above this on the free plan. */
 const FILE_LIMIT = 20_000;
 
-/**
- * Say something well before the wall rather than at it.
- *
- * The guard below refuses a deployment that cannot be uploaded, which is correct
- * and also the worst moment to learn: the answer is a change to how the art is
- * stored, not something to decide with a failed deploy open. At 85% there are
- * still a couple of years to choose in.
- */
 const WARN_AT = 0.85;
 
-/**
- * `--split` writes two bundles instead of one, for two Pages projects.
- *
- * Off by default, and nothing about the site changes until `NEXT_PUBLIC_CDN_URL_B`
- * is set as well — see scripts/cdn-shard.mjs for why two projects rather than
- * fewer widths, and for what the alternatives cost a reader.
- */
 const SPLIT = has('split');
 
 const log = (...m) => console.log('[cdn]', ...m);
 
-/** The site allowed to use the bundle. */
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://carminelaluna.github.io').replace(/\/+$/, '');
 const SITE_ORIGIN = new URL(SITE).origin;
 
-/** `--lock` adds the referrer check. Read the cost in writeGuard() before using it. */
 const LOCK = has('lock');
 
-/**
- * Response headers for the whole bundle.
- *
- * `Access-Control-Allow-Origin` is the site rather than `*`. That does **not** stop
- * hotlinking — an `<img>` tag makes no CORS request and never reads this — but it
- * does stop another origin's JavaScript from fetching the bytes, and it costs
- * nothing, because this site only ever puts these URLs in `src` attributes.
- *
- * `X-Robots-Tag` keeps the images out of image search, so they are not surfaced as
- * results detached from the page they belong to.
- */
 const headers = () =>
   [
     '/*',
@@ -98,26 +45,6 @@ const headers = () =>
     '',
   ].join('\n');
 
-/**
- * The referrer check — a Pages Function that refuses requests sent from anywhere
- * but the site.
- *
- * **This is off unless you pass `--lock`, and the reason is a real cost.** Cloudflare
- * bills Pages this way: *"requests to static assets are free and unlimited. A request
- * is considered static when it does not invoke Functions."* Middleware at the root
- * matches every path, so with this file present **no request to the bundle is static
- * any more** — all of them count against the free plan's 100,000 Functions requests a
- * day. A card grid pulls 60 images, which is roughly 1,600 grid views a day before
- * the images start failing.
- *
- * What it buys is worth weighing against that. `Referer` is a request header the
- * client chooses, so anyone who wants to hotlink can set it and this does nothing;
- * it stops casual embedding, not a determined one. And hotlinking here costs no
- * money — the bandwidth it would spend is the unmetered kind.
- *
- * So: it works, it is one flag away, and it trades an unlimited free service for a
- * capped one to prevent something that is currently free and bypassable.
- */
 async function writeGuard() {
   const source = `/**
  * Refuse requests that did not come from the site.
@@ -155,7 +82,6 @@ export async function onRequest(context) {
   log('NOTE: every request is now a Functions request, capped at 100,000/day on free');
 }
 
-/** Remove the check, so a build without --lock really is a build without it. */
 async function unwriteGuard() {
   const dir = path.join(OUT, 'functions');
   if (!(await exists(dir))) return;
@@ -171,7 +97,6 @@ async function convert(name) {
   let written = 0;
   let bytes = 0;
 
-  /* Split or not, a printing's three widths always land together. */
   const into = SPLIT ? path.join(OUT, bundleDir(cdnShardOf(id))) : OUT;
 
   for (const { width, quality } of SIZES) {
@@ -207,11 +132,6 @@ async function main() {
   const planned = all.length * SIZES.length;
   log(`${all.length} cards x ${SIZES.length} widths = ${planned.toLocaleString('en-US')} files`);
 
-  /*
-   * Split, the limit applies per project, so what matters is the fuller bundle
-   * rather than the total. The hash is even enough that the two are within a few
-   * printings of each other, but it is measured rather than assumed.
-   */
   const perBundle = SPLIT
     ? all.reduce((counts, name) => {
         counts[cdnShardOf(path.basename(name, '.png'))] += SIZES.length;
@@ -247,7 +167,6 @@ async function main() {
   }
 
   await mkdir(OUT, { recursive: true });
-  /* One directory per bundle when split, since convert() writes straight into it. */
   if (SPLIT) {
     for (let i = 0; i < CDN_BUNDLES; i++) {
       await mkdir(path.join(OUT, bundleDir(i)), { recursive: true });
@@ -278,12 +197,6 @@ async function main() {
     })
   );
 
-  /*
-   * Cache headers are the reason this is not simply dropped next to the site on
-   * GitHub Pages, which does not let you set them. Every file is content-addressed
-   * by card number and width and never changes, so it can be cached forever.
-   */
-  /* One per bundle: each is its own Pages project and carries its own rules. */
   if (SPLIT) {
     for (let i = 0; i < CDN_BUNDLES; i++) {
       await writeFile(path.join(OUT, bundleDir(i), '_headers'), headers());
@@ -292,13 +205,6 @@ async function main() {
     await writeFile(path.join(OUT, '_headers'), headers());
   }
 
-  /*
-   * With --lock, write the referrer check; without it, take any previous one away.
-   *
-   * Not just "skip writing it". cdn/ is a directory that survives between builds, so
-   * a plain rebuild after a --lock one left the middleware sitting there and every
-   * request kept costing a Functions invocation — an off switch that only turns on.
-   */
   if (LOCK) await writeGuard();
   else await unwriteGuard();
 

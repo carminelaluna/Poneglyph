@@ -27,10 +27,6 @@ export function ColorPips({ colors }: { colors: string[] }) {
   );
 }
 
-/**
- * A card tile: art carved into the slab, lifting out on hover with its own
- * pigment bleeding into the groove around it.
- */
 export default function CardTile({ card, priority = false }: { card: TileCard; priority?: boolean }) {
   const glow = card.colors.length === 1 ? pigment(card.colors[0]) : pigment(card.colors[0] ?? '');
 

@@ -20,24 +20,6 @@ import {
   type SubmittedDeck,
 } from '@/lib/useAccount';
 
-/**
- * The review queue.
- *
- * Approving a submission used to mean opening the Supabase table editor and
- * changing a `status` cell by hand — workable for the first few, and awkward
- * immediately after, because the decklists live in a JSON column and the one thing
- * a reviewer has to actually look at is the thing that view shows worst.
- *
- * The gate has not moved. The role is still granted by hand in the dashboard and
- * still cannot be set from any client; the policies decide which rows come back
- * from the same query everyone else runs. This page only puts the work where the
- * data is readable.
- *
- * Card names come from `card-names.json` (19 KB), not the 176 KB card index: what
- * matters here is whether the list is fifty cards and whether the counts are legal,
- * and both are arithmetic on what was submitted.
- */
-
 const TABS: { id: SubmissionStatus | 'all'; label: string }[] = [
   { id: 'pending', label: 'Waiting' },
   { id: 'approved', label: 'Approved' },
@@ -53,7 +35,6 @@ const day = (value: string) =>
     timeZone: 'UTC',
   });
 
-/** What is wrong with one submitted list, in the reviewer's terms. */
 function problemsWith(deck: SubmittedDeck): string[] {
   const problems: string[] = [];
   const total = deck.cards.reduce((n, c) => n + (c.count ?? 0), 0);
@@ -125,18 +106,6 @@ function Decks({ submissionId }: { submissionId: string }) {
   );
 }
 
-/**
- * People asking for the organizer role.
- *
- * Above the submissions, because it is the decision that comes first: nobody sends
- * a tournament until somebody has said yes to them.
- *
- * Approving grants the role — the only place on the site where a role changes at
- * all. The policy behind it allows `user` and `organizer` and no third value, so
- * this cannot produce an admin however it is called, and an admin's own row is not
- * reachable through it. Minting that role is still something you do in the Supabase
- * dashboard, by hand.
- */
 function OrganizerRequests() {
   const [rows, setRows] = useState<OrganizerRequest[] | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -193,8 +162,6 @@ function OrganizerRequests() {
             <p className="sub-note">{row.events}</p>
             {row.link ? (
               <p className="sub-meta">
-                {/* Somebody else's URL: opened in a new tab, and never given this
-                    page's referrer or window handle. */}
                 <a
                   href={row.link}
                   target="_blank"
@@ -269,7 +236,6 @@ export default function ReviewQueue() {
     setError(null);
     try {
       await reviewSubmission(id, status, notes[id] ?? '');
-      /* Off the list when the list is one status; in place when it is all of them. */
       setRows((held) =>
         (held ?? [])
           .map((row) => (row.id === id ? { ...row, status, review_note: notes[id] ?? null } : row))
@@ -283,18 +249,6 @@ export default function ReviewQueue() {
     }
   };
 
-  /*
-   * Back into the queue.
-   *
-   * One click and no confirmation, which is the same weight this page already
-   * gives Approve — and reopening is the milder of the two, since it undoes a
-   * decision rather than making one and the decks are untouched. What it is worth
-   * is the deadline: an approved row is read by the next submissions ingest, twice
-   * a day, and after that undoing it means editing the corpus rather than a row.
-   *
-   * The old note goes into the box rather than being thrown away with the column,
-   * so correcting a decision does not mean retyping the reason for it.
-   */
   const reopen = async (row: Submission) => {
     setBusy(row.id);
     setError(null);
@@ -319,16 +273,9 @@ export default function ReviewQueue() {
     }
   };
 
-  /* ------------------------------------------------------------- gates */
-
   if (!accountsEnabled) {
     return <p className="empty">Accounts are not set up on this deployment.</p>;
   }
-  /*
-   * `roleKnown` as well as `checked`: the session lands before the profile row
-   * does, and refusing on `isAdmin` in that gap told the right person they
-   * were the wrong one for a moment on every refresh.
-   */
   if (!checked || !roleKnown) return <p className="muted">Checking…</p>;
   if (!signedIn) {
     return (
@@ -345,8 +292,6 @@ export default function ReviewQueue() {
       </p>
     );
   }
-
-  /* ------------------------------------------------------------ queue */
 
   return (
     <div className="submit" style={{ marginTop: '1.2rem' }}>
@@ -386,11 +331,6 @@ export default function ReviewQueue() {
               · {row.submission_decks?.[0]?.count ?? 0} decks ·{' '}
               {row.players ? `${row.players} entrants` : 'entrants not recorded'}
               {' · '}
-              {/*
-                The field-versus-winners answer, spelled out rather than abbreviated.
-                It is the organizer's claim about their own data and the one thing on
-                this row a reviewer can only check by reading the decks.
-              */}
               <b className={row.sampling === 'field' ? 'submit-ok' : undefined}>
                 {row.sampling === 'field' ? 'whole field' : 'winners only'}
               </b>

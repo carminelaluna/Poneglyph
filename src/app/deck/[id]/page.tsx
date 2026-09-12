@@ -5,11 +5,6 @@ import '../../decks.css';
 
 type Params = { params: Promise<{ id: string }> };
 
-/**
- * Only the notable finishes get a page of their own; every other decklist is
- * reached through the client-side fallback. The body renders in the browser either
- * way — this list buys a real URL and a title written from the data.
- */
 export function generateStaticParams() {
   return decks
     .filter((d) => d.placing !== null && d.placing <= 8)

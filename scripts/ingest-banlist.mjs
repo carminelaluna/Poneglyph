@@ -1,23 +1,4 @@
 #!/usr/bin/env node
-/**
- * Poneglyph — banned and restricted list.
- *
- *   node scripts/ingest-banlist.mjs
- *
- * Reads Bandai's own Banned/Restricted page. This is the one piece of data on the
- * site that is a *rule* rather than a description, so it comes from the rule-maker
- * and nowhere else — a community mirror would be a second-hand copy of something
- * whose whole value is being authoritative.
- *
- * The page is HTML with no API behind it, but it is regular: an "Active
- * Restrictions" section with three headed lists, each entry a bullet of
- * `CARD-ID Name`. That structure is what is parsed, and if it stops matching the
- * ingest fails loudly rather than writing an empty banlist — an empty banlist that
- * looks successful is worse than no banlist at all.
- *
- * Writes data/banlist.json.
- */
-
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { RULES_SOURCES } from './sources.mjs';
@@ -37,7 +18,6 @@ async function fetchText(url) {
   return res.text();
 }
 
-/** Flatten the page to readable lines, keeping block boundaries. */
 function toLines(html) {
   return html
     .replace(/<script[\s\S]*?<\/script>/gi, ' ')
@@ -53,7 +33,6 @@ function toLines(html) {
     .filter(Boolean);
 }
 
-/** `・ OP06-047 Charlotte Pudding` -> { id, name }. */
 function parseEntry(line) {
   const m = line.match(CARD_ID);
   if (!m) return null;
@@ -71,8 +50,6 @@ const HEADINGS = {
 };
 
 function parse(lines) {
-  /* Only the "Active Restrictions" block is the current list — everything above it
-     is the announcement of the most recent change, which repeats entries. */
   const start = lines.findIndex((l) => /cards with active restrictions/i.test(l));
   if (start === -1) throw new Error('could not find the "Active Restrictions" section');
 
@@ -80,7 +57,6 @@ function parse(lines) {
   let current = null;
 
   for (const line of lines.slice(start + 1)) {
-    /* The history links at the foot of the page end the current list. */
     if (/^history of banned/i.test(line)) break;
 
     const heading = HEADINGS[line.toLowerCase().replace(/[^a-z ]/g, '').trim()];
@@ -96,7 +72,6 @@ function parse(lines) {
     if (entry) sections[current].push(entry);
   }
 
-  /* Pairs arrive as a flat list of two-card groups: A, B, A, B, … */
   const pairs = [];
   for (let i = 0; i + 1 < sections.pairs.length; i += 2) {
     pairs.push([sections.pairs[i], sections.pairs[i + 1]]);
@@ -125,7 +100,6 @@ async function main() {
     throw new Error('parsed an entirely empty banlist — the page layout has probably changed');
   }
 
-  /* Attach what we know about each card so the page can show art and colours. */
   let cards = [];
   try {
     cards = JSON.parse(await readFile(path.join(DATA, 'cards.json'), 'utf8'));
@@ -143,7 +117,6 @@ async function main() {
       category: card?.category ?? null,
       setCode: card?.setCode ?? null,
       blockNumber: card?.blockNumber ?? null,
-      /* A Block 1 card is already out of Standard, so its ban only bites in Extra. */
       standardLegal: card?.standardLegal ?? null,
       known: Boolean(card),
     };
@@ -167,20 +140,11 @@ async function main() {
   await mkdir(DATA, { recursive: true });
   await writeFile(path.join(DATA, 'banlist.json'), JSON.stringify(payload, null, 2));
 
-  /*
-   * And a copy the browser can read. The deck builder validates against it while you
-   * are choosing cards, which is the moment it is worth knowing — the /banlist page
-   * imports the build-time file and does not need this one.
-   *
-   * Only the card numbers travel. The full entries carry names, colours and set data
-   * the builder already has from the card index.
-   */
   const ids = {
     generatedAt: payload.generatedAt,
     effectiveFrom: payload.effectiveFrom ?? null,
     banned: (payload.banned ?? []).map((c) => c.id),
     restricted: (payload.restricted ?? []).map((c) => c.id),
-    /* Cards that may not be played together, as pairs of card numbers. */
     pairs: (payload.pairs ?? []).map((pair) => pair.map((c) => c.id)),
   };
   await mkdir(path.resolve('public', 'data'), { recursive: true });

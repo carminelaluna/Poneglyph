@@ -15,7 +15,6 @@ export const metadata: Metadata = {
 const matchups = matchupsJson as { counts: { matches: number; tournaments: number; pending: number } };
 const priceDays = (priceHistory as { days?: string[] }).days ?? [];
 
-/* Only the two fields this page reads; the banlist page owns the full shape. */
 const banlist = banlistJson as {
   effectiveFrom: string | null;
   source: { label: string; url: string };
@@ -116,11 +115,6 @@ export default function DataPage() {
                   </td>
                 </tr>
               ))}
-              {/*
-                The banlist's own source, which comes from a different ingest and so
-                is not in `meta.sources`. It belongs in this table all the same: the
-                page that used to name it stopped doing so.
-              */}
               <tr>
                 <td>{banlist.source.label}</td>
                 <td className="muted">banned &amp; restricted</td>
@@ -186,12 +180,6 @@ export default function DataPage() {
         </div>
       ) : null}
 
-      {/*
-        Two things the archive keeps that no upstream publishes: a record of who
-        beat whom, and yesterday's prices. Both are built here over time rather
-        than fetched, so how far back they go is a fact about this site and belongs
-        on the page that says where everything comes from.
-      */}
       <div className="meta-block">
         <h2>Kept over time</h2>
         <p className="muted" style={{ maxWidth: '64ch', marginTop: 0 }}>
@@ -227,16 +215,6 @@ export default function DataPage() {
         </table>
       </div>
 
-      {/*
-        The caveats that used to sit in a boxed callout on the top of /decks,
-        /tournaments and /players — one on each, so a reader met the same treatment
-        on nearly every page and learned to skip it.
-
-        They are here because they are all the same kind of thing: not a warning
-        about the page you are on, but an explanation of how the archive was built,
-        which is what this page is for. Each of those pages keeps one line pointing
-        at this one.
-      */}
       <div className="meta-block">
         <h2>How to read the numbers</h2>
         <div style={{ color: 'var(--glyph-mid)', lineHeight: 1.7, display: 'grid', gap: '0.85rem', maxWidth: '68ch' }}>
@@ -271,12 +249,6 @@ export default function DataPage() {
             than the whole archive. Mirrors are left out, and a pair that has met fewer than
             five times is held back — 67% from three games is noise wearing a percentage.
           </p>
-          {/*
-            The banlist page used to carry these two sentences itself, above the
-            cards. They are facts about the rules rather than about the page, and
-            this is where the rest of "how to read what you are looking at" lives,
-            so they moved rather than went.
-          */}
           <p style={{ margin: 0 }}>
             <strong>A ban applies to a card, not to a printing.</strong> Alternate arts count
             as the same card, so a banned card is banned in every version of it. Restrictions

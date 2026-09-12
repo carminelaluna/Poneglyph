@@ -19,21 +19,6 @@ import {
   type Submission,
 } from '@/lib/useAccount';
 
-/**
- * Submitting a tournament.
- *
- * The design decision that matters is that decklists are **pasted, not built**. An
- * organizer with a thirty-two player event is not going to click fifty cards
- * thirty-two times, and they already have the lists in the format OPTCGSim reads —
- * which is the format this site exports. `parseDeckList` is the inverse of that
- * export, so a list that came out of here goes back in unchanged.
- *
- * Everything is checked in the page and nothing is enforced by it. A deck that is
- * 49 cards, or names a card the archive has not ingested yet, is still submittable:
- * the review step is the gate, and a form that refuses a real result because our
- * data is behind would be the wrong kind of strict.
- */
-
 type Row = { i: string; n: string; c: string[]; y: string; f: 0 | 1 };
 
 type DeckEntry = {
@@ -83,17 +68,6 @@ const day = (value: string) =>
     timeZone: 'UTC',
   });
 
-/**
- * What you have sent, and what happened to it.
- *
- * This form used to be write-only. You submitted a tournament, saw one confirmation
- * screen, and the site never mentioned it again — so "approved, rejected, or did I
- * misclick" had no answer anywhere on it. The policy to read your own submissions
- * was in the first schema; nothing had ever called it.
- *
- * A rejection carries a note, and the note is the point: "the fourth list is 49
- * cards" is something the organizer can fix and send again.
- */
 function SubmissionHistory({ reloadKey }: { reloadKey: number }) {
   const [rows, setRows] = useState<Submission[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -193,7 +167,6 @@ export default function SubmitForm() {
   const [decks, setDecks] = useState<DeckEntry[]>([blankDeck(1)]);
   const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
   const [error, setError] = useState<string | null>(null);
-  /* Bumped after a send, so the history below re-reads rather than going stale. */
   const [sentCount, setSentCount] = useState(0);
 
   useEffect(() => {
@@ -210,7 +183,6 @@ export default function SubmitForm() {
     return map;
   }, [rows]);
 
-  /** One pasted list, read back as a Leader plus counted cards, with any problems. */
   const readDeck = useCallback(
     (entry: DeckEntry) => {
       const parsed = parseDeckList(entry.list);
@@ -280,7 +252,6 @@ export default function SubmitForm() {
           tier,
           region,
           sampling,
-          /* Null, not zero — "not recorded" is not "nobody came". */
           players: players.trim() === '' ? null : Number(players),
         })
         .select('id')
@@ -294,7 +265,6 @@ export default function SubmitForm() {
         .map(({ entry, reading }) => ({
           submission_id: submissionId,
           player: entry.player.trim() || null,
-          /* The column is `place`; PLACING is reserved in Postgres. */
           place: entry.place.trim() === '' ? null : Number(entry.place),
           wins: Number(entry.wins || 0),
           losses: Number(entry.losses || 0),
@@ -314,16 +284,9 @@ export default function SubmitForm() {
     }
   }, [userId, eventName, eventDate, venue, tier, region, sampling, players, decks, readings]);
 
-  /* ------------------------------------------------------------- gates */
-
   if (!accountsEnabled) {
     return <p className="empty">Accounts are not set up on this deployment.</p>;
   }
-  /*
-   * `roleKnown` as well as `checked`: the session lands before the profile row
-   * does, and refusing on `isOrganizer` in that gap told the right person they
-   * were the wrong one for a moment on every refresh.
-   */
   if (!checked || !roleKnown) return <p className="muted">Checking…</p>;
   if (!signedIn) {
     return (
@@ -366,8 +329,6 @@ export default function SubmitForm() {
       </div>
     );
   }
-
-  /* -------------------------------------------------------------- form */
 
   return (
     <div className="submit">
@@ -433,11 +394,6 @@ export default function SubmitForm() {
           </label>
         </div>
 
-        {/*
-          The one question on this form that changes what the numbers mean, so it is
-          asked outright with the consequence spelled out rather than buried in a
-          dropdown labelled "sampling".
-        */}
         <fieldset className="submit-sampling">
           <legend className="eyebrow">What are you uploading?</legend>
           <label>

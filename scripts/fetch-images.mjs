@@ -1,17 +1,4 @@
 #!/usr/bin/env node
-/**
- * Poneglyph — card art mirror.
- *
- * Downloads every printing's art into public/cards so production serves images
- * statically instead of proxying them per request. Safe to re-run: files already
- * on disk are skipped, so a run after a new set only fetches the new cards.
- *
- *   node scripts/fetch-images.mjs [--concurrency 6] [--force] [--only OP-17]
- *
- * Roughly 4,800 files at ~180 KB each — budget about 900 MB and 15 minutes on a
- * cold run. public/cards is gitignored; mirror it in CI or before a deploy.
- */
-
 import { mkdir, writeFile, access } from 'node:fs/promises';
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
@@ -52,7 +39,6 @@ async function download(id) {
       await writeFile(file, Buffer.from(await res.arrayBuffer()));
       return 'fetched';
     } catch {
-      // Try the next upstream.
     }
   }
   return 'failed';

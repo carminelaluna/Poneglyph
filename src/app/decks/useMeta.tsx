@@ -15,14 +15,8 @@ import {
   type Window,
 } from '@/lib/meta';
 
-/**
- * The deck corpus, fetched once and shared by every metagame view. It is a static
- * file rather than an API call, so the browser caches it and switching between the
- * table and an archetype costs nothing.
- */
 export type Region = 'en' | 'jp';
 
-/** The two regions a player actually thinks in. */
 export const REGIONS: { id: Region; label: string; blurb: string; file: string }[] = [
   {
     id: 'en',
@@ -40,30 +34,8 @@ export const REGIONS: { id: Region; label: string; blurb: string; file: string }
 
 const fileFor = (region: Region) => REGIONS.find((r) => r.id === region)?.file ?? 'decks-en';
 
-/**
- * The two regions are separate corpora, not a filter over one. They cover different
- * scenes with different card pools and different event structures, so switching
- * region swaps the whole dataset rather than narrowing it.
- */
-/**
- * The corpus for a region, in two parts.
- *
- * The first payload carries the last 90 days, which answers every window the page
- * offers by default. Anything older reaches into the archive, which is a file per
- * month: a window is a date range, so it fetches the months it covers and leaves
- * the rest alone.
- *
- * It was one file until the Limitless backfill, when the English archive went from
- * 253 KB gzipped to 1.1 MB. That is the whole cost of the split: before the
- * backfill, an old era was thin and "All" was the only real reason to want the
- * archive; after it, an old era is the interesting thing on the page and was
- * costing 1.1 MB to read three months of 2024. Now it costs one to three files of
- * about 21 KB. "All" still fetches everything, which is what all costs — but in
- * parallel, and each month is cached on its own.
- */
 export function useMetaIndex(region: Region = 'en', window_?: Window) {
   const [index, setIndex] = useState<MetaIndex | null>(null);
-  /* Keyed `region:YYYY-MM`, so switching region cannot read another one's decks. */
   const [archive, setArchive] = useState<Record<string, MetaDeck[]>>({});
   const [error, setError] = useState<string | null>(null);
 
@@ -87,12 +59,10 @@ export function useMetaIndex(region: Region = 'en', window_?: Window) {
     };
   }, [region]);
 
-  /* The months this window reaches into, and nothing beyond them. */
   const wanted = useMemo(
     () => (index && window_ ? archiveMonthsFor(window_, index) : []),
     [index, window_]
   );
-  /* A stable dependency: the array is rebuilt every render, its contents are not. */
   const wantedKey = wanted.join(',');
 
   useEffect(() => {
@@ -106,10 +76,6 @@ export function useMetaIndex(region: Region = 'en', window_?: Window) {
       fetch(dataUrl(`${fileFor(region)}-archive/${month}.json`))
         .then((res) => (res.ok ? res.json() : { decks: [] }))
         .then((data: { decks?: MetaDeck[] }) => {
-          /*
-           * A failed month is stored as an empty list rather than left absent, so a
-           * blip does not become an endless retry every time this effect re-runs.
-           */
           if (!cancelled) setArchive((prev) => ({ ...prev, [key]: data.decks ?? [] }));
         })
         .catch(() => {
@@ -120,11 +86,9 @@ export function useMetaIndex(region: Region = 'en', window_?: Window) {
     return () => {
       cancelled = true;
     };
-    /* `archive` is read, not depended on: adding it would re-run on every arrival. */
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [region, wantedKey]);
 
-  /* One object either way, so nothing downstream knows the corpus arrived in parts. */
   const merged = useMemo(() => {
     if (!index) return null;
     const older = wanted.flatMap((m) => archive[`${region}:${m}`] ?? []);
@@ -132,33 +96,14 @@ export function useMetaIndex(region: Region = 'en', window_?: Window) {
     return { ...index, decks: [...index.decks, ...older] };
   }, [index, archive, region, wanted]);
 
-  /*
-   * "Loading" is whether a month this window needs has not arrived, not whether a
-   * request is in flight: months already held are shown at once, and a second
-   * window over the same months waits for nothing. A month that failed is held as
-   * an empty list, so it counts as arrived and the spinner cannot stick.
-   */
   const loadingArchive = wanted.some((m) => !(`${region}:${m}` in archive));
 
   return { index: merged, error, loadingArchive };
 }
 
-/** The window a page opens on, and so the one value the query string omits. */
 const DEFAULT_DAYS = 30;
 const DEFAULT: Window = { kind: 'days', days: DEFAULT_DAYS };
 
-/**
- * The chosen view, written as a query string.
- *
- * Extracted from the effect below because it now has a second caller: the links
- * out to the full matchup and decklist tables, which are separate pages and would
- * otherwise land there showing the last 30 days however far back you had set the
- * window. Two copies of this encoding would be two answers to "what is this page
- * showing", and the reader would meet the disagreement rather than the bug.
- *
- * `base` keeps any parameter this does not own — the five it does are cleared
- * first, so a re-encode replaces rather than appends.
- */
 export function windowQuery(
   window_: Window,
   venues: Venue[],
@@ -179,15 +124,8 @@ export function windowQuery(
   return params.toString();
 }
 
-/** The same, as a suffix ready to concatenate onto a path. */
 export const windowHref = (path: string, qs: string) => (qs ? `${path}?${qs}` : path);
 
-/**
- * The chosen window, kept in the address bar so a view can be linked to and so it
- * survives moving between the table and an archetype page. Written with the History
- * API rather than the router — the page already holds every deck, so a navigation
- * would fetch a server render for a result it can compute itself.
- */
 export function useWindow(): {
   window: Window;
   setWindow: (w: Window) => void;
@@ -197,14 +135,7 @@ export function useWindow(): {
   setTiers: (t: string[]) => void;
   region: Region;
   setRegion: (r: Region) => void;
-  /** This view as a query string, for linking to a page that shows the same one. */
   query: string;
-  /**
-   * The same state, named the way `WindowBar` wants it, so a caller spreads it
-   * rather than restating ten props. Four views render that bar and all four had
-   * written the list out; the tenth prop added to it would have been added four
-   * times, or three.
-   */
   bar: WindowBarControls;
 } {
   const [window_, setWindow] = useState<Window>(DEFAULT);
@@ -232,10 +163,6 @@ export function useWindow(): {
     setReady(true);
   }, []);
 
-  /*
-   * The same encoding the "see all" links carry, so following one lands on the
-   * window that was being read rather than back on the default thirty days.
-   */
   const query = windowQuery(window_, venues, tiers, region);
 
   useEffect(() => {
@@ -250,7 +177,6 @@ export function useWindow(): {
     globalThis.history.replaceState(null, '', qs ? `?${qs}` : globalThis.location.pathname);
   }, [ready, window_, venues, tiers, region]);
 
-  /* Region-specific filters do not carry across; the vocabularies differ. */
   const changeRegion = (r: Region) => {
     setRegion(r);
     setVenues([]);
@@ -280,7 +206,6 @@ export function useWindow(): {
   };
 }
 
-/** The controls half of the bar — what `useWindow` hands back as `bar`. */
 export type WindowBarControls = {
   window: Window;
   onChange: (w: Window) => void;
@@ -292,13 +217,6 @@ export type WindowBarControls = {
   onRegion: (r: Region) => void;
 };
 
-/**
- * The archive did not load, said once.
- *
- * Four views fetch this index and all four carried the same paragraph, naming the
- * same command. A message telling somebody how to fix their checkout is exactly the
- * kind that should not exist in four slightly different versions.
- */
 export function IndexError({ error }: { error: string }) {
   return (
     <p className="empty">
@@ -326,7 +244,6 @@ export function WindowBar({
   noun?: string;
 }) {
   const from = windowStart(window_, index);
-  /* An era stops when the next set arrived; everything else runs to the newest. */
   const to = windowEnd(window_, index);
 
   return (
@@ -379,11 +296,6 @@ export function WindowBar({
             }
           >
             <option value="">Choose a release…</option>
-            {/*
-              One list in release order. Grouping expansions and starter decks into
-              separate optgroups put a 2022 booster above a 2026 starter deck, which
-              is not how anyone reads a release timeline.
-            */}
             {index.eras.map((era) => (
               <option key={era.set} value={era.set}>
                 {era.from} · {era.code}

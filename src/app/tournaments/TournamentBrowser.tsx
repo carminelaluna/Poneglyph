@@ -11,20 +11,6 @@ import {
   type Leaders,
 } from '@/lib/shards';
 
-/**
- * Every tournament in the corpus, most recent first.
- *
- * The default is the last ninety days, which is 11 KB and answers what nearly
- * everyone arrives asking. Reaching further loads the archive once — 106 KB for the
- * remaining six thousand events, which is a fair price for a question somebody
- * chose to ask and a poor one to charge everybody up front.
- *
- * Recorded decks, not entrants, is the figure in the last column: Top Decks
- * publishes only what placed, so a 128-player Regional can be four rows here. Both
- * are shown, and where a source reported no field size it says so rather than
- * printing a zero that reads as "nobody came".
- */
-
 const REGIONS: { id: Region | 'all'; label: string }[] = [
   { id: 'all', label: 'Both' },
   { id: 'en', label: 'English' },
@@ -82,7 +68,6 @@ export default function TournamentBrowser() {
     }
   };
 
-  /* Tiers actually present, so the filter never offers an empty answer. */
   const tiers = useMemo(() => {
     const seen = new Set<string>();
     for (const row of rows ?? []) seen.add(row[4]);

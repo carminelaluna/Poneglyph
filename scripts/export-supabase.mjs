@@ -1,41 +1,4 @@
 #!/usr/bin/env node
-/**
- * Poneglyph — a copy of everything Supabase holds.
- *
- *   node scripts/export-supabase.mjs [--out <dir>]
- *
- * It is the only data here that is not in git, and the Free plan takes no backups:
- * *"the Free tier does not receive automatic backups"* — daily ones start at Pro,
- * with seven days of retention. So accounts, saved decks, organizer requests and
- * submissions have no copy anywhere, and a deleted or corrupted project would take
- * them with it. Everything else on this site is either in the repository or can be
- * re-derived from what is.
- *
- * ## Why an artifact and not a commit
- *
- * The repository is **public**. `organizer_requests` holds text people wrote about
- * who they are and what they run, and a submission is somebody's work before it has
- * been reviewed. Committing a dump would publish both. The workflow uploads this as
- * an Actions artifact instead — private to the repository, ninety days of retention,
- * and free.
- *
- * ## What this cannot do, and it matters
- *
- * `auth.users` lives in the `auth` schema, which PostgREST does not expose, so the
- * **email addresses and the identities are not in here**. What is exported is the
- * application's own tables, keyed by user id.
- *
- * That makes this a restore of *data*, not of *accounts*. After one, a person signs
- * in again with the same provider and Supabase links them back by verified email —
- * the profile, decks and submissions are then reattached by id. Somebody who never
- * signs in again is a row pointing at a user that no longer exists. A full backup
- * needs `supabase db dump`, which needs the database password rather than the
- * service key; this is what can be automated without holding that.
- *
- * `SUPABASE_SERVICE_ROLE_KEY` bypasses every policy, which is exactly why it reads
- * everything — and why it belongs in the workflow secrets and nowhere else.
- */
-
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -55,16 +18,8 @@ const CONFIGURED = Boolean(URL_BASE && KEY);
 
 const log = (...m) => console.log('[backup]', ...m);
 
-/**
- * Every table in the `public` schema, and nothing derived.
- *
- * If one is added to `supabase/schema.sql` it has to be added here; nothing
- * enforces that, which is the same gap `sitemap.ts` has and worth the same
- * suspicion when a table is new.
- */
 const TABLES = ['profiles', 'decks', 'organizer_requests', 'submissions', 'submission_decks'];
 
-/** PostgREST caps a response; ask in pages so a growing table cannot silently truncate. */
 const PAGE = 1000;
 
 async function fetchAll(table) {
@@ -89,11 +44,6 @@ async function fetchAll(table) {
 }
 
 async function main() {
-  /*
-   * A checkout with no project stops here having written nothing and failed
-   * nothing, the same way ingest-submissions.mjs does — the site builds without
-   * a Supabase project and this script is not the place to change that.
-   */
   if (!CONFIGURED) {
     log(
       'no Supabase project configured — skipping. ' +
@@ -116,10 +66,6 @@ async function main() {
     log(`${table}: ${rows.length} row(s)`);
   }
 
-  /*
-   * A manifest, so a dump found in six months says what it is, when it was taken
-   * and — the part a restorer needs most — what it does not contain.
-   */
   await writeFile(
     path.join(OUT, 'manifest.json'),
     JSON.stringify(

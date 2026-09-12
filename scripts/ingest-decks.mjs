@@ -1,28 +1,4 @@
 #!/usr/bin/env node
-/**
- * Poneglyph — tournament and decklist ingest.
- *
- *   node scripts/ingest-decks.mjs [--max 400] [--since 2026-01-01] [--reset]
- *   node scripts/ingest-decks.mjs --backfill --since 2023-01-01   # fill in history
- *   node scripts/ingest-decks.mjs --rebuild    # re-derive from stored decks, no network
- *
- * Pulls tournament standings from the Limitless API, resolves every card in every
- * decklist against our own archive, and derives the archetype metagame from the
- * result.
- *
- * Limitless advertises 50 requests per 5 minutes in its response headers, and there
- * are thousands of One Piece tournaments on record, so a full backfill cannot happen
- * in one run. This ingest is therefore **incremental and resumable**: it keeps a
- * state file of tournaments it has already read, spends a fixed request budget per
- * run, and picks up where it left off next time. Run it on a schedule and the
- * archive fills in on its own.
- *
- * Writes data/tournaments.json, data/decks/{YYYY}.json, data/archetypes.json,
- * data/card-play.json and data/decks-meta.json. It writes nothing under
- * public/data: build-indexes.mjs owns every browser payload, which is the rule
- * ingest-topdecks.mjs learned by leaving a 0 KB index behind.
- */
-
 import { writeFile, readFile, mkdir, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { DECK_SOURCES } from './sources.mjs';
@@ -40,39 +16,17 @@ const SRC = DECK_SOURCES.limitless;
 const DATA = path.resolve('data');
 const STATE_FILE = path.join(DATA, 'decks-state.json');
 
-/** Requests this run may spend. Keeps a scheduled run bounded and predictable. */
 const BUDGET = Number(flag('max', 400));
-/** Ignore tournaments before this date — old formats distort the current metagame. */
 const SINCE = flag('since', null);
-/** A tournament this small is a locals night, not a signal. */
 const MIN_PLAYERS = Number(flag('min-players', 8));
-/** Page the whole listing rather than stopping where the archive already reaches. */
 const BACKFILL = has('backfill');
 
 const log = (...m) => console.log('[decks]', ...m);
 
-// ---------------------------------------------------------------------------
-// the shared Limitless client
-// ---------------------------------------------------------------------------
-
-/*
- * `Budget` and the request helper moved to scripts/limitless.mjs when the matchup
- * ingest needed them too. Two copies would have meant two rate limiters against one
- * server, each unaware of the other's requests.
- */
 const budget = new Budget(BUDGET, log);
 const api = (url, options = {}) =>
   apiGet(url, budget, { agent: 'poneglyph-decks/1.0 (+https://poneglyph.gg)', ...options });
 
-// ---------------------------------------------------------------------------
-// card resolution
-// ---------------------------------------------------------------------------
-
-/**
- * Limitless reports cards as `{set: "OP17", number: "039"}`. Our archive keys on
- * `OP17-039`. Most pairs join directly; the fallbacks below cover promos and the
- * handful of sets whose numbering is written differently at each end.
- */
 function makeResolver(cards) {
   const byId = new Map(cards.map((c) => [c.id.toUpperCase(), c]));
   const byNameAndNumber = new Map();
@@ -87,14 +41,12 @@ function makeResolver(cards) {
     const candidates = [
       `${set}-${number}`,
       `${set}-${number.padStart(3, '0')}`,
-      // Promos are `P-001` upstream and here, but some feeds send `PRB01-001`.
       `${set.replace(/^PROMO$/, 'P')}-${number.padStart(3, '0')}`,
     ];
     for (const id of candidates) {
       const hit = byId.get(id);
       if (hit) return hit;
     }
-    // Last resort: the printed name plus the collector number is unique in practice.
     if (entry.name) {
       const hit = byNameAndNumber.get(`${entry.name.toLowerCase()}|${number.padStart(3, '0')}`);
       if (hit) return hit;
@@ -102,10 +54,6 @@ function makeResolver(cards) {
     return null;
   };
 }
-
-// ---------------------------------------------------------------------------
-// state
-// ---------------------------------------------------------------------------
 
 async function loadJson(file, fallback) {
   try {
@@ -115,20 +63,12 @@ async function loadJson(file, fallback) {
   }
 }
 
-/**
- * The state file holds only which tournaments have been read. Everything it could
- * otherwise cache already exists in decks.json and tournaments.json, and keeping a
- * second copy meant committing four redundant megabytes on every refresh.
- */
 async function loadState() {
   if (has('reset')) return { seen: {}, details: {} };
   const state = await loadJson(STATE_FILE, null);
-  /* `details` must survive a rebuild: it is the only copy of each event's venue,
-     and dropping it silently reclassified every tournament as "unknown". */
   return { seen: state?.seen ?? {}, details: state?.details ?? {} };
 }
 
-/** Decks and tournaments collected by previous runs, read back from their outputs. */
 async function loadCollected() {
   const [tournaments, decks] = await Promise.all([
     loadJson(path.join(DATA, 'tournaments.json'), []),
@@ -137,10 +77,6 @@ async function loadCollected() {
   if (has('reset')) return { tournaments: [], decks: [] };
   return { tournaments, decks };
 }
-
-// ---------------------------------------------------------------------------
-// stage 1 — discover tournaments
-// ---------------------------------------------------------------------------
 
 async function discoverTournaments(state) {
   log('stage 1/3  discovering tournaments...');
@@ -164,18 +100,6 @@ async function discoverTournaments(state) {
       });
     }
 
-    /*
-     * Older pages are all in the past, so once every tournament on a page has been
-     * read there is normally nothing new further back — new events arrive at the
-     * front. That is right for keeping up and wrong for filling in: it stops at the
-     * first fully-read page, which is page two or three, so the archive can never
-     * reach back past where it already is.
-     *
-     * `--backfill` keeps paging to the cutoff instead. It costs one request per
-     * page — 57 to reach the end of the Limitless listing — which is 19% of a 300
-     * request budget, worth paying while there is history to collect and worth
-     * dropping once there is not.
-     */
     const allSeen = batch.every((t) => state.seen[t.id]);
     const pastCutoff = SINCE && batch.every((t) => t.date < SINCE);
     if (pastCutoff) break;
@@ -185,7 +109,7 @@ async function discoverTournaments(state) {
     }
 
     page++;
-    if (page > 200) break; // hard stop
+    if (page > 200) break;
   }
 
   const fresh = found.filter((t) => !state.seen[t.id]);
@@ -193,17 +117,8 @@ async function discoverTournaments(state) {
   return { found, fresh };
 }
 
-// ---------------------------------------------------------------------------
-// stage 2 — read standings and build decks
-// ---------------------------------------------------------------------------
-
 const CATEGORY_KEYS = ['character', 'event', 'stage'];
 
-/**
- * A deck may hold at most 4 copies of a card number — except for the handful that
- * say otherwise on the card itself ("Under the rules of this game, you may have any
- * number of this card in your deck"), which are legitimately run 10 or 20 deep.
- */
 function findUnlimited(cards) {
   return new Set(
     cards
@@ -212,17 +127,10 @@ function findUnlimited(cards) {
   );
 }
 
-/** True when every entry respects the copy limit for its card. */
 function countsAreLegal(entries, unlimited) {
   return entries.every((e) => e.count <= 4 || unlimited.has(e.id));
 }
 
-/**
- * A decklist can name the same card twice when a player registered copies across
- * different printings — four Prisoner of Impel Down might arrive as 3 + 1. They are
- * one card as far as the rules and the metagame are concerned, so the entries are
- * summed. Left unmerged they double-count the deck and push inclusion past 100%.
- */
 function mergeEntries(cards) {
   const merged = new Map();
   for (const card of cards) {
@@ -265,8 +173,6 @@ function buildDecks(tournament, standings, resolve, stats, unlimited) {
       }
     }
 
-    // A legal deck is exactly 50 cards plus the leader. Anything else is a
-    // partial or misreported list and would skew inclusion rates.
     if (total !== 50) {
       stats.wrongSize++;
       continue;
@@ -274,8 +180,6 @@ function buildDecks(tournament, standings, resolve, stats, unlimited) {
 
     const unique = mergeEntries(cards);
 
-    // A misregistered list is not evidence about the metagame — drop it rather
-    // than let it skew inclusion rates.
     if (!countsAreLegal(unique, unlimited)) {
       stats.illegalCounts++;
       continue;
@@ -349,14 +253,6 @@ async function readStandings(fresh, resolve, state, unlimited) {
   return { newDecks, newTournaments, stats };
 }
 
-// ---------------------------------------------------------------------------
-// stage 3 — derive the metagame
-// ---------------------------------------------------------------------------
-
-/**
- * The archetype is the Leader card: in this game the Leader fixes the colours and
- * most of the deck's plan, which is exactly how players name decks ("Purple Luffy").
- */
 function buildArchetypes(decks, cardsById) {
   const groups = new Map();
 
@@ -398,7 +294,6 @@ function buildArchetypes(decks, cardsById) {
   return [...groups.values()]
     .map((a) => {
       const games = a.wins + a.losses + a.ties;
-      /* The staple list: what actually defines the archetype. */
       const cards = [...a.cardCounts.entries()]
         .map(([id, stat]) => ({
           id,
@@ -423,7 +318,6 @@ function buildArchetypes(decks, cardsById) {
         winRate: games ? +((a.wins / games) * 100).toFixed(1) : null,
         top8: a.top8,
         firsts: a.wins1st,
-        /* Cards in at least 60% of lists are the archetype's skeleton. */
         core: cards.filter((c) => c.inclusion >= 60),
         flex: cards.filter((c) => c.inclusion < 60 && c.inclusion >= 10),
         cards,
@@ -433,7 +327,6 @@ function buildArchetypes(decks, cardsById) {
     .sort((a, b) => b.decks - a.decks);
 }
 
-/** How often each card shows up across the whole field — drives the card pages. */
 function buildCardPlay(decks) {
   const play = new Map();
   for (const deck of decks) {
@@ -459,16 +352,6 @@ function buildCardPlay(decks) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// stage 2b — how each event was played
-// ---------------------------------------------------------------------------
-
-/**
- * Standings do not say whether an event was played on a simulator, over webcam, or
- * across a table, but `/details` does. That is one extra request per tournament, so
- * it runs as its own budgeted pass over tournaments we have not asked about yet —
- * the deck data is already useful without it, and this fills in behind.
- */
 async function loadDetails(tournaments, state) {
   const missing = tournaments.filter((t) => !state.details?.[t.id]);
   if (missing.length === 0 || budget.exhausted) return 0;
@@ -496,33 +379,16 @@ async function loadDetails(tournaments, state) {
   return filled;
 }
 
-/**
- * What kind of event this was.
- *
- * Bandai's own circuit — Regionals, Treasure Cups, Championship Finals — is where
- * the strongest fields are, and those results deserve to be separable from a
- * Tuesday-night league. Limitless does not label any of this, so it is read out of
- * the event name, which is where organisers actually put it.
- *
- * Anything that names no tier is Local. That is the honest default: most events
- * genuinely are local, and guessing "probably a Regional because it was big" would
- * quietly promote a large online league into the same bucket as a Bandai Regional.
- *
- * Today the big tiers are nearly empty — this corpus is community online events —
- * but the classification costs nothing and fills in as official results appear.
- */
 const TIERS = [
   { id: 'worlds', label: 'Worlds', test: /\bworld(s| championship)\b/i },
   { id: 'finals', label: 'Finals', test: /\b(finals?|national(s| championship)?)\b/i },
   { id: 'treasure', label: 'Treasure Cup', test: /\btreasure\s*cup\b/i },
   { id: 'regional', label: 'Regional', test: /\bregional/i },
-  /* Before `championship`: a Store Championship is a store event, not a national. */
   { id: 'store', label: 'Store', test: /\b(store championship|flagship|shop (event|battle))\b/i },
   { id: 'championship', label: 'Championship', test: /\bchampionship\b/i },
   { id: 'qualifier', label: 'Qualifier', test: /\bqualifier\b/i },
 ];
 
-/** Tier ids strongest first, with the default last — the order the UI offers. */
 const TIER_ORDER = [...TIERS.map((t) => t.id), 'local'];
 const TIER_LABELS = Object.fromEntries([
   ...TIERS.map((t) => [t.id, t.label]),
@@ -534,13 +400,6 @@ function tierOf(name) {
   return 'local';
 }
 
-/**
- * How an event was played, in the terms a player would use.
- *
- * `platform` is SIM for simulator play and CAM for webcam; an event with neither
- * and `isOnline: false` was played in person. Anything we have not asked about yet
- * is "unknown" rather than being guessed at.
- */
 function venueOf(details) {
   if (!details) return 'unknown';
   if (details.platform === 'SIM') return 'simulator';
@@ -549,8 +408,6 @@ function venueOf(details) {
   if (details.isOnline === false) return 'offline';
   return 'unknown';
 }
-
-// ---------------------------------------------------------------------------
 
 async function main() {
   const started = Date.now();
@@ -579,7 +436,6 @@ async function main() {
     ? { newDecks: [], newTournaments: [], stats: { tournaments: 0, decks: 0, empty: 0, wrongSize: 0, illegalCounts: 0, unresolvedCards: 0, unresolvedLeaders: 0 } }
     : await readStandings(fresh, resolve, state, unlimited);
 
-  /* Merge with what previous runs collected. */
   const merged = dedupe([...collected.tournaments, ...newTournaments], (t) => t.id)
     .sort((a, b) => b.date.localeCompare(a.date));
 
@@ -640,11 +496,6 @@ async function main() {
     writeFile(path.join(DATA, 'decks-meta.json'), JSON.stringify(meta, null, 2)),
   ]);
 
-  /*
-   * After the rest, and on its own: this is the corpus, and a crash between the
-   * two is a state where the metadata claims decks the year files do not hold.
-   * Written second means the worse outcome is metadata that is one run behind.
-   */
   const years = await writeDecks(DATA, decks);
   log(`decks -> ${years.map((y) => `${y.year}:${y.decks}`).join(' ')}`);
 

@@ -5,11 +5,6 @@ import '../../decks.css';
 
 type Params = { params: Promise<{ slug: string }> };
 
-/**
- * Regulars get a page of their own; everyone else is reached through the
- * client-side fallback. The body renders in the browser either way — this list
- * buys a real URL and a title written from the data.
- */
 export function generateStaticParams() {
   return prerenderablePlayers(5).map((slug) => ({ slug }));
 }

@@ -6,7 +6,6 @@ export const metadata: Metadata = {
   title: 'Submit results',
   description:
     'Tournament organizers: submit an event and its decklists for review. Approved results join the metagame figures alongside Limitless and One Piece Top Decks.',
-  /* Useful to exactly the handful of people who have the role. */
   robots: { index: false, follow: true },
 };
 

@@ -1,19 +1,4 @@
 #!/usr/bin/env node
-/**
- * Poneglyph — card ingest.
- *
- * Merges the public One Piece TCG datasets into the shape the site indexes on:
- * one document per *card* (the gameplay entity) holding every *printing*
- * (regular / alternate art / reprint) of it.
- *
- *   node scripts/ingest.mjs [--lang english] [--no-prices] [--out data]
- *   node scripts/ingest.mjs --check      # is there anything new upstream?
- *
- * Writes data/cards.json, data/sets.json, data/filters.json, data/meta.json.
- * A run that looks broken (too few cards, dead spine) aborts before writing, so
- * the site keeps serving the last good dataset.
- */
-
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { SOURCES, RULES_SOURCES } from './sources.mjs';
@@ -30,14 +15,9 @@ const LANG = flag('lang', 'english');
 const OUT_DIR = path.resolve(flag('out', 'data'));
 const WITH_PRICES = !has('no-prices');
 
-/** A run producing fewer cards than this means a broken upstream, not an update. */
 const MIN_EXPECTED_CARDS = 1500;
 
 const log = (...m) => console.log('[ingest]', ...m);
-
-// ---------------------------------------------------------------------------
-// fetch helpers
-// ---------------------------------------------------------------------------
 
 async function getJson(url, { retries = 3, optional = false } = {}) {
   for (let attempt = 1; attempt <= retries; attempt++) {
@@ -61,7 +41,6 @@ async function getJson(url, { retries = 3, optional = false } = {}) {
   return null;
 }
 
-/** Bounded-concurrency map — keeps us polite to raw.githubusercontent. */
 async function pooled(items, limit, worker) {
   let cursor = 0;
   await Promise.all(
@@ -71,14 +50,8 @@ async function pooled(items, limit, worker) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// normalisation
-// ---------------------------------------------------------------------------
-
-/** `OP01-001_p2` -> `OP01-001`. Suffixes mark another printing of the same card. */
 const baseId = (id) => String(id).replace(/_[a-z]\d*$/i, '');
 
-/** Human label for a printing suffix. */
 function variantLabel(id) {
   const m = String(id).match(/_([a-z])(\d*)$/i);
   if (!m) return 'Regular';
@@ -86,16 +59,6 @@ function variantLabel(id) {
   return m[2] && m[2] !== '1' ? `${kind} ${m[2]}` : kind;
 }
 
-/**
- * How a printing is labelled in the interface.
- *
- * Upstream ids carry the scan filename — `OP01-025_p2` — which is noise to a
- * player: the suffix is an artefact of how the official site stores images, not
- * something printed on the card. The base printing keeps the plain card number and
- * every later art is V2, V3, … in the order they were released.
- *
- * The underlying id is still what everything joins on; this is presentation only.
- */
 function versionLabel(id, position) {
   return position === 0 ? id : `${baseId(id)} V${position + 1}`;
 }
@@ -113,7 +76,6 @@ const RARITY_CODES = {
 };
 const rarityName = (r) => RARITY_NAMES[r] ?? (r ? String(r) : 'Unknown');
 
-/** Upstream serves the official site's HTML, so `&amp;` and `&lt;Slash&gt;` arrive raw. */
 const ENTITIES = {
   amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ',
   '#39': "'", '#34': '"', '#160': ' ',
@@ -123,7 +85,6 @@ function decode(value) {
   return value.replace(/&(#?\w+);/g, (whole, code) => ENTITIES[code] ?? whole).trim();
 }
 
-/** Effects quote their timings and keywords in brackets — that is our keyword index. */
 function keywordsFromEffect(effect) {
   if (!effect) return [];
   return [...new Set([...effect.matchAll(/\[([^\]]{1,32})\]/g)].map((m) => m[1].trim()))];
@@ -134,12 +95,6 @@ const GROUP_ORDER = {
   'Starter Deck': 4, Promo: 5, Other: 6,
 };
 
-/**
- * Some packs ship no `[XX-00]` label — "Promotion card" and "Other Product Card" are
- * grab-bags holding promo printings of cards from many sets. Their card ids disagree,
- * so a code is only borrowed from the cards when they overwhelmingly agree; otherwise
- * the pack title becomes the code.
- */
 function fallbackCode(cardIds, rawTitle) {
   const counts = new Map();
   for (const id of cardIds) {
@@ -152,7 +107,6 @@ function fallbackCode(cardIds, rawTitle) {
   return /^PROMO/.test(word) ? 'PROMO' : word.slice(0, 6) || 'SET';
 }
 
-/** `STARTER DECK -Straw Hat Crew- [ST-01]` -> a stable, sortable set record. */
 function normalisePack(pack, cardIds) {
   const parts = pack.title_parts ?? {};
   const code = parts.label ?? fallbackCode(cardIds, pack.raw_title);
@@ -183,21 +137,12 @@ const num = (v) => {
   return Number.isFinite(n) ? n : null;
 };
 
-/**
- * A price of zero means "no sales recorded", not "free" — upstream reports both
- * the same way. Carrying the zero through would drag every price range down to
- * $0.00, so it is dropped instead.
- */
 const price = (v) => {
   const n = num(v);
   return n !== null && n > 0 ? n : null;
 };
 
 const pick = (obj, ...keys) => Object.fromEntries(keys.map((k) => [k, obj[k]]));
-
-// ---------------------------------------------------------------------------
-// stage 1 — spine: every printing, from punk-records
-// ---------------------------------------------------------------------------
 
 async function loadSpine() {
   const src = SOURCES.punkRecords;
@@ -217,10 +162,6 @@ async function loadSpine() {
   log(`  ${ids.length} printings, ${Object.keys(packs).length} packs (upstream built ${built})`);
   return { manifest, packs, cards };
 }
-
-// ---------------------------------------------------------------------------
-// stage 2 — bulk rules text from vegapull-records
-// ---------------------------------------------------------------------------
 
 async function loadBulkEffects(packIds) {
   log('stage 2/5  vegapull-records bulk rules text...');
@@ -245,10 +186,6 @@ async function loadBulkEffects(packIds) {
   return effects;
 }
 
-// ---------------------------------------------------------------------------
-// stage 3 — per-card top-up for anything stage 2 missed
-// ---------------------------------------------------------------------------
-
 async function topUpEffects(missing, spineCards, effects) {
   log(`stage 3/5  per-card top-up for ${missing.length} printings...`);
   if (!missing.length) return;
@@ -270,24 +207,6 @@ async function topUpEffects(missing, spineCards, effects) {
   log(`  ${filled} filled`);
 }
 
-// ---------------------------------------------------------------------------
-// stage 3b — block numbers, which decide format legality
-// ---------------------------------------------------------------------------
-
-/**
- * Every card carries a Block number, and since Bandai's April 2026 rotation that
- * number is what decides whether a card is legal in Standard. It is therefore not
- * optional metadata — it is the rule.
- *
- * Only one of our sources publishes it: the per-card files in punk-records. The
- * bulk index omits it and vegapull-records does not have the field at all, which
- * is why the older half of the archive had no block until now.
- *
- * Rather than fetch 2,785 files, this fetches one card per set with an unknown
- * block and applies the answer to that whole set. Blocks are assigned per release,
- * so a set has exactly one — and the assumption is checked against the cards whose
- * block we already know before it is trusted.
- */
 async function fillBlocks(cards, spineCards, effects) {
   const bySet = new Map();
   for (const [id, card] of Object.entries(spineCards)) {
@@ -296,7 +215,6 @@ async function fillBlocks(cards, spineCards, effects) {
     bySet.get(set).push({ id, packId: card.pack_id });
   }
 
-  /* Blocks already known, per set, from the effect pass. */
   const known = new Map();
   for (const [id, fx] of effects) {
     if (fx?.blockNumber === null || fx?.blockNumber === undefined) continue;
@@ -310,7 +228,6 @@ async function fillBlocks(cards, spineCards, effects) {
 
   const found = new Map();
   await pooled(unknown, 10, async (set) => {
-    /* Try a few cards — a promo sheet can have gaps. */
     for (const candidate of bySet.get(set).slice(0, 3)) {
       const row = await getJson(
         SOURCES.punkRecords.cardUrl(candidate.packId, candidate.id, LANG),
@@ -325,7 +242,6 @@ async function fillBlocks(cards, spineCards, effects) {
 
   for (const [set, block] of found) known.set(set, new Set([block]));
 
-  /* A set with two blocks is a reprint collection; the lowest is the safe answer. */
   const blockBySet = new Map(
     [...known.entries()].map(([set, blocks]) => [set, Math.min(...blocks)])
   );
@@ -333,26 +249,9 @@ async function fillBlocks(cards, spineCards, effects) {
   return blockBySet;
 }
 
-/**
- * Standard rotates by block. Bandai dropped Block 1 on 1 April 2026, so Standard is
- * currently Block 2 and above; Extra (Grand Battle) has never dropped anything.
- * When the next rotation lands, this constant is the only thing that changes.
- */
 const STANDARD_MIN_BLOCK = 2;
 const ROTATION_NOTE = 'Block 1 rotated out of Standard on 1 April 2026';
 
-/**
- * The rotation's published exception.
- *
- * Super Parallel Rares from past products — and every card sharing those card
- * numbers — stay legal in Standard even when their block has rotated out. Bandai
- * publishes the exact list, so it is read rather than inferred: guessing "anything
- * with an alternate art" would be wrong, since a Block 1 card having a parallel
- * printing does not by itself make it legal.
- *
- * The upstream card data is no help here — every printing of OP01-016, including
- * its reprints, still reports block 1 — so this page is the only source.
- */
 async function loadBlockUpdates() {
   log('stage 3c/5  block-number updates...');
   try {
@@ -369,16 +268,10 @@ async function loadBlockUpdates() {
     log(`  ${ids.size} card numbers keep Standard legality across rotation`);
     return ids;
   } catch (err) {
-    /* Losing this makes some legal cards read as Extra-only, which is wrong but
-       not corrupting; the run continues and says so. */
     log(`  ! could not read the block-update list (${err.message}) — legality may be understated`);
     return new Set();
   }
 }
-
-// ---------------------------------------------------------------------------
-// stage 4 — prices and printable set names from OPTCG API
-// ---------------------------------------------------------------------------
 
 async function loadMarket() {
   const empty = { prices: new Map(), setNames: new Map(), text: new Map() };
@@ -401,7 +294,6 @@ async function loadMarket() {
   for (const group of groups) {
     for (const row of group ?? []) {
       rows++;
-      // Promo rows in this API sometimes shift columns, so read only validated fields.
       const imageId = row.card_image_id || row.card_set_id;
       if (!imageId) continue;
       const market = price(row.market_price);
@@ -421,10 +313,6 @@ async function loadMarket() {
   return { prices, setNames, text };
 }
 
-// ---------------------------------------------------------------------------
-// stage 5 — merge into the site's card documents
-// ---------------------------------------------------------------------------
-
 function merge({ packs, cards }, effects, market, blockBySet, blockUpdates) {
   log('stage 5/5  merging...');
 
@@ -439,7 +327,6 @@ function merge({ packs, cards }, effects, market, blockBySet, blockUpdates) {
     packById.set(id, normalisePack({ ...pack, id }, idsByPack.get(id) ?? []));
   }
 
-  /** printings grouped under their gameplay card */
   const grouped = new Map();
   for (const [printingId, c] of Object.entries(cards)) {
     const key = baseId(printingId);
@@ -449,7 +336,6 @@ function merge({ packs, cards }, effects, market, blockBySet, blockUpdates) {
 
   const out = [];
   for (const [id, printings] of grouped) {
-    // The regular printing carries the canonical stat line.
     printings.sort((a, b) =>
       a.printingId === id ? -1 : b.printingId === id ? 1 : a.printingId.localeCompare(b.printingId)
     );
@@ -482,9 +368,7 @@ function merge({ packs, cards }, effects, market, blockBySet, blockUpdates) {
     const rarity = rarityName(head.rarity);
     const isLeader = head.category === 'Leader';
 
-    /* Per-card block first; otherwise the block of the set it was printed in. */
     const block = fx.blockNumber ?? blockBySet?.get(id.split('-')[0]) ?? null;
-    /* Extra (Grand Battle) never rotates, so every card is legal there. */
     const blockLegal = block !== null && block >= STANDARD_MIN_BLOCK;
     const keptByUpdate = blockUpdates?.has(id) ?? false;
     const standardLegal = blockLegal || keptByUpdate;
@@ -497,7 +381,6 @@ function merge({ packs, cards }, effects, market, blockBySet, blockUpdates) {
       category: head.category ?? 'Unknown',
       colors: head.colors ?? [],
       colorIdentity: (head.colors ?? []).join('/') || 'Colorless',
-      // A Leader's cost column on the physical card is its Life total.
       cost: isLeader ? null : head.cost ?? null,
       life: isLeader ? head.cost ?? null : null,
       power: head.power ?? null,
@@ -512,7 +395,6 @@ function merge({ packs, cards }, effects, market, blockBySet, blockUpdates) {
       rarityCode: RARITY_CODES[rarity] ?? String(head.rarity ?? ''),
       formats,
       standardLegal,
-      /* Why it is legal, when the block alone would not make it so. */
       legalBy: keptByUpdate && !blockLegal ? 'block-update' : blockLegal ? 'block' : null,
       setId: head.pack_id,
       setCode: pack?.code ?? '',
@@ -523,7 +405,6 @@ function merge({ packs, cards }, effects, market, blockBySet, blockUpdates) {
       image: printed[0]?.image ?? null,
       priceLow: markets.length ? Math.min(...markets) : null,
       priceHigh: markets.length ? Math.max(...markets) : null,
-      // Pre-built haystack so the browser filters 2.8k cards without an index library.
       search: [id, name, effect ?? '', types.join(' '), pack?.code ?? '', pack?.name ?? '']
         .join(' ')
         .toLowerCase(),
@@ -553,7 +434,6 @@ function merge({ packs, cards }, effects, market, blockBySet, blockUpdates) {
   return { cards: out, sets };
 }
 
-/** Facet lists the UI renders straight into filter controls. */
 function buildFilters(cards, sets) {
   const tally = (pickValue) => {
     const m = new Map();
@@ -567,7 +447,6 @@ function buildFilters(cards, sets) {
   };
   const byCount = (a, b) => b.count - a.count || String(a.value).localeCompare(String(b.value));
   const byValue = (a, b) => String(a.value).localeCompare(String(b.value), 'en', { numeric: true });
-  // The six colours have a canonical order on every official product — keep it.
   const COLOR_ORDER = ['Red', 'Green', 'Blue', 'Purple', 'Black', 'Yellow'];
   const byColor = (a, b) => COLOR_ORDER.indexOf(a.value) - COLOR_ORDER.indexOf(b.value);
 
@@ -589,14 +468,6 @@ function buildFilters(cards, sets) {
   };
 }
 
-// ---------------------------------------------------------------------------
-
-/**
- * `--check` answers one question for a scheduler: has the upstream card list been
- * rebuilt since our last ingest? Exits 0 when there is something new (go ahead and
- * rebuild) and 3 when the archive is current, so a cron job can skip the work —
- * and the commit, and the deploy — on the days nothing shipped.
- */
 async function check() {
   const upstream = await getJson(SOURCES.punkRecords.manifestUrl(LANG), { optional: true });
   if (!upstream?.generated_at) {
@@ -700,12 +571,6 @@ async function main() {
   log(`rules text on ${meta.coverage.effect}% of cards, prices on ${meta.coverage.price}%`);
 }
 
-/**
- * The card browser filters all 2.8k cards in the page, so it needs the whole set
- * client-side. Shipping data/cards.json (4 MB, printings and prices included) would
- * be wasteful, so a slim row per card goes to public/ and is fetched at runtime —
- * outside the JS bundle, cacheable on its own.
- */
 async function writeSlimIndex(cards) {
   const dir = path.resolve('public', 'data');
   await mkdir(dir, { recursive: true });
@@ -737,23 +602,6 @@ async function writeSlimIndex(cards) {
   log(`browser index -> public/data/cards-index.json (${kb} KB)`);
 }
 
-/**
- * Today's prices, appended to what came before.
- *
- * Until now a price was a single number with no yesterday: the ingest overwrote it
- * twice a day, so "is this card going up" — which is most of why anyone looks at a
- * price at all — had no answer anywhere in the archive.
- *
- * The append and the trim are in scripts/price-history.mjs, pure and tested. The
- * trim only fires once the archive is ninety days old, and a bug in it would rebase
- * every series wrongly three months from now; that is not something to find out
- * from a chart.
- *
- * Nothing is back-filled. The source publishes a price and a date it was scraped,
- * not a series, so the first run records one day and the card page says it does not
- * have enough history yet — which is true, and better than drawing a flat line out
- * of one number and letting it read as a stable price.
- */
 async function recordPrices(cards) {
   const file = path.join(OUT_DIR, 'price-history.json');
   const today = new Date().toISOString().slice(0, 10);

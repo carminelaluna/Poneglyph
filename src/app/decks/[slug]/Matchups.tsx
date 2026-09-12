@@ -6,37 +6,6 @@ import { art } from '@/lib/art';
 import { dataUrl } from '@/lib/paths';
 import { loadLeaders, type Leaders } from '@/lib/shards';
 
-/**
- * This archetype against every other, from recorded pairings.
- *
- * Every other win rate on this site is a record against *the field* — 52.8% means
- * it beat whatever it happened to sit across from. This is the narrower question
- * people actually ask about a deck, and until the matchup ingest existed the
- * archive could not answer it at all: standings carry a record, not an opponent.
- *
- * Three things this table is careful about.
- *
- * **The sample is printed beside every number.** A matchup is one row of a Swiss
- * pairing sheet, so a pair of archetypes can meet three times in a month; 67% from
- * three games is noise wearing a percentage. Rows under `MIN_GAMES` are held back
- * behind a click rather than mixed in.
- *
- * **Draws are counted and shown**, not silently dropped into losses. A timed round
- * that ended level is a real outcome and both decks failed to win it.
- *
- * **It is Limitless only.** Top Decks publishes finishing lists and organizers are
- * not asked for brackets, so this covers part of the corpus. That used to be a
- * paragraph above the table, along with the mirror rule and the five-game rule; all
- * three are on `/data` under *How to read the numbers*, said at more length, and
- * three sentences of preamble on every archetype page was the reader paying for
- * them 141 times over. The conditional notes below stay, because they are not
- * preamble: they describe why the table in front of you is empty.
- *
- * `limit` is what the archetype page passes — ten rows and a way through to the
- * rest, which is the same trade the metagame table makes with its top ten.
- */
-
-/** Below this, a percentage says more about the sample than about the matchup. */
 const MIN_GAMES = 5;
 
 type Row = [number, string, number];
@@ -61,12 +30,9 @@ export default function Matchups({
 }: {
   leaderId: string;
   from: string | null;
-  /* Exclusive, and set only for an era — see windowEnd in lib/meta.ts. */
   to: string | null;
   region: 'en' | 'jp';
-  /** Rows to draw. Unset means the whole table, which is the full page. */
   limit?: number;
-  /** Where the whole table lives, when this one is capped. */
   moreHref?: string;
 }) {
   const [payload, setPayload] = useState<Payload | null>(null);
@@ -101,12 +67,6 @@ export default function Matchups({
     const byOpponent = new Map<string, Tally>();
 
     for (const [day, opponent, result] of payload.rows) {
-      /*
-       * The same window the rest of the page is showing, so the table below the
-       * share figure is talking about the same matches. `from` is null for "all
-       * recorded", and a row whose day is missing from the file is kept rather
-       * than guessed at.
-       */
       const on = payload.days[day] ?? '';
       if (from && on < from) continue;
       if (to && on >= to) continue;
@@ -127,12 +87,6 @@ export default function Matchups({
       .sort((a, b) => b.games - a.games || b.rate - a.rate);
   }, [payload, from, to]);
 
-  /*
-   * Limitless is an English-corpus source, so there are no Japanese pairings to
-   * have. Showing the English table under the Japanese view would be the worst
-   * option of the three: it is a real table of real matches about a different
-   * metagame, and nothing on the page would say so.
-   */
   if (region === 'jp') {
     return (
       <div className="meta-block" style={{ marginTop: '2.25rem' }}>
@@ -162,12 +116,6 @@ export default function Matchups({
 
   const solid = tallies.filter((t) => t.games >= MIN_GAMES);
   const thin = tallies.filter((t) => t.games < MIN_GAMES);
-  /*
-   * Capped, this shows the ten most played matchups and nothing else: the thin
-   * rows are the tail of a list that is already a head, so offering to unfold them
-   * here would answer a question the reader did not get to ask. They are on the
-   * full page, behind the same click they always were.
-   */
   const capped = limit !== undefined;
   const shown = capped ? solid.slice(0, limit) : showThin ? [...solid, ...thin] : solid;
   const hidden = tallies.length - shown.length;
@@ -211,12 +159,6 @@ export default function Matchups({
                     </Link>
                   </td>
                   <td>
-                    {/*
-                      Two-sided, from an axis at 50%: a losing matchup grows left and
-                      a winning one grows right. A single bar running left to right
-                      makes 52% and 32% differ only in length and colour, and the two
-                      colours this palette has to spend on it are orange and red.
-                    */}
                     <span className="matchup-bar">
                       <span className="matchup-half left">
                         <i style={{ width: `${t.rate < 50 ? (50 - t.rate) * 2 : 0}%` }} />

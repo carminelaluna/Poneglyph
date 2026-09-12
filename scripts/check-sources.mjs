@@ -1,39 +1,11 @@
 #!/usr/bin/env node
-/**
- * Source hygiene check.
- *
- * Two things that are invisible until they break something, both of which have
- * already cost a debugging session here:
- *
- * 1. A literal control character inside a regex. Invisible in an editor and in a
- *    diff, matches nothing, fails silently — a `\b` that became 0x08 made the
- *    block-update list read as empty and quietly understated card legality.
- *
- * 2. A PostgreSQL reserved word used as a bare column name. `placing integer` fails
- *    to parse, and the error points at the column name with no hint that the word
- *    itself is the problem.
- *
- *   node scripts/check-sources.mjs
- */
-
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const SKIP = new Set(['node_modules', '.next', '.git', 'public']);
-/*
- * .md is in here because CLAUDE.md is the file most likely to catch one: it
- * *documents* control characters, so writing that paragraph is itself a chance to
- * paste a real 0x00 into the repo. It did, and this check did not see it.
- */
 const EXTENSIONS = ['.mjs', '.js', '.ts', '.tsx', '.css', '.yml', '.md'];
-/* Anything in C0 except tab, newline and carriage return. */
 const CONTROL = /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/;
 
-/**
- * PostgreSQL's *reserved* keywords — the ones that cannot name a column without
- * quotes. Non-reserved words like `role`, `format` and `name` are fine bare and are
- * deliberately not listed; flagging those would make this noise.
- */
 const RESERVED = new Set(
   `all analyse analyze and any array as asc asymmetric both case cast check collate column
    constraint create current_catalog current_date current_role current_time current_timestamp
@@ -53,22 +25,6 @@ async function* walk(dir) {
   }
 }
 
-/**
- * A row-level policy on a table that reads the same table.
- *
- * Postgres has to evaluate the policy to decide whether the policy applies, and
- * refuses: `infinite recursion detected in policy for relation "x"`. Because SELECT
- * policies are OR'd together, one of these breaks *every* read of that table, and
- * with it every policy on another table that asks it a question — so the symptom
- * turns up a long way from the cause. This repository shipped exactly that: an
- * admin check on `profiles` written as a subquery over `profiles`, which took
- * renaming yourself down with it.
- *
- * The fix is always the same shape: ask through a `security definer` function,
- * which runs as the table's owner and therefore does not re-enter its policies.
- * Only `create policy` statements are examined, so those function bodies — which
- * must read the table — are not flagged.
- */
 function* selfReferencingPolicies(text) {
   const statements = text.split(/;\s*\n/);
   let consumed = 0;
@@ -111,7 +67,6 @@ for await (const file of walk(process.cwd())) {
   }
 
   if (path.extname(file) === '.sql') {
-    /* `  name  type` — a column definition, indented, inside a create table. */
     text.split('\n').forEach((line, i) => {
       const m = /^\s{2,}([a-z_]+)\s{2,}[a-z]/.exec(line);
       if (m && RESERVED.has(m[1])) {

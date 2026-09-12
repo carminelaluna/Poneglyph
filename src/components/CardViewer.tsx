@@ -5,14 +5,6 @@ import { art } from '@/lib/art';
 import type { Printing } from '@/lib/cards';
 import { formatPrice } from '@/lib/cards';
 
-/**
- * The card art and its other printings.
- *
- * Picking a printing swaps the art in place — it does not navigate, and it does
- * not open the raw image file in another tab, which is what the thumbnails used
- * to do. Clicking the art opens a lightbox that fits the image to the viewport
- * instead of showing it at its natural pixel size.
- */
 export default function CardViewer({
   cardId,
   name,
@@ -30,7 +22,6 @@ export default function CardViewer({
 
   const close = useCallback(() => setZoomed(false), []);
 
-  /* Escape closes, and arrows move between printings while zoomed. */
   useEffect(() => {
     if (!zoomed) return;
     const onKey = (e: KeyboardEvent) => {

@@ -1,18 +1,9 @@
-/**
- * What the builder says a deck adds up to.
- *
- * Arithmetic that is read as fact and checked by nobody: a curve with a column in
- * the wrong place, an average over the cards that happen to have a cost, a price
- * that quietly treats the unpriced fifth of a deck as free. None of it throws, and
- * all of it looks like a number.
- */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { TOP_COST, curveLabel, deckStats, type StatCard } from '../src/lib/deck-stats.ts';
 
 const row = (over: Partial<StatCard> = {}): StatCard => ({ o: 3, u: null, $: null, ...over });
 
-/** A deck as the builder holds it, plus the index rows it looks the cards up in. */
 function build(entries: { id: string; count: number; card: StatCard }[]) {
   return {
     deck: entries.map((e) => ({ card: { id: e.id }, count: e.count })),
@@ -85,8 +76,6 @@ describe('average cost', () => {
     assert.equal(deckStats(deck, byId).averageCost, 2);
   });
 
-  /* A Leader has no cost, and neither does anything the archive is missing one
-     for. Counting those as zero would drag every average down. */
   it('ignores cards with no cost rather than counting them as zero', () => {
     const { deck, byId } = build([
       { id: 'a', count: 2, card: row({ o: 4 }) },
@@ -120,11 +109,6 @@ describe('price', () => {
     assert.equal(stats.unpriced, 0);
   });
 
-  /*
-   * The one that matters. About one card in twenty has no price; adding those as
-   * zero would report a cheaper deck rather than an incomplete total, and the
-   * reader would have no way to tell which they were looking at.
-   */
   it('counts what it could not price instead of calling it free', () => {
     const { deck, byId } = build([
       { id: 'a', count: 4, card: row({ $: 2 }) },
@@ -140,7 +124,6 @@ describe('price', () => {
     assert.equal(deckStats(deck, byId, row({ $: null })).unpriced, 1);
   });
 
-  /* Rounded once at the end: rounding each card first drifts by cents. */
   it('rounds the total, not the parts', () => {
     const { deck, byId } = build([{ id: 'a', count: 3, card: row({ $: 0.335 }) }]);
     assert.equal(deckStats(deck, byId).price, 1.01);

@@ -5,15 +5,6 @@ import '../../decks.css';
 
 type Params = { params: Promise<{ id: string }> };
 
-/**
- * Events with a real field get a page of their own; the rest are reached through
- * the client-side fallback.
- *
- * The page body is rendered in the browser either way — see lib/shards.ts — so what
- * this list actually buys is a real URL with a 200 and a title and description
- * written from the data. That is worth having for a Regional and not worth 5.5 GB
- * for every shop tournament ever recorded.
- */
 export function generateStaticParams() {
   return prerenderableEvents(8).map((id) => ({ id }));
 }

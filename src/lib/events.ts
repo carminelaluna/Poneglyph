@@ -1,28 +1,12 @@
 import { decks, type Deck } from './decks';
 
-/**
- * Events.
- *
- * An event is every recorded deck sharing one identity. Limitless supplies a real
- * tournament id; Top Decks supplies a venue name and a date, so those are keyed on
- * both — see `eventKey` in build-indexes.mjs, which assigns the id this reads.
- *
- * That key is honest rather than perfect: Top Decks venue names are generic
- * ("Cardshop" on 509 different days, "LGS" on 246), so two different shops using
- * the same name on the same day would appear here as one event. The page says how
- * many lists were recorded and where they came from, which is the information
- * needed to judge that.
- */
-
 export type EventDeck = Deck & { eventId: string };
 
 export type TcgEvent = {
   id: string;
   name: string;
   date: string;
-  /** Entrants, when a source reported it — Top Decks does not. */
   players: number;
-  /** How many decklists we hold, which is not the same as how many were played. */
   recorded: number;
   region: string;
   source: string;
@@ -30,7 +14,6 @@ export type TcgEvent = {
   venue: string;
   eventType?: string;
   sourceUrl?: string;
-  /** Who ran it, when an organizer submitted it. */
   organizer?: string;
   decks: Deck[];
   winner: Deck | null;
@@ -94,7 +77,6 @@ export const getEvent = (id: string): TcgEvent | undefined => {
   return list ? build(id, list) : undefined;
 };
 
-/** Events with enough recorded lists to be worth prerendering. */
 export function prerenderableEvents(minDecks = 8) {
   return [...byEvent.entries()]
     .filter(([, list]) => list.length >= minDecks)

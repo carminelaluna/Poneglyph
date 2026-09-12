@@ -1,14 +1,4 @@
-/*
- * Poneglyph — an archive carved in stone.
- *
- * The chrome is achromatic basalt on purpose: every saturated colour on the page
- * comes from the cards themselves, because colour is the One Piece TCG's own
- * primary axis. The only pigment the site owns is `--rune`, the red poneglyph,
- * and it appears in exactly two places: the mark and the live-data indicator.
- */
-
 :root {
-  /* stone */
   --void: #0a0c10;
   --slab: #131720;
   --slab-hi: #1b212c;
@@ -17,17 +7,14 @@
   --edge: rgba(255, 255, 255, 0.055);
   --edge-strong: rgba(255, 255, 255, 0.11);
 
-  /* limestone dust */
   --glyph: #e6e0d2;
   --glyph-mid: #a8afba;
   --glyph-dim: #79818f;
   --glyph-faint: #4d5561;
 
-  /* the red poneglyph */
   --rune: #c0512e;
   --rune-lit: #e2683f;
 
-  /* card pigments — the game's six colours */
   --c-red: #d8402f;
   --c-green: #2e9e62;
   --c-blue: #3080d8;
@@ -65,7 +52,6 @@ body {
   line-height: 1.55;
   font-feature-settings: 'kern' 1;
   -webkit-font-smoothing: antialiased;
-  /* Basalt grain: two offset radial washes, never a gradient sweep. */
   background-image:
     radial-gradient(1100px 620px at 12% -8%, rgba(60, 72, 92, 0.2), transparent 65%),
     radial-gradient(900px 520px at 92% 4%, rgba(120, 60, 44, 0.09), transparent 60%);
@@ -77,15 +63,6 @@ a {
   text-decoration: none;
 }
 
-/*
- * A link inside a sentence, where inheriting the colour of the prose would make it
- * unfindable. Most links here sit in a nav, a card or a table row and are obvious
- * from where they are; these are the ones that are not — and /review in particular
- * is reachable from exactly one sentence, since it is not in the nav, not in the
- * footer, and noindex.
- *
- * Matches .link-btn, so a link and a button that do the same thing look the same.
- */
 .inline-link {
   color: var(--glyph);
   text-decoration: underline;
@@ -96,16 +73,6 @@ a {
   color: var(--rune-lit);
 }
 
-/*
- * A button that does a link's job — "include the earlier 6,000", "show 33 more".
- *
- * It lives here because it is used on five routes and used to be defined on two.
- * The two copies were byte-identical and each carried a comment explaining that
- * repeating the rule beat letting the same control look different on different
- * pages; what neither noticed is that /decks and /decks/[slug] load neither
- * stylesheet, so on the metagame page and every archetype page the control
- * rendered as a raw grey browser button. One definition, every route.
- */
 .link-btn {
   border: 0;
   background: none;
@@ -145,8 +112,6 @@ select {
   border-radius: 2px;
 }
 
-/* ---------------------------------------------------------------- type */
-
 .display {
   font-family: var(--font-display), 'Arial Narrow', sans-serif;
   font-weight: 700;
@@ -155,7 +120,6 @@ select {
   text-transform: uppercase;
 }
 
-/* Inscriptional caps set small and wide — the label style carved above a slab. */
 .eyebrow {
   font-family: var(--font-display), 'Arial Narrow', sans-serif;
   font-size: 0.68rem;
@@ -174,8 +138,6 @@ select {
 .muted {
   color: var(--glyph-dim);
 }
-
-/* ------------------------------------------------------------- layout */
 
 .shell {
   width: 100%;
@@ -204,10 +166,6 @@ select {
   font-size: clamp(1.15rem, 2vw, 1.5rem);
 }
 
-/* --------------------------------------------------------------- rule */
-
-/* -------------------------------------------------------------- header */
-
 .masthead {
   position: sticky;
   top: 0;
@@ -231,11 +189,6 @@ select {
   flex-shrink: 0;
 }
 
-/*
- * A touch larger than the line-art mark it replaced. That one was drawn for 22px;
- * this one is a slab with a 3x3 grid and carved glyph lines, and at 22 it reads as
- * a coloured smudge. 26 is where the blocks separate.
- */
 .mark-glyph {
   width: 26px;
   height: 26px;
@@ -275,8 +228,6 @@ select {
   border-bottom-color: var(--rune);
 }
 
-/* ---------------------------------------------------------------- hero */
-
 .hero {
   padding-block: clamp(3rem, 8vw, 6rem) clamp(2rem, 5vw, 3.5rem);
   display: grid;
@@ -290,7 +241,6 @@ select {
   font-size: clamp(2.35rem, 6.4vw, 4.6rem);
 }
 
-/* Each line rises out of the groove once on load. */
 .hero-line {
   display: block;
   overflow: hidden;
@@ -349,7 +299,6 @@ select {
   color: var(--glyph-dim);
 }
 
-/* Six card fronts, one per colour, tilted like tablets leaning on a wall. */
 .hero-fan {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -390,12 +339,6 @@ select {
   }
 }
 
-/* --------------------------------------------------- signature: spectrum */
-
-/*
- * The colour band. Segment widths are the real share of cards in each colour, so
- * the one saturated element on the page is also the page's densest statistic.
- */
 .spectrum {
   display: flex;
   width: 100%;
@@ -449,8 +392,6 @@ select {
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
 }
 
-/* --------------------------------------------------------------- slabs */
-
 .slab {
   background: linear-gradient(180deg, var(--slab-hi), var(--slab));
   border: 1px solid var(--edge);
@@ -461,8 +402,6 @@ select {
 .slab-pad {
   padding: clamp(1rem, 2.2vw, 1.6rem);
 }
-
-/* ---------------------------------------------------------- card tiles */
 
 .card-grid {
   display: grid;
@@ -493,7 +432,6 @@ select {
   transition: transform 0.35s var(--ease);
 }
 
-/* The tile lifts out of the stone and its own pigment bleeds into the groove. */
 .tile:hover {
   transform: translateY(-5px);
 }
@@ -540,7 +478,6 @@ select {
   color: var(--glyph-dim);
 }
 
-/* Variant count, printed on the art like a stamp. */
 .tile-badge {
   position: absolute;
   top: 6px;
@@ -553,8 +490,6 @@ select {
   font-size: 0.62rem;
   color: var(--glyph-mid);
 }
-
-/* --------------------------------------------------------------- pips */
 
 .pips {
   display: inline-flex;
@@ -570,8 +505,6 @@ select {
   box-shadow: inset 0 -1px 1px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(0, 0, 0, 0.5);
 }
 
-/* --------------------------------------------------------------- chips */
-
 .chip {
   display: inline-flex;
   align-items: center;
@@ -586,13 +519,6 @@ select {
   white-space: nowrap;
 }
 
-/*
- * A chip is a label. A chip that is a button or a link is a control, and the two
- * were identical: no pointer, no focus ring, no pressed state, and a disabled
- * Send that looked exactly like a live one. The selector is the element rather
- * than a class so every control gets this and every label is left alone, with no
- * markup to change — `span.chip` is a tag, `button.chip` is something you press.
- */
 button.chip,
 a.chip {
   cursor: pointer;
@@ -610,24 +536,12 @@ a.chip:hover {
   color: var(--glyph);
 }
 
-/* One pixel is enough to feel on a control this small. */
 button.chip:active,
 a.chip:active {
   transform: translateY(1px);
   background: var(--groove);
 }
 
-/*
- * Which one is selected, and it used not to say. The region toggle on
- * /tournaments and /players rendered "Both", "English" and "Japanese" with the
- * same background, border and colour whichever was chosen — measured, not
- * guessed — so the one filter those pages have could not be read off them.
- *
- * The underline in the accent is not a new idea: `.window-chip[aria-pressed]` on
- * the metagame page already means "this one" that way. Two controls that answer
- * the same question should look the same doing it, which is the argument
- * `.link-btn` lost by living in two stylesheets.
- */
 button.chip[aria-pressed='true'] {
   background: var(--slab-lift);
   border-color: var(--edge-strong);
@@ -635,7 +549,6 @@ button.chip[aria-pressed='true'] {
   box-shadow: inset 0 -2px 0 var(--rune);
 }
 
-/* Busy or unavailable, and now visibly so — Send, Save and Sign out all use it. */
 button.chip:disabled {
   cursor: default;
   opacity: 0.45;
@@ -645,11 +558,6 @@ button.chip:disabled {
   color: var(--glyph-dim);
 }
 
-/*
- * The one action on a panel, for when a chip's outline is too quiet to read as a
- * button at all. Same shape and palette a step louder: the lifted slab, the
- * stronger edge, the carve the slabs themselves use, and text at full strength.
- */
 .chip-solid {
   padding: 0.5rem 1rem;
   background: var(--slab-lift);
@@ -670,8 +578,6 @@ button.chip-solid:hover {
   flex-wrap: wrap;
   gap: 0.35rem;
 }
-
-/* --------------------------------------------------------------- table */
 
 .table {
   width: 100%;
@@ -710,8 +616,6 @@ button.chip-solid:hover {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
-
-/* -------------------------------------------------------------- footer */
 
 .footer {
   margin-top: clamp(3rem, 7vw, 5rem);
@@ -752,16 +656,6 @@ button.chip-solid:hover {
   text-underline-offset: 3px;
 }
 
-/* The Bandai notice is a permanent fixture, not a dismissible banner. */
-/*
- * The first-visit notice: the Bandai text, once, to somebody who has not read it.
- *
- * Fixed to the bottom rather than covering the page, because it is a notice and
- * not a decision — nothing behind it is blocked, nothing is being asked, and a
- * reader who ignores it entirely has lost nothing. That is also why there is one
- * button and no overlay: the pattern it borrows from a cookie banner is the
- * placement, not the interruption.
- */
 .notice-bar {
   position: fixed;
   inset: auto 0 0;
@@ -779,7 +673,6 @@ button.chip-solid:hover {
   gap: 0.8rem;
 }
 
-/* The full notice, which elsewhere sits under a rule at the foot of a page. */
 .notice-bar .disclaimer {
   margin: 0;
   padding: 0;
@@ -799,7 +692,6 @@ button.chip-solid:hover {
   font-size: 0.78rem;
 }
 
-/* Room to breathe on a phone, where the text is several lines taller. */
 @media (max-width: 40rem) {
   .notice-inner {
     padding-block: 0.85rem 1rem;
@@ -823,8 +715,6 @@ button.chip-solid:hover {
   font-weight: 600;
 }
 
-/* -------------------------------------------------------- reduced motion */
-
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -840,8 +730,6 @@ button.chip-solid:hover {
     transform: none;
   }
 }
-
-/* ---------------------------------------------------------- responsive */
 
 @media (max-width: 1000px) {
   .hero {
@@ -881,13 +769,6 @@ button.chip-solid:hover {
   }
 }
 
-/* ====================================================================
-   Stat lines, rules text and meta blocks — shared by card, data and legal
-   ==================================================================== */
-
-/* --------------------------------------------------------------- stats */
-
-/* The stat line is the card's spine — carved cells, monospaced figures. */
 .stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
@@ -930,8 +811,6 @@ button.chip-solid:hover {
 .stat dd.none {
   color: var(--glyph-faint);
 }
-
-/* ---------------------------------------------------------- rules text */
 
 .rules {
   margin-top: 1.5rem;
@@ -992,8 +871,6 @@ button.chip-solid:hover {
   margin-bottom: 0.35rem;
 }
 
-/* --------------------------------------------------------------- meta */
-
 .meta-block {
   margin-top: 1.75rem;
 }
@@ -1008,25 +885,6 @@ button.chip-solid:hover {
   color: var(--glyph-dim);
 }
 
-/* ==================================================================== 
-   Spoilers — unreleased sets
-   ==================================================================== */
-
-/* Reveals are provisional, so the page says so before it shows anything. */
-/*
- * Where a page says where its numbers came from.
- *
- * This replaced `.notice`, which was a dashed red box carrying a paragraph of
- * caveats and appeared on ten pages — so the treatment reserved for "look at this"
- * was what a reader met almost everywhere, which is the reliable way to teach
- * somebody to stop looking.
- *
- * The caveats themselves moved to the pages that exist for them: how the archive is
- * built to /data, what this site is and is not to /legal, accounts to /privacy and
- * /terms. What is left on a browse page is one line of provenance in the same voice
- * as the rest of the prose, because "read from Bandai's own event pages" is
- * something a reader wants once and never again.
- */
 .source-line {
   margin: 0.9rem 0 0;
   font-size: 0.78rem;
@@ -1052,11 +910,6 @@ button.chip-solid:hover {
   box-shadow: var(--carve);
 }
 
-/*
- * The picture is a link to itself, so it has to look like one on the way to being
- * clicked. The lift is small on purpose: a grid of these should read as a grid,
- * not as a row of buttons.
- */
 .spoiler-open {
   display: block;
   border-radius: var(--radius);
@@ -1074,12 +927,6 @@ button.chip-solid:hover {
   transform: translateY(0);
 }
 
-/*
- * A reveal with a number and no picture, which is most of them: the fast source
- * carries card numbers within minutes and its image links expire within hours,
- * so there is nothing to point at. The frame keeps the grid even and takes a
- * card's aspect ratio, so a row does not collapse around the ones that have art.
- */
 .spoiler-blank {
   display: block;
   aspect-ratio: 5 / 7;
@@ -1089,11 +936,6 @@ button.chip-solid:hover {
   box-shadow: var(--carve);
 }
 
-/*
- * Somebody's translation of a card that is not out. It is set small and quiet
- * because it is a reader's transcription rather than the printed rules text, and
- * it wraps rather than truncating: half a card's ability is worse than none.
- */
 .spoiler-text {
   margin: 0.35rem 0 0;
   font-size: 0.72rem;
@@ -1124,9 +966,6 @@ button.chip-solid:hover {
   flex-shrink: 0;
 }
 
-/* ---------------------------------------------------------------- banlist */
-
-/* A banned pair is one rule about two cards, so it is drawn as one object. */
 .pair-list {
   display: grid;
   gap: 1rem;
@@ -1152,7 +991,6 @@ button.chip-solid:hover {
   color: var(--rune-lit);
 }
 
-/* Format legality, stated wherever a card is shown in full. */
 .legal-yes,
 .legal-no {
   font-size: 0.72rem;
@@ -1175,7 +1013,6 @@ button.chip-solid:hover {
   background: rgba(226, 104, 63, 0.08);
 }
 
-/* Sets that have graduated from Spoilers to the archive. */
 .released-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -1190,14 +1027,6 @@ button.chip-solid:hover {
   border-color: var(--edge-strong);
 }
 
-/* ------------------------------------------------------- back to top */
-
-/*
- * Fixed to the corner, and out of the way until there is something to go back
- * from — see components/BackToTop.tsx. It is faded rather than unmounted so the
- * appearance is not a jump, and `visibility` is what keeps it unclickable while
- * transparent; `opacity: 0` alone still takes the click.
- */
 .to-top {
   position: fixed;
   right: clamp(0.8rem, 3vw, 1.6rem);
@@ -1241,7 +1070,6 @@ button.chip-solid:hover {
   }
 }
 
-/* Two shelves on the home page — boosters and starter decks. */
 .set-shelf {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));

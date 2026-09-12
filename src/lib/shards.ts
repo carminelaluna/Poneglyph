@@ -1,22 +1,3 @@
-/**
- * The corpus, one slice at a time.
- *
- * The event, player and deck pages are rendered in the browser. Prerendering all
- * 37,000 of them costs 5.5 GB of HTML and RSC against GitHub Pages' 1 GB limit, and
- * the alternative — shipping a whole region so the page can find its three rows —
- * is 362 KB gzipped to draw one small event.
- *
- * So `build-indexes.mjs` groups the corpus by entity and splits it into buckets —
- * 256 of them, a count that moves with the corpus because what it really sets is
- * how much one page downloads. A page fetches the bucket its id falls in, about
- * 11-15 KB gzipped, plus a shared archetype table. Everything is a static file, cached by the browser, so
- * moving between events costs one request the first time and none after.
- *
- * Rows are the same terse shape the metagame index uses, with `g` for the region.
- * The rebuilding below deliberately mirrors `lib/events.ts` and `lib/players.ts` —
- * those still run at build time for metadata and prerendering, and the two must
- * agree or a prerendered page and a fetched one would disagree about the same event.
- */
 import type {
   EventRow,
   PlayerIndex,
@@ -29,23 +10,12 @@ import { dataUrl } from './paths';
 
 export type Region = 'en' | 'jp';
 
-/** One deck row as it arrives in a shard. */
 export type ShardRow = MetaDeck & { g: Region };
 
-/** Archetype names and colours, and the Leader's own lowest listed price. */
 export type Leaders = Record<string, { n: string; c: string[]; $?: number | null }>;
 
-/** Card name, category, and lowest listed price — `null` when there is none. */
 export type CardNames = Record<string, [string, string, (number | null)?]>;
 
-/**
- * Which bucket a key falls in — FNV-1a.
- *
- * **`shardOf` in scripts/build-indexes.mjs is an identical copy** and the two must
- * agree exactly; if they drift, every lookup misses and every page reads as "not
- * found". `Math.imul` is what keeps the multiply in 32 bits, which is the whole
- * reason the two implementations can agree across Node and the browser.
- */
 export function shardOf(key: string): string {
   let hash = 2166136261;
   for (let i = 0; i < key.length; i++) {
@@ -55,14 +25,12 @@ export function shardOf(key: string): string {
   return String((hash >>> 0) % 256).padStart(3, '0');
 }
 
-/* Fetched buckets, kept for the life of the page so navigation is free. */
 const cache = new Map<string, Promise<unknown>>();
 
 function once<T>(key: string, load: () => Promise<T>): Promise<T> {
   const held = cache.get(key);
   if (held) return held as Promise<T>;
   const started = load().catch((err) => {
-    /* A failed fetch must not be cached, or a blip becomes permanent. */
     cache.delete(key);
     throw err;
   });
@@ -86,14 +54,6 @@ export const loadLeaders = () => once('leaders', () => json<Leaders>(dataUrl('le
 export const loadCardNames = () =>
   once('card-names', () => json<CardNames>(dataUrl('card-names.json')));
 
-/* --------------------------------------------------------- the directories */
-
-/*
- * The whole-file payloads behind /tournaments and /players. They live here rather
- * than in lib/directory.ts for the same reason the metagame fetches do: that file
- * is the shapes and the arithmetic, free of imports so a test can read it, and this
- * one is where a payload is fetched and kept.
- */
 export const loadTournaments = () =>
   once('tournaments', () => json<TournamentIndex>(dataUrl('tournaments-index.json')));
 
@@ -108,13 +68,10 @@ export const loadPlayers = () =>
 export const loadPlayerArchive = () =>
   once('players-archive', () => json<{ players: PlayerRow[] }>(dataUrl('players-archive.json')));
 
-/** Card lists for one archetype: deck id -> [[cardId, count], …]. */
 export const loadArchetypeLists = (region: Region, leaderId: string) =>
   once(`decks-${region}/${leaderId}`, () =>
     json<Record<string, [string, number][]>>(dataUrl(`decks-${region}/${leaderId}.json`))
   );
-
-/* ------------------------------------------------------------------ events */
 
 export type ShardEvent = {
   id: string;
@@ -125,7 +82,6 @@ export type ShardEvent = {
   region: Region;
   source: 'limitless' | 'topdecks' | 'community';
   sourceUrl?: string;
-  /** Who ran it, when an organizer submitted it. */
   organizer?: string;
   tier: string;
   venue: string;
@@ -134,7 +90,6 @@ export type ShardEvent = {
   archetypes: { leaderId: string; count: number }[];
 };
 
-/** Best finishes first, then the better record, then by name — as lib/events.ts does. */
 const byFinish = (a: ShardRow, b: ShardRow) =>
   (a.p ?? 9999) - (b.p ?? 9999) || b.w - a.w || a.s - b.s || a.a.localeCompare(b.a);
 
@@ -157,14 +112,9 @@ export async function getEvent(id: string): Promise<ShardEvent | null> {
     id,
     name: head.e,
     date: head.d,
-    /* Entrants, when a source reported it — Top Decks does not, and 0 means that. */
     players: Math.max(...decks.map((d) => d.n ?? 0), 0),
     recorded: decks.length,
     region: head.g,
-    /*
-     * Three sources, so `o` carries which one rather than saying "not Limitless".
-     * As a boolean this read every submitted tournament as a Limitless event.
-     */
     source: head.o === 2 ? 'community' : head.o === 1 ? 'topdecks' : 'limitless',
     sourceUrl: head.u,
     organizer: head.z,
@@ -176,11 +126,8 @@ export async function getEvent(id: string): Promise<ShardEvent | null> {
   };
 }
 
-/* ----------------------------------------------------------------- players */
-
 export type ShardPlayer = {
   slug: string;
-  /** Every spelling that produced this slug, most common first. */
   names: string[];
   name: string;
   results: ShardRow[];
@@ -189,7 +136,6 @@ export type ShardPlayer = {
   events: number;
   archetypes: { leaderId: string; count: number }[];
   regions: Region[];
-  /** First and last day on record, for the "Active" stat. */
   first: string;
   last: string;
 };
@@ -203,11 +149,6 @@ export async function getPlayer(slug: string): Promise<ShardPlayer | null> {
     .slice()
     .sort((a, b) => b.d.localeCompare(a.d) || (a.p ?? 999) - (b.p ?? 999));
 
-  /*
-   * Names are never merged across spellings — `Ric Masterflash` and
-   * `ricmasterflash` are different people until something proves otherwise. What is
-   * grouped here is one slug's spellings, ordered by how often each was reported.
-   */
   const spellings = new Map<string, number>();
   for (const row of results) spellings.set(row.a, (spellings.get(row.a) ?? 0) + 1);
   const names = [...spellings.entries()].sort((a, b) => b[1] - a[1]).map(([n]) => n);
@@ -219,23 +160,18 @@ export async function getPlayer(slug: string): Promise<ShardPlayer | null> {
     results,
     wins: results.filter((r) => r.p === 1).length,
     top8: results.filter((r) => r.p !== null && r.p <= 8).length,
-    /* Distinct day-plus-event, since one event can yield several recorded lists. */
     events: new Set(results.map((r) => `${r.d}|${r.e}`)).size,
     archetypes: countArchetypes(results),
     regions: [...new Set(results.map((r) => r.g))],
-    /* `results` is newest first, so the ends of it are the active range. */
     last: results[0]?.d ?? '',
     first: results[results.length - 1]?.d ?? '',
   };
 }
 
-/* ------------------------------------------------------------------- decks */
-
 export async function getDeckRow(id: string): Promise<ShardRow | null> {
   return (await bucket<ShardRow>('deck', id))[id] ?? null;
 }
 
-/** A deck's card list, resolved to names, categories and prices. */
 export async function getDeckCards(row: ShardRow) {
   const [lists, names] = await Promise.all([
     loadArchetypeLists(row.g, row.l),
@@ -248,7 +184,6 @@ export async function getDeckCards(row: ShardRow) {
     count,
     name: names[id]?.[0] ?? id,
     category: names[id]?.[1] ?? '',
-    /* `undefined` for a card this payload predates, `null` for one with no price. */
     price: names[id]?.[2] ?? null,
   }));
 }

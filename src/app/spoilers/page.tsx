@@ -7,9 +7,7 @@ type SpoilerCard = {
   id: string;
   name: string | null;
   image: string | null;
-  /** A local 320px thumbnail, when the reveal came from Discord — see asset(). */
   thumb?: string | null;
-  /** What the card does, when the reveal came with somebody's translation. */
   text?: string | null;
 };
 type SpoilerSet = {
@@ -83,29 +81,10 @@ export default function SpoilersPage() {
             {set.cards.length > 0 ? (
               <div className="spoiler-grid">
                 {set.cards.map((card) => {
-                  /* Ours if we kept a thumbnail, the source's if we only linked one. */
                   const source = card.thumb ? asset(`/spoilers/${card.thumb}`) : card.image;
                   return (
                     <figure key={card.id} className="spoiler-card">
-                      {/*
-                        A card number with no picture is still a reveal, and most of
-                        them are: the Discord source carries the numbers within
-                        minutes but its image links are signed and expire in hours,
-                        so nothing points at one. A broken image is worse than an
-                        honest empty frame, which is what this is.
-                      */}
                       {card.image || card.thumb ? (
-                        /*
-                          The picture opens itself, in a tab of its own. A reveal is
-                          drawn a few centimetres wide in this grid and the thing a
-                          reader wants next is a closer look — which for these is the
-                          file, since there is no card page to send them to until the
-                          set ships.
-
-                          A new tab rather than a navigation: leaving the page to
-                          look at one card, then coming back to find the grid where
-                          you left it, is the interaction this is instead of.
-                        */
                         <a
                           href={source!}
                           target="_blank"
@@ -114,11 +93,6 @@ export default function SpoilersPage() {
                           aria-label={`Open the full image of ${card.name ?? card.id}`}
                         >
                           <img
-                            /*
-                              `asset()` and not a bare path: this site is served under
-                              a basePath, and a hand-written src is one of the two
-                              things Next does not rewrite.
-                            */
                             src={source!}
                             alt={card.name ? `${card.name} (${card.id})` : card.id}
                             loading="lazy"
@@ -132,12 +106,6 @@ export default function SpoilersPage() {
                         <b>{card.name ?? 'Name not listed'}</b>
                         <span className="mono">{card.id}</span>
                       </figcaption>
-                      {/*
-                        Only when there is one. A reveal that is already in English
-                        does not come with a translation, so most of these are the
-                        Japanese ones, and this is the only place on the site that
-                        says what an unreleased card does.
-                      */}
                       {card.text ? <p className="spoiler-text">{card.text}</p> : null}
                     </figure>
                   );
@@ -178,13 +146,6 @@ export default function SpoilersPage() {
         </section>
       ) : null}
 
-      {/*
-        The header used to carry two paragraphs and now carries none. What could not
-        simply go is that these are somebody else's images of cards that are not out
-        — attribution and "may change" are the reason the page is allowed to show
-        them at all — so it says that here, once, at the foot, instead of twice at
-        the top where it was the first thing in the way.
-      */}
       <p className="muted" style={{ fontSize: '0.76rem', marginTop: '2.5rem', maxWidth: '74ch' }}>
         Community reveals, not official releases: read from{' '}
         <a href={source.home} target="_blank" rel="noreferrer noopener" className="inline-link">

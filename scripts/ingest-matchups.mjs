@@ -1,32 +1,4 @@
 #!/usr/bin/env node
-/**
- * Poneglyph — archetype against archetype.
- *
- *   node scripts/ingest-matchups.mjs [--max 200] [--reset]
- *
- * Every win rate on this site until now has been a deck's record against *the
- * field* — 52.8% says it beat whatever it happened to sit across from. The question
- * people actually ask about a deck is narrower than that: how does it do against the
- * thing it will meet in the top cut.
- *
- * Limitless publishes `/tournaments/{id}/pairings` — round, table, both players and
- * the winner, by username. `data/decks.json` already records which Leader each
- * username played *at that tournament*, so joining the two gives a real Leader
- * against Leader result for every match in a recorded event. Nothing here is
- * inferred from records or reconstructed from standings.
- *
- * **Only Limitless.** One Piece Top Decks publishes finishing lists, not brackets,
- * and an organizer submitting a tournament is not asked for pairings — so this
- * covers the 9,381 decks from Limitless and says so, rather than quietly presenting
- * a partial corpus as the whole one.
- *
- * One request per tournament, resumable in exactly the way the deck ingest is: a
- * budget per run, a record of what has already been read, and a note of what is
- * left for next time.
- *
- * Writes data/matchups.json. Run build-indexes.mjs afterwards.
- */
-
 import { writeFile, readFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { DECK_SOURCES } from './sources.mjs';
@@ -67,7 +39,6 @@ async function main() {
     process.exit(1);
   }
 
-  /* Username -> Leader, per tournament: the same person plays different decks. */
   const byTournament = new Map();
   for (const deck of decks) {
     if (!deck.tournamentId || !deck.player || !deck.leaderId) continue;
@@ -85,7 +56,6 @@ async function main() {
   const budget = new Budget(BUDGET, log);
   const pending = tournaments
     .filter((t) => byTournament.has(t.id) && seen[t.id] === undefined)
-    /* Newest first: the current metagame is what a matchup table is read for. */
     .sort((a, b) => String(b.date).localeCompare(String(a.date)));
 
   log(
@@ -111,11 +81,6 @@ async function main() {
     readNow++;
 
     if (!Array.isArray(pairings) || pairings.length === 0) {
-      /*
-       * Recorded as read with zero matches. Without this the next run would ask
-       * again, for ever, and a handful of events with no published bracket would
-       * eat the budget that new tournaments need.
-       */
       seen[tournament.id] = 0;
       noPairings++;
       continue;
@@ -139,11 +104,6 @@ async function main() {
     }
   }
 
-  /*
-   * Refuses to overwrite a real file with nothing, like every other ingest here.
-   * A first run that reached no tournament should leave no file rather than an
-   * empty one that later reads as "there are no matchups".
-   */
   if (rows.length === 0) {
     console.error('[matchups] no matches resolved — leaving any existing file untouched');
     process.exit(readNow === 0 ? 0 : 1);

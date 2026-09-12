@@ -1,8 +1,3 @@
-/*
- * Card browser — the filter rail, toolbar, and result views.
- * Split out of globals.css because it is the only place these rules apply.
- */
-
 .browse {
   display: grid;
   grid-template-columns: 254px minmax(0, 1fr);
@@ -80,7 +75,6 @@
   padding-top: 0.75rem;
 }
 
-/* Six pigment swatches — the colour filter reuses the home page's language. */
 .swatches {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -106,7 +100,6 @@
   box-shadow: 0 0 0 1px var(--void), 0 0 0 2px var(--sw);
 }
 
-/* Checkable rows for the long facets. */
 .opt {
   display: flex;
   align-items: center;
@@ -203,7 +196,6 @@
   color: var(--glyph-faint);
 }
 
-/* Pills for the short numeric facets — cost 0-10 reads best as a keypad. */
 .keypad {
   display: flex;
   flex-wrap: wrap;
@@ -234,8 +226,6 @@
   border-color: var(--rune);
   color: var(--glyph);
 }
-
-/* ------------------------------------------------------------- toolbar */
 
 .toolbar {
   display: flex;
@@ -326,7 +316,6 @@
   white-space: nowrap;
 }
 
-/* Active filters, removable. */
 .active-filters {
   display: flex;
   flex-wrap: wrap;
@@ -357,10 +346,6 @@
   font-family: var(--font-mono), monospace;
 }
 
-/* ---------------------------------------------------------- list view */
-
-/* The global `img { max-width: 100% }` would collapse this to nothing inside a
-   table cell the browser has squeezed, so the thumbnail sets its own floor. */
 .row-art {
   width: 38px;
   min-width: 38px;
@@ -401,8 +386,6 @@
   background: var(--slab-hi);
   color: var(--glyph);
 }
-
-/* --------------------------------------------------------- rail toggle */
 
 .rail-toggle {
   display: none;

@@ -1,20 +1,3 @@
-/**
- * Metagame aggregation.
- *
- * Deliberately free of imports so the exact same code runs in the browser, where
- * the reader picks a time window and the whole table is recomputed. Nothing here
- * touches the filesystem or the network — it takes decks in and gives archetypes
- * back.
- */
-
-/**
- * One deck as it travels to the browser. Keys are terse because this file is
- * downloaded by every visitor to the metagame page.
- *
- * Card lists are deliberately absent: they are five times heavier than the rest
- * and only the archetype page needs them, one archetype at a time. They live in
- * public/data/decks/{leaderId}.json and are keyed by deck id.
- */
 export type MetaDeck = {
   i: string;
   l: string;
@@ -25,77 +8,35 @@ export type MetaDeck = {
   t: number;
   n: number;
   e: string;
-  /** How the event was played: simulator, webcam, offline, or unknown. */
   v: Venue;
-  /** What kind of event it was: regional, treasure, championship, local, … */
   k: string;
-  /** Who played it. */
   a: string;
-  /** Which event it was played at. */
   x?: string;
-  /** 1 when this deck came from a whole-field sample, 0 when it only placed. */
   f: 0 | 1;
-  /**
-   * Which source the result came from: 1 Top Decks, 2 an organizer's submission.
-   * Absent on Limitless rows, which are the bulk, so they pay nothing for it.
-   *
-   * It was a boolean — `1` or absent — for as long as there were two sources, and
-   * the day a third arrived every submitted tournament read as Limitless: absent
-   * meant "not Top Decks", which the reader turned into "Limitless". A flag that
-   * says what a thing is *not* only works while there are two things.
-   *
-   * `f` implies none of this. Every Limitless row happens to be a whole field and
-   * every Top Decks row winners-only, but that is a fact about those upstreams
-   * rather than a rule — an organizer answers the sampling question themselves —
-   * so attribution is recorded rather than inferred from a sampling flag.
-   */
   o?: 1 | 2;
   u?: string;
-  /** Who ran it, on a submitted event. Absent everywhere else. */
   z?: string;
 };
 
 export type Venue = 'simulator' | 'webcam' | 'offline' | 'unknown';
 
-/**
- * Play settings, in the order they are offered.
- *
- * Most recorded results come from simulator events, so someone asking "what wins
- * across a table" is asking a different question from "what wins overall" — this
- * is the control that separates them.
- */
 export const VENUES: { id: Venue; label: string; blurb: string }[] = [
   { id: 'offline', label: 'Paper', blurb: 'Played in person' },
   { id: 'simulator', label: 'Simulator', blurb: 'Played on a simulator' },
   { id: 'webcam', label: 'Webcam', blurb: 'Played over webcam' },
 ];
 
-/** Card lists for one archetype: deck id -> [[cardId, count], ...]. */
 export type DeckCardLists = Record<string, [string, number][]>;
 
 export type MetaIndex = {
   generatedAt: string;
-  /**
-   * How the corpus was collected. `field` is every deck in a Swiss event, so win
-   * rate is meaningful. `winners` is only decks that placed, so share answers
-   * "what wins" but a win rate would be an artefact of the sampling.
-   */
   sampling?: 'field' | 'winners' | 'mixed';
-  /** How many decks in this corpus came from whole fields. */
   fieldDecks?: number;
   regionLabel?: string;
   sources?: string[];
-  /** Oldest day the first payload carries; older decks live in the archive files. */
   recentFrom?: string;
   archived?: number;
-  /**
-   * Which months the archive has a file for, oldest first (`YYYY-MM`). A window
-   * reaching past `recentFrom` fetches the ones it covers and nothing else, and it
-   * asks only for months named here — a miss on a static host is answered with the
-   * whole 404 page, as JSON, which fails to parse and reads like a corrupt payload.
-   */
   archiveMonths?: string[];
-  /** Size of the whole corpus, including the part in the archive files. */
   totalDecks?: number;
   window: { from: string | null; to: string | null };
   eras: Era[];
@@ -105,7 +46,6 @@ export type MetaIndex = {
   decks: MetaDeck[];
 };
 
-/** When a set first showed up in tournament results — see buildEras in the ingest. */
 export type Era = {
   code: string;
   set: string;
@@ -134,13 +74,10 @@ export type MetaArchetype = {
   losses: number;
   ties: number;
   winRate: number | null;
-  /** Decks the win rate was computed from — only whole-field results count. */
   winRateSample: number;
   top8: number;
   firsts: number;
 };
-
-/* ------------------------------------------------------------------ windows */
 
 export type Window =
   | { kind: 'days'; days: number }
@@ -149,19 +86,6 @@ export type Window =
 
 export const DAY_WINDOWS = [7, 15, 30, 90] as const;
 
-/**
- * The window is measured back from the most recent deck on record, not from
- * today. Results arrive in batches, so anchoring on the clock would quietly empty
- * "last 7 days" whenever ingestion paused for a week.
- */
-/**
- * The era a window names, or null when this corpus does not have it.
- *
- * The two regions do not share a release calendar — five sets entered play in
- * Japanese that never did in English, and two the other way — so an era is a
- * question one corpus can answer and the other cannot. Which is why the answer to
- * "not here" has to be nothing rather than everything: see `filterDecks`.
- */
 const eraIn = (window: Window, index: MetaIndex) =>
   window.kind === 'era' ? (index.eras.find((e) => e.set === window.set) ?? null) : null;
 
@@ -179,29 +103,6 @@ export function windowStart(window: Window, index: MetaIndex): string | null {
   return anchor.toISOString().slice(0, 10);
 }
 
-/**
- * The day a window stops, exclusive. Only an era has one.
- *
- * An era used to be open-ended — "since ST-01 entered play" meant everything from
- * December 2022 to now, which for the oldest set is the entire archive. Picking a
- * release from 2022 and being shown decks from 2026 is not an answer to the
- * question anyone was asking: what people mean by "the OP-05 metagame" is the
- * period while OP-05 was the newest thing in it.
- *
- * So an era runs until the next **expansion** entered play. Not the next set of any
- * kind: a starter deck arriving does not end a format, and ending on one gives
- * answers nobody wants. Measured against the real corpus, ending on any set at all
- * made OP-01 a window one day wide holding two decks, because three products
- * entered play inside 48 hours at the start of the archive; ending on the next
- * expansion makes it 98 days and 160 decks, which is the period people mean when
- * they say "the OP-01 format". It also stops ST-30 cutting OP-16 in half.
- *
- * For the most recent era there is no next expansion, which leaves it open — and
- * that is right, because that one is still going on.
- *
- * Sets that arrived together share a date, so the end is the earliest expansion
- * date **strictly after** this one rather than whatever sits next in the list.
- */
 export function windowEnd(window: Window, index: MetaIndex): string | null {
   if (window.kind !== 'era') return null;
   const era = index.eras.find((e) => e.set === window.set);
@@ -213,42 +114,16 @@ export function windowEnd(window: Window, index: MetaIndex): string | null {
   return later[0] ?? null;
 }
 
-/**
- * Which archive files a window needs, and no more.
- *
- * The index payload holds the last 90 days; everything older is a file per month.
- * A window is a date range, so the months it covers are arithmetic on its two
- * ends — which is the reason the split is monthly rather than by era: an era is a
- * range too, and one rule serves both.
- *
- * Three ends are handled here rather than at the call site, because each of them
- * used to be a way of asking for the whole archive by accident:
- *
- * - **A window that stays inside the index needs nothing.** "Last 30 days" is
- *   answered by the file already downloaded.
- * - **A release this corpus never had needs nothing**, the same answer
- *   `filterDecks` gives it. Falling through to "no start date, so every month"
- *   would fetch the entire archive to display nothing.
- * - **Only months that exist are named.** A miss on a static host is answered with
- *   the whole 404 page, and asking for it as JSON fails to parse — a wrong URL
- *   that reads like a corrupt payload.
- */
 export function archiveMonthsFor(window: Window, index: MetaIndex): string[] {
   const months = index.archiveMonths ?? [];
   const recentFrom = index.recentFrom;
   if (months.length === 0 || !recentFrom) return [];
 
-  /* The same refusal filterDecks makes, for the same reason. */
   if (window.kind === 'era' && !eraIn(window, index)) return [];
 
   const from = windowStart(window, index);
   if (from && from >= recentFrom) return [];
 
-  /*
-   * The archive stops where the index starts, so the last month worth asking for
-   * is the one `recentFrom` falls in — or the window's own end, which is
-   * exclusive and so still includes its own month's earlier days.
-   */
   const end = windowEnd(window, index);
   const until = (end && end < recentFrom ? end : recentFrom).slice(0, 7);
   const since = from?.slice(0, 7) ?? '';
@@ -272,15 +147,6 @@ export function filterDecks(
   venues: Venue[] = [],
   tiers: string[] = []
 ): MetaDeck[] {
-  /*
-   * A release this corpus never had answers with nothing, not with everything.
-   *
-   * It used to fall through to "no start date, so no filtering", which meant a
-   * link to a Japanese-only release opened under the English corpus reported the
-   * entire archive under a heading naming that release — real numbers, wrong
-   * question, and the dropdown still reading "Choose a release…". It is reachable
-   * by switching region with one selected, not only by typing a URL.
-   */
   if (window.kind === 'era' && !eraIn(window, index)) return [];
 
   const from = windowStart(window, index);
@@ -291,18 +157,13 @@ export function filterDecks(
   return index.decks.filter(
     (d) =>
       (!from || d.d >= from) &&
-      /* Exclusive: the day the next set arrived belongs to the next era. */
       (!to || d.d < to) &&
       (!byVenue || venues.includes(d.v)) &&
       (!byTier || tiers.includes(d.k))
   );
 }
 
-/* -------------------------------------------------------------- aggregation */
-
-/** A card in at least this share of an archetype's lists is part of its skeleton. */
 const CORE_THRESHOLD = 60;
-/** Below this, a card is noise rather than a real build choice. */
 const FLEX_THRESHOLD = 10;
 
 export function aggregate(decks: MetaDeck[], index: MetaIndex): MetaArchetype[] {
@@ -328,11 +189,6 @@ export function aggregate(decks: MetaDeck[], index: MetaIndex): MetaArchetype[] 
     if (deck.p !== null && deck.p <= 8) bucket.top8++;
     if (deck.p === 1) bucket.firsts++;
 
-    /*
-     * Records only count when the deck came from a whole field. A corpus of decks
-     * that placed would otherwise report a win rate near 100% — true of the sample,
-     * meaningless about the archetype.
-     */
     if (deck.f === 1) {
       bucket.fieldDecks++;
       bucket.wins += deck.w;
@@ -366,11 +222,6 @@ export function aggregate(decks: MetaDeck[], index: MetaIndex): MetaArchetype[] 
     .sort((a, b) => b.decks - a.decks || a.name.localeCompare(b.name));
 }
 
-/**
- * What the decks in this window are actually built out of. Split from `aggregate`
- * because it needs the card lists, which are fetched per archetype rather than
- * shipped with the table.
- */
 export function archetypeCards(
   deckIds: string[],
   lists: DeckCardLists,
@@ -417,10 +268,6 @@ export function archetypeCards(
   };
 }
 
-/**
- * Movement against the window immediately before this one. A deck that is 8% of
- * the field says less than a deck that was 3% a fortnight ago.
- */
 export function withTrend(
   current: MetaArchetype[],
   index: MetaIndex,
@@ -433,10 +280,6 @@ export function withTrend(
 
   const byVenue = venues.length > 0 && venues.length < VENUES.length;
   const byTier = tiers.length > 0 && tiers.length < index.tiers.length;
-  /*
-   * As long as the window itself, so the comparison is like for like. A bounded era
-   * ends when the next set arrived; an open one runs to the newest deck on record.
-   */
   const until = windowEnd(window, index) ?? index.window.to ?? from;
   const span = daysBetween(from, until) + 1;
   const previousStart = shiftDays(from, -span);
@@ -456,8 +299,6 @@ export function withTrend(
   });
 }
 
-/* ------------------------------------------------------------------ helpers */
-
 const round1 = (n: number) => Math.round(n * 10) / 10;
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -470,10 +311,6 @@ function shiftDays(day: string, by: number) {
   return d.toISOString().slice(0, 10);
 }
 
-/**
- * Values a source used to mean "not recorded". Mirrors the server-side list in
- * lib/players.ts — a placeholder must not become a clickable career.
- */
 const NOT_A_PLAYER = new Set([
   'na', 'n/a', 'unknown', 'none', 'null', 'nan', '-', '--', '?', '??',
   'anon', 'anonymous', 'player not recorded',
@@ -484,7 +321,6 @@ export const isNamedPlayer = (name: string | null | undefined) => {
   return text.length > 0 && !NOT_A_PLAYER.has(text.toLowerCase());
 };
 
-/** URL form of a player name. Must match lib/players.ts exactly. */
 export function playerSlug(name: string) {
   return name
     .trim()

@@ -1,10 +1,3 @@
-/* Deck builder — see page.tsx and DeckBuilder.tsx. */
-
-/*
- * Pool on the left, deck on the right, and the deck column stays put while the pool
- * scrolls. Building is a loop of "look at a card, look at the count" and a running
- * total that scrolls out of sight is the one thing that has to not happen.
- */
 .build {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 21rem;
@@ -74,7 +67,6 @@
   -webkit-box-orient: vertical;
 }
 
-/* How many are in the deck, over the art, so the pool shows the deck's state. */
 .build-count {
   position: absolute;
   top: 0.3rem;
@@ -155,11 +147,6 @@
   font-size: 0.74rem;
 }
 
-/*
- * An error is a rule broken; a warning is something every recorded deck obeys but
- * that a card's own text could permit. They are coloured apart because acting on
- * them is different: one you must fix, the other you check.
- */
 .build-error,
 .build-warning {
   padding: 0.4rem 0.55rem;
@@ -251,7 +238,6 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* Stuck to the bottom of the viewport instead, so the total stays in sight. */
   .build-deck {
     position: static;
     max-height: none;
@@ -259,7 +245,6 @@
   }
 }
 
-/* Save, above the export. Both are ways of keeping a deck; one needs an account. */
 .build-save {
   display: grid;
   gap: 0.5rem;
@@ -273,8 +258,6 @@
   justify-content: center;
   padding: 0.5rem 0.9rem;
 }
-
-/* ---------------------------------------------------------------- import */
 
 .build-import-open {
   padding: 0.4rem 0.8rem;
@@ -306,13 +289,6 @@
   padding: 0.45rem 0.9rem;
 }
 
-/* ------------------------------------------------------------ deck stats */
-
-/*
- * What the fifty cards add up to: the cost curve, and three figures under it.
- * Everything here is derived from the card index the page already has, so it
- * appears as soon as the first card goes in and costs nothing to keep current.
- */
 .build-stats {
   margin-top: 0.9rem;
   padding-top: 0.8rem;
@@ -339,7 +315,6 @@
   gap: 0.15rem;
 }
 
-/* The bar grows from the bottom, so the column below it must not move. */
 .build-curve-bar {
   width: 100%;
   min-height: 1px;

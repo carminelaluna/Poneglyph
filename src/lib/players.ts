@@ -1,19 +1,6 @@
 import { decks, type Deck } from './decks';
 import { isNamedPlayer, playerSlug } from './meta';
 
-/**
- * Player results.
- *
- * A player is a *name as it was reported*, not a verified person. The same handle
- * turning up in Limitless and in Top Decks is treated as one player — 147 names do,
- * and they are overwhelmingly the same competitor — but nothing here proves it, and
- * the page says which sources a record came from so the reader can judge.
- *
- * Names are never merged across different spellings. `Ric Masterflash` and
- * `ricmasterflash` stay separate, because guessing at identity would silently
- * invent a career.
- */
-
 export { isNamedPlayer, playerSlug };
 
 export type PlayerResult = {
@@ -34,7 +21,6 @@ export type PlayerResult = {
 
 export type Player = {
   slug: string;
-  /** Every spelling that produced this slug, most common first. */
   names: string[];
   name: string;
   results: PlayerResult[];
@@ -107,7 +93,6 @@ function build(slug: string, entry: { names: Map<string, number>; decks: Deck[] 
     results,
     wins: results.filter((r) => r.placing === 1).length,
     top8: results.filter((r) => r.placing !== null && r.placing <= 8).length,
-    /* Distinct days-plus-event, since one event can yield several recorded lists. */
     events: new Set(results.map((r) => `${r.date}|${r.eventName}`)).size,
     archetypes: [...archetypes.values()].sort((a, b) => b.count - a.count),
     regions: [...new Set(results.map((r) => r.region))],
@@ -122,7 +107,6 @@ export const getPlayer = (slug: string): Player | undefined => {
   return entry ? build(slug.toLowerCase(), entry) : undefined;
 };
 
-/** Slugs worth prerendering — everyone else renders on demand. */
 export function prerenderablePlayers(minResults = 5) {
   return [...bySlug.entries()]
     .filter(([, e]) => e.decks.length >= minResults)

@@ -5,17 +5,6 @@ import EventLink from '../EventLink';
 import PlayerLink from '../PlayerLink';
 import { formatRecord, ordinal, type MetaDeck } from '@/lib/meta';
 
-/**
- * The registered lists for one archetype, as a table.
- *
- * It lives here rather than inline because it now has two callers — the archetype
- * page, which draws ten of them, and the decklists page, which draws all of them
- * with the ordering controls. Two copies would be two answers to what a row of this
- * archive looks like, and the one that drifted would be the one nobody was reading.
- *
- * Ordering is the caller's business: the archetype page has one order and no
- * control for it, the full page has three.
- */
 export default function DeckTable({ decks }: { decks: MetaDeck[] }) {
   return (
     <div className="table-scroll">

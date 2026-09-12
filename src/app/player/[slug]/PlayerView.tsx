@@ -8,12 +8,6 @@ import { pigment } from '@/lib/colors';
 import { formatRecord, ordinal } from '@/lib/meta';
 import { getPlayer, loadLeaders, type Leaders, type ShardPlayer } from '@/lib/shards';
 
-/**
- * One competitor's record, drawn in the browser.
- *
- * 8,679 named players are on record and only the regulars are prerendered, so this
- * fetches its own bucket — see lib/shards.ts.
- */
 export default function PlayerView({ slug }: { slug: string }) {
   const [player, setPlayer] = useState<ShardPlayer | null>(null);
   const [leaders, setLeaders] = useState<Leaders>({});

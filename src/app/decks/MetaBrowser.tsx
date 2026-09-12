@@ -16,19 +16,10 @@ import {
 } from '@/lib/meta';
 import { IndexError, Trend, WindowBar, WinRate, useMetaIndex, useWindow } from './useMeta';
 
-/** A deck this rare in the chosen window is a one-off, not a metagame position. */
 const MIN_DECKS = 3;
 
-/**
- * How many archetypes the table opens with.
- *
- * A window holds up to 141 of them and the tail is decks somebody brought once.
- * Ten is what the question "what is being played" is actually answered by, and
- * the rest are one click away rather than four screens of scrolling away.
- */
 const HEAD = 10;
 
-/** The winners are a list to glance at, not a table to read through. */
 const RECENT = 12;
 
 export default function MetaBrowser() {
@@ -36,10 +27,6 @@ export default function MetaBrowser() {
   const { index, error, loadingArchive } = useMetaIndex(region, window_);
   const [all, setAll] = useState(false);
 
-  /*
-   * Every control above the table changes what the top ten *are*, so an expanded
-   * table would silently become a different question's long tail. It closes again.
-   */
   useEffect(() => setAll(false), [region, window_, venues, tiers]);
 
   const view = useMemo(() => {
@@ -57,18 +44,12 @@ export default function MetaBrowser() {
 
   const { decks, rows } = view;
   const top = rows[0]?.share ?? 1;
-  /* Win rate needs whole-field results; a corpus of decks that placed has none. */
   const fieldSample = (index.fieldDecks ?? 0) > 0;
 
   return (
     <>
       <WindowBar {...bar} index={index} count={decks.length} />
 
-      {/*
-        The one question a page split by corpus cannot answer, so it is a link out
-        rather than a control here: the comparison counts something else entirely —
-        first places, the only figure the two regions define the same way.
-      */}
       <p className="muted source-line" style={{ margin: '0.9rem 0 0' }}>
         <Link href="/compare" className="inline-link">
           Japanese and English side by side
@@ -76,12 +57,6 @@ export default function MetaBrowser() {
         — what wins in one and not the other.
       </p>
 
-      {/*
-        Conditional, and therefore still here rather than on /data with the rest of
-        the caveats: it explains the table in front of you right now — why a column
-        is missing, or which decks the one you can see was counted from. A line, not
-        a box; the reasoning is one link away.
-      */}
       {!fieldSample ? (
         <p className="muted source-line" style={{ marginBottom: '1.1rem' }}>
           These are decks that placed, not whole fields, so the column reads{' '}
@@ -211,22 +186,11 @@ export default function MetaBrowser() {
 
 
 
-/**
- * The most recent events somebody won, in this window.
- *
- * It listed top-eight finishes until it did not: eight rows of one Regional is a
- * standings page rather than a look at the metagame, and the only thing separating
- * those rows is the column saying which of the eight each was. A win is the result
- * the table above is built from — the Wins column is these — so this is that
- * column opened up, and the placing column went with the change, since every row
- * in it now reads 1st.
- */
 function RecentWinners({ index, decks }: { index: MetaIndex; decks: MetaDeck[] }) {
   const results = useMemo(
     () =>
       decks
         .filter((d) => d.p === 1)
-        /* Newest first, and the larger field first within a day. */
         .sort((a, b) => b.d.localeCompare(a.d) || (b.n ?? 0) - (a.n ?? 0))
         .slice(0, RECENT),
     [decks]

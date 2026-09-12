@@ -2,16 +2,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CONTACT_EMAIL, CONTACT_MAILTO } from '@/lib/contact';
 
-/**
- * Terms of use.
- *
- * The other URL Discord and Google ask for when registering an OAuth application.
- *
- * Deliberately short and in plain words. This is a free fan archive with no payment,
- * no subscription and no company behind it, and terms written to sound like a
- * software licence would misrepresent what it is.
- */
-
 export const metadata: Metadata = {
   title: 'Terms',
   description:

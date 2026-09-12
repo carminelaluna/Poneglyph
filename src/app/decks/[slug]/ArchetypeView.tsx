@@ -19,24 +19,6 @@ import {
 } from '@/lib/meta';
 import { IndexError, WinRate, WindowBar, useMetaIndex, useWindow, windowHref } from '../useMeta';
 
-/**
- * Everything about an archetype that depends on the chosen window: its share and
- * record, the cards that define it, and the lists people actually registered.
- *
- * The page shell around this — leader art, name, rules text — stays server
- * rendered, because that part is the archetype's identity and does not move.
- */
-/**
- * How many lists this page draws before handing over to `/decklists`.
- *
- * Sorted by finish, ten is the ten most recent first places wherever the archetype
- * has ten — which is what this section is read for. Where it does not, the same
- * sort answers with the ten best finishes instead of an empty section, and that
- * matters more than it sounds: in the default thirty-day window, 62% of archetypes
- * with recorded results have no first place at all, and one of them has 31 decks on
- * record. Cutting strictly to winners would have left the majority of these pages
- * saying nothing about results they plainly have.
- */
 const HEAD = 10;
 
 export default function ArchetypeView({
@@ -45,7 +27,6 @@ export default function ArchetypeView({
   glow,
 }: {
   leaderId: string;
-  /* Passed rather than derived: the two sub-pages are addressed by it. */
   slug: string;
   glow: string;
 }) {
@@ -53,11 +34,6 @@ export default function ArchetypeView({
   const { index, error, loadingArchive } = useMetaIndex(region, window_);
   const [lists, setLists] = useState<DeckCardLists | null>(null);
 
-  /*
-   * Card lists for this archetype only. They are a fifth of the whole corpus, so
-   * they are fetched here rather than shipped with the metagame table that every
-   * visitor loads.
-   */
   useEffect(() => {
     let cancelled = false;
     const dir = region === 'jp' ? 'decks-jp' : 'decks-en';
@@ -79,23 +55,12 @@ export default function ArchetypeView({
     const windowed = filterDecks(index, window_, venues, tiers);
     const all = aggregate(windowed, index);
     const mine = all.find((a) => a.leaderId === leaderId) ?? null;
-    /*
-     * Best finish, newest first within a placing — so the head of this list is the
-     * most recent wins. A deck with no recorded placing sorts last rather than
-     * first. The other two orders live on the full page, which is where a reader
-     * asking for the oldest lists is going anyway.
-     */
     const decks = windowed
       .filter((d) => d.l === leaderId)
       .sort((a, b) => (a.p ?? 999) - (b.p ?? 999) || b.d.localeCompare(a.d) || b.w - a.w);
     const built = lists
       ? archetypeCards(decks.map((d) => d.i), lists, index)
       : null;
-    /*
-     * The range the table covers, read off the dates rather than off the ends of
-     * the list — those are only oldest-to-newest while the sort happens to be by
-     * date, and printed straight they came out backwards.
-     */
     const days = decks.map((d) => d.d).sort();
     const span = days.length ? { from: days[0], to: days[days.length - 1] } : null;
 
@@ -175,12 +140,6 @@ export default function ArchetypeView({
             <p className="empty">Reading decklists…</p>
           )}
 
-          {/*
-            Against a named opponent, from published brackets — the question the
-            field-wide win rate above cannot answer. Given the same window as
-            everything else on the page so the two are talking about one set of
-            matches.
-          */}
           <Matchups
             leaderId={leaderId}
             from={windowStart(window_, index)}
@@ -222,7 +181,6 @@ export default function ArchetypeView({
   );
 }
 
-/** A row of cards with their inclusion rate drawn underneath as a filled rule. */
 function CardBand({
   title,
   blurb,

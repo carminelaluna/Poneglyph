@@ -1,12 +1,3 @@
-/**
- * Deciding that two rows are one deck.
- *
- * This is the test that stands between the archive and counting a decklist twice,
- * and — more dangerously — between it and dropping a real second event. Both
- * mistakes are silent: a share moves and nothing says why.
- *
- * The cases below are the shapes the corpus actually holds, not invented ones.
- */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
@@ -49,7 +40,6 @@ describe('the keys', () => {
     );
   });
 
-  /* Sources list the fifty in whatever order they please; the deck is the same. */
   it('does not care what order the fifty arrived in', () => {
     const shuffled = deck({
       cards: [
@@ -71,7 +61,6 @@ describe('how big the field was', () => {
     assert.equal(fieldSize(deck({ players: 128 }) as never), 128);
   });
 
-  /* Top Decks does not report entrants and writes the number into the name. */
   it('reads the number Top Decks puts in the event name', () => {
     assert.equal(fieldSize(deck({ players: 0, eventName: 'ChinoizeCup(128)' }) as never), 128);
   });
@@ -81,10 +70,6 @@ describe('how big the field was', () => {
     assert.equal(fieldSize({} as never), null);
   });
 
-  /*
-   * A parenthesised number smaller than a readable field is not a field: a year, a
-   * shop's branch. Every one of the 1,154 real ones is at or above MIN_FIELD.
-   */
   it('refuses a number too small to be a field', () => {
     assert.equal(fieldSize(deck({ players: 0, eventName: 'Store (3)' }) as never), null);
     assert.equal(
@@ -101,11 +86,6 @@ describe('is this deck already recorded', () => {
     assert.equal(asked(deck({ eventName: 'ChinoizeCup(128)', players: 0 }), held), 'list');
   });
 
-  /*
-   * The case this was written for. Same day, player and Leader; the lists differ by
-   * one card because two sources typed the same deck; the field size says it is one
-   * event. 23 of the 39 in the corpus differ by exactly this much.
-   */
   it('says so when the lists differ but the event is the same size', () => {
     const topDecks = deck({
       players: 0,
@@ -118,11 +98,6 @@ describe('is this deck already recorded', () => {
     assert.equal(asked(topDecks, held), 'event');
   });
 
-  /*
-   * The mistake worth fearing. A player really does bring one archetype to two
-   * events in a day — 354 times inside Limitless alone — and the second event is
-   * a different size. Nothing may drop it.
-   */
   it('keeps a second event of a different size on the same day', () => {
     const later = deck({
       players: 0,
@@ -145,10 +120,6 @@ describe('is this deck already recorded', () => {
     assert.equal(asked(deck({ date: '2026-08-20', players: 0, eventName: 'X(128)' }), held), null);
   });
 
-  /*
-   * An event whose entrant count was never recorded must not become a field size of
-   * zero that matches every other unrecorded event.
-   */
   it('does not let two unrecorded field sizes match each other', () => {
     const blank = index([deck({ players: 0, eventName: 'LGS' })]);
     const other = deck({

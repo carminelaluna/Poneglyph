@@ -96,12 +96,6 @@ export default function BanlistPage() {
   );
 }
 
-/*
- * The heading stays and the sentence under it does not. Three grids of cards
- * follow, and they mean different things — cannot be played at all, may be played
- * in fewer copies, may not be played together — so the title is the label that
- * tells them apart rather than an explanation of the page.
- */
 function Section({
   title,
   count,

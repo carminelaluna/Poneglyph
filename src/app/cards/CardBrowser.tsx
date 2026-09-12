@@ -7,23 +7,15 @@ import { pigment } from '@/lib/colors';
 import { dataUrl } from '@/lib/paths';
 import type { Filters } from '@/lib/cards';
 
-/**
- * One row of the slim browser index (public/data/cards-index.json). Keys are
- * single letters because this file is downloaded by every visitor — the naming
- * is paid for once here and never leaks past `toCard`.
- */
 type Row = {
   i: string; n: string; c: string[]; y: string; o: number | null; l: number | null;
   p: number | null; u: number | null; a: string[]; t: string[]; k: string[];
   r: string; s: string; g: string; m: string | null; v: number;
   $: number | null; q: string;
-  /** 1 when the card is Standard-legal; 0 when it has rotated to Extra only. */
   f: 0 | 1;
-  /** Block number, which is what the rotation actually keys on. */
   b: number | null;
 };
 
-/** Every facet, and how a card is matched against it. */
 const FACETS = {
   format: { label: 'Format', get: (r: Row) => (r.f ? ['Standard', 'Extra'] : ['Extra']) },
   block: { label: 'Block', get: (r: Row) => (r.b === null ? [] : [String(r.b)]) },
@@ -61,7 +53,6 @@ const SORTS = {
 
 type SortKey = keyof typeof SORTS;
 
-/** Cards missing the sorted stat sink to the bottom in both directions. */
 function nullLast(a: number | null, b: number | null, dir: 1 | -1) {
   if (a === null && b === null) return 0;
   if (a === null) return 1;
@@ -82,12 +73,6 @@ export default function CardBrowser({ facets }: { facets: Filters }) {
   const [railOpen, setRailOpen] = useState(false);
   const [ready, setReady] = useState(false);
 
-  /*
-   * Filters live in the address bar so a search can be linked to, but they are
-   * read and written with the History API rather than the router: filtering is
-   * entirely client-side, and a router navigation per keystroke would round-trip
-   * to the server for a result the page already has.
-   */
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setQuery(params.get('q') ?? '');
@@ -153,7 +138,6 @@ export default function CardBrowser({ facets }: { facets: Filters }) {
 
     const matched = rows.filter((row) => {
       if (needle && !row.q.includes(needle)) return false;
-      // Facets are AND across groups, OR within a group.
       for (const key of active) {
         const values = FACETS[key].get(row);
         if (!selection[key].some((v) => values.includes(v))) return false;
@@ -420,8 +404,6 @@ export default function CardBrowser({ facets }: { facets: Filters }) {
   );
 }
 
-/* ------------------------------------------------------------------ bits */
-
 function Group({ label, open = false, children }: { label: string; open?: boolean; children: React.ReactNode }) {
   return (
     <details className="fgroup" open={open}>
@@ -622,7 +604,6 @@ function ListView({ rows }: { rows: Row[] }) {
   );
 }
 
-/** Rebuild the selection from `?color=Red&color=Blue&cost=3` on first render. */
 function fromParams(params: URLSearchParams): Selection {
   const out = { ...EMPTY };
   for (const key of Object.keys(FACETS) as FacetKey[]) {

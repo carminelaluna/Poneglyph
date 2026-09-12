@@ -1,18 +1,3 @@
-/*
- * A directory table — /tournaments, /players, and the events section on /decks.
- *
- * One stylesheet for all three: they are the same table with different columns, and
- * the controls above the first two ask the same shape of question. The table itself
- * is `.meta-table` from decks.css, which the directories import for exactly that
- * reason — a second table style that looked almost the same would be the worse
- * outcome, and the events section on the metagame page is that same argument read
- * the other way round. Only what is particular to a directory is here.
- *
- * `.dir-controls` and the two `.dir-` inputs go unused on /decks, which has its own
- * window bar. They cost 200 bytes and they keep one file answering "what does a
- * directory look like".
- */
-
 .dir-controls {
   display: flex;
   flex-wrap: wrap;
@@ -35,7 +20,6 @@
   font-size: 0.78rem;
 }
 
-/* Dense: these tables are read by scanning a column, not by reading a row. */
 .dir-table td,
 .dir-table th {
   padding-block: 0.45rem;
@@ -64,7 +48,6 @@
   color: var(--glyph-faint);
 }
 
-/* Never wrapped: a date broken across two lines reads as two dates. */
 .dir-date {
   white-space: nowrap;
   font-size: 0.72rem;

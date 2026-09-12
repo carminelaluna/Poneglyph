@@ -16,15 +16,6 @@ import {
   type SavedDeck,
 } from '@/lib/useAccount';
 
-/**
- * Signing in, and what you have once you are.
- *
- * Three ways in, and they are not equivalent. Discord and Google send no mail at
- * all — the provider vouches for the person. Email and password does, for
- * confirmation and for reset, and is hidden until SMTP is configured because an
- * account whose password cannot be reset is a trap.
- */
-
 const day = (iso: string) =>
   new Date(iso).toLocaleDateString('en-GB', {
     day: 'numeric',
@@ -37,28 +28,6 @@ const PROVIDERS = [
   { id: 'google', name: 'Google', label: 'Continue with Google' },
 ] as const;
 
-/**
- * The display name, which until now could be set but never changed.
- *
- * `rename self only` has been in the schema from the first version — it is the
- * policy written specifically to allow this one field and refuse the role next to
- * it — and nothing had ever called it. An OAuth sign-in fills the name in from the
- * provider, which is a reasonable default and a poor permanent answer.
- */
-/**
- * The two provider marks, inline.
- *
- * Inline rather than fetched, for the reason every other image on this site is
- * mirrored: hotlinking somebody's CDN is their bandwidth and their uptime, and
- * these are 1 KB of path data that would otherwise be two requests on the one
- * page a reader is waiting on. It also means they work in the static export with
- * nothing behind it.
- *
- * They are each provider's own mark, drawn in each provider's own colours,
- * because that is what both of them ask for on a button that signs you into them
- * — a wrong-coloured Google G is a worse answer than none. `aria-hidden` because
- * the button says which service it is in words already.
- */
 function ProviderMark({ id }: { id: 'discord' | 'google' }) {
   if (id === 'discord') {
     return (
@@ -93,35 +62,12 @@ function ProviderMark({ id }: { id: 'discord' | 'google' }) {
   );
 }
 
-/** One line in the account menu: somewhere to go, or something to do. */
 type MenuItem = {
   label: string;
   href?: string;
   onSelect?: () => void;
 };
 
-/**
- * The name, and a menu behind it.
- *
- * This was a bordered card holding a name and a Sign out button, which is a lot of
- * furniture for two facts. The name is the only thing worth seeing at rest; what
- * you can *do* with the account belongs behind it, which is also where it grows
- * without the page growing with it — asking to become an organizer, submitting a
- * tournament once you are one, and reviewing what others send all arrived here
- * afterwards without moving anything.
- *
- * Items are given rather than written in, because what belongs in the menu depends
- * on the role: a player can ask, an organizer can submit, an admin can review, and
- * offering somebody the thing they already have is a page not paying attention.
- *
- * An item that goes somewhere is a link and not a button, so it can be
- * middle-clicked and opened in a tab like any other; one that does something here
- * is a button. Everything a menu has to do and a `<div>` does not: it closes on
- * Escape and on a click anywhere else, it says `aria-expanded` and `aria-haspopup`
- * so a screen reader announces it as a menu rather than a button that did nothing,
- * and closing puts focus back on the trigger so the keyboard does not lose its
- * place.
- */
 function AccountMenu({
   name,
   items,
@@ -143,7 +89,6 @@ function AccountMenu({
       trigger.current?.focus();
     };
 
-    /* Pointer down rather than click: a menu that waits for mouseup feels stuck. */
     const away = (event: PointerEvent) => {
       if (!box.current?.contains(event.target as Node)) setOpen(false);
     };
@@ -164,15 +109,9 @@ function AccountMenu({
       <button
         type="button"
         ref={trigger}
-        /* A chip, because that is what a small control looks like on this site. */
         className="chip who-name"
         aria-haspopup="menu"
         aria-expanded={open}
-        /*
-          Nothing to open until we know whose account this is, and nothing to say
-          either: a placeholder holds the shape so the header does not jump when
-          the name lands, without claiming a name that may not be the right one.
-        */
         aria-busy={loading}
         disabled={loading}
         onClick={() => setOpen(!open)}
@@ -265,25 +204,6 @@ function DisplayName({
   );
 }
 
-/**
- * Asking for the organizer role.
- *
- * The site's answer to "how do I get my events in here" was an email address on the
- * legal page: off the record, easy to lose, and visible to nobody but whoever
- * received it. Three fields and a row are better on all three counts.
- *
- * Collapsed to one line until it is wanted. Asking is something you do once and
- * never again, so a form sitting open under the account block is three fields of
- * furniture for everyone who has already asked and for everyone who never will.
- * The line carries the answer instead — what the button says *is* the status — so
- * the common case is reading one sentence and moving on.
- *
- * What it asks for is what a reviewer actually needs to decide: a name, what they
- * run, and somewhere it can be checked. Deliberately not a form that could be
- * filled in convincingly by someone who runs nothing.
- *
- * Nothing here changes a role. It records a question; `/review` records the answer.
- */
 function OrganizerRequest({
   userId,
   open,
@@ -317,8 +237,6 @@ function OrganizerRequest({
     setFailed(null);
     try {
       await requestOrganizer({ userId, organizerName, events, link });
-      /* Left open: the panel turning into "waiting for review" is the confirmation,
-         and a form that simply vanished would leave you wondering. */
       load();
     } catch (err) {
       setFailed(err instanceof Error ? err.message : 'Could not send that.');
@@ -327,16 +245,10 @@ function OrganizerRequest({
     }
   };
 
-  /* undefined is "not looked yet" and null is "nothing sent" — see useAccount. */
   if (request === undefined) return null;
 
   const status = request?.status;
 
-  /*
-   * Closed is nothing at all now. This used to render its own chip, whose label
-   * was the status — the menu opens it instead, so a page nobody is asking about
-   * the organizer role on shows nothing about it.
-   */
   if (!open) return null;
 
   const close = (
@@ -351,13 +263,6 @@ function OrganizerRequest({
         <p className="eyebrow">Organizer role</p>
         <p style={{ margin: '0.4rem 0 0' }}>Waiting for review.</p>
 
-        {/*
-          What was sent, and nothing that could change it. A request that could be
-          rewritten — or taken back and replaced — after a reviewer had read it is a
-          request nobody can rely on having read, so once it is in it stands until it
-          is answered. The database says the same: no update policy for the person
-          who sent it, and no delete either.
-        */}
         <dl className="account-sent">
           <div>
             <dt>Sent as</dt>
@@ -394,9 +299,6 @@ function OrganizerRequest({
       <div className="slab slab-pad account-ask">
         <p className="eyebrow">Organizer role</p>
         <p style={{ margin: '0.4rem 0 0' }}>Not granted.</p>
-        {/* .account-notice, not the review page's .sub-note: that stylesheet is not
-            loaded here, and a class resolving to nothing renders as an unstyled
-            paragraph rather than as anything anyone would notice. */}
         {request.review_note ? <p className="account-notice">{request.review_note}</p> : null}
         <p className="muted account-ask-note">
           You can ask again — say what changed, and it will be read again.
@@ -493,7 +395,6 @@ export default function AccountView() {
       setNotice(error.message);
       setBusy(false);
     }
-    /* On success the page navigates away, so there is nothing to reset. */
   }, []);
 
   const withEmail = useCallback(
@@ -513,14 +414,6 @@ export default function AccountView() {
             })
           : await client.auth.signInWithPassword({ email, password });
 
-      /*
-       * Supabase answers a sign-up on an address that already has an account with
-       * an obfuscated success and sends no mail — deliberately, so the response
-       * cannot be used to find out who is registered. We cannot say "that account
-       * exists", and must not try; what we can do is make the message survive the
-       * case, so somebody who signed up with Google months ago is not left waiting
-       * for a mail that was never sent.
-       */
       if (error) setNotice(error.message);
       else if (mode === 'up')
         setNotice(
@@ -557,19 +450,7 @@ export default function AccountView() {
 
   if (!checked) return <p className="muted">Checking…</p>;
 
-  /* ------------------------------------------------------------- signed in */
-
   if (signedIn && session) {
-    /*
-     * Nothing until the profile row lands.
-     *
-     * The session arrives first and carries what the OAuth provider knows, so
-     * falling through to `full_name` here meant the page showed the name Google
-     * or Discord has on file — a real name — for a moment on every refresh,
-     * before settling on the display name somebody chose instead. Showing a name
-     * late is a flicker; showing the wrong one is telling a reader something
-     * untrue about themselves in public.
-     */
     const name = roleKnown
       ? profile?.display_name ||
         (session.user.user_metadata?.full_name as string) ||
@@ -579,13 +460,6 @@ export default function AccountView() {
 
     return (
       <>
-        {/*
-          Who you are sits beside the heading rather than under it, which is why
-          this is a sibling of the stack and not a member of it: `.account-page`
-          is a grid, and only a direct child can be placed in its second column.
-          It is one name and a way out — a row of its own made that look like the
-          point of a page whose point is the decks below.
-        */}
         <div className="account-who">
           {renaming ? (
             <DisplayName
@@ -594,12 +468,6 @@ export default function AccountView() {
               onSave={rename}
             />
           ) : (
-            /*
-              What is in the menu is what this account can actually do. A player
-              can ask to become an organizer; an organizer can submit a tournament
-              and no longer needs to ask; an admin can review what others sent, and
-              that link lives here now rather than in a sentence beside the name.
-            */
             <AccountMenu
               name={name}
               loading={!roleKnown}
@@ -620,17 +488,7 @@ export default function AccountView() {
           )}
         </div>
 
-        {/*
-          A stack, because each of these is a bordered slab and nothing between
-          them set a margin — they met edge to edge and read as one panel with
-          rules drawn across it, measured at 0px, twice over.
-        */}
         <div className="account-stack">
-          {/*
-            Only for a plain account. An organizer has the role and an admin grants
-            it; offering either of them a form to ask for what they already have, or
-            hand out themselves, would be a page not paying attention.
-          */}
           {profile && profile.role === 'user' ? (
             <OrganizerRequest
               userId={session.user.id}
@@ -644,8 +502,6 @@ export default function AccountView() {
       </>
     );
   }
-
-  /* ------------------------------------------------------------ signed out */
 
   return (
     <div className="account">
@@ -664,19 +520,6 @@ export default function AccountView() {
         ))}
       </div>
 
-      {/*
-        Drawn whether or not it works, and inert until it does.
-
-        Hiding it behind the flag made the gap invisible to everybody, including
-        whoever has to close it — the form sat written and unreachable for months.
-        Leaving it *working* is the other wrong answer: with no SMTP provider there
-        is no confirmation mail and no reset mail, so signing up here would hand
-        somebody an account they could never get back into.
-
-        So it is visible, disabled, and says which of the two it is. `fieldset`
-        rather than a `disabled` on each control, because one attribute that cannot
-        be forgotten beats four that can.
-      */}
       <form className="account-email slab slab-pad" onSubmit={withEmail}>
         <fieldset className="account-email-fields" disabled={!emailAuthEnabled || busy}>
           <label className="eyebrow" htmlFor="account-email">
@@ -741,15 +584,6 @@ export default function AccountView() {
   );
 }
 
-/* --------------------------------------------------------------- decks */
-
-/**
- * The decks on this account.
- *
- * Opening one is a link to the builder with its id, rather than a copy of the deck
- * in the address bar. The builder reads it back from the account, so the link is
- * short, and it stays correct after the deck is edited.
- */
 function SavedDecks() {
   const [decks, setDecks] = useState<SavedDeck[] | null>(null);
   const [leaders, setLeaders] = useState<Leaders>({});
@@ -769,7 +603,6 @@ function SavedDecks() {
 
   const remove = useCallback(
     async (id: string, name: string) => {
-      /* Deleting is the one action here that cannot be undone, so it asks. */
       if (!globalThis.confirm(`Delete “${name}”? This cannot be undone.`)) return;
       setRemoving(id);
       try {
@@ -816,7 +649,6 @@ function SavedDecks() {
                       <Pips colors={leader?.c ?? []} />
                       {leader?.n ?? deck.leader_id}
                       <span className="dot">·</span>
-                      {/* 50 plus the Leader, so an incomplete deck reads as incomplete. */}
                       <span className={cards === 50 ? undefined : 'muted'}>{cards}/50</span>
                       <span className="dot">·</span>
                       {deck.format}

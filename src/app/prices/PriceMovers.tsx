@@ -5,46 +5,19 @@ import { useMemo, useState } from 'react';
 import { art } from '@/lib/art';
 import type { Mover } from '@/lib/prices';
 
-/**
- * What moved, and the two ways of asking that.
- *
- * **By percent** answers "what is the market doing" — a common that trebles because
- * it turned up in a winning list is the story, even though it is two dollars.
- * **By cash** answers "what is this worth now" — a chase card gaining six dollars is
- * one percent and is the one you actually feel.
- *
- * Neither is the real one, so both are here and the control says which you are
- * reading. What is not offered is a single blended score: it would be a number
- * nobody could check against the two columns beside it.
- *
- * The floor exists only under the percent view. Below about a dollar a one-cent tick
- * is a double-digit move, so ranking cheap cards by percent measures the price
- * source's rounding — the list fills with commons that went from six cents to eight.
- * It is a control rather than a constant because the effect it hides is sometimes
- * exactly the thing worth seeing.
- *
- * Nothing is fetched: the whole table is computed at build time and arrives with the
- * page. `price-history.json` is 142 KB and lives on the server side of the line for
- * the same reason the card page draws its chart as inline SVG.
- */
-
 type Named = Mover & { name: string; colors: string[] };
 
-/** How many rows a column shows. Longer is a list to scroll, not a list to read. */
 const ROWS = 15;
 
-/** Below this, a percentage is arithmetic on rounding rather than on a market. */
 const FLOORS = [0, 1, 5] as const;
 
 export default function PriceMovers({
   windows,
   currency = '$',
 }: {
-  /** Keyed by the label the control shows: recorded days -> the movers over them. */
   windows: {
     label: string;
     span: string;
-    /** How many moved at each floor, counted over every row rather than these. */
     counts: Record<number, number>;
     movers: Named[];
   }[];
@@ -68,11 +41,6 @@ export default function PriceMovers({
     };
   }, [chosen, by, floor]);
 
-  /*
-   * From the server's count over every row, not from `pool.length`. Only the rows
-   * a control can reach are sent, so counting what arrived would report 90 cards
-   * moved when 1,809 did.
-   */
   const counted = chosen.counts[by === 'percent' ? floor : 0] ?? 0;
 
   return (
@@ -216,11 +184,6 @@ function Column({
                     className={`mono mover-change ${m.delta > 0 ? 'up' : 'down'}`}
                     style={{ textAlign: 'right', whiteSpace: 'nowrap' }}
                   >
-                    {/*
-                      Both figures, whichever is being sorted on. The one you did not
-                      rank by is the one that tells you whether the ranking means
-                      anything — +1046% reads differently beside +$2.51.
-                    */}
                     {m.percent > 0 ? '+' : ''}
                     {m.percent.toFixed(0)}%
                     <span className="muted" style={{ fontSize: '0.76rem' }}>

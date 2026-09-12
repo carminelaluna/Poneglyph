@@ -1,15 +1,6 @@
 import Link from 'next/link';
 import { meta } from '@/lib/cards';
 
-/**
- * The Bandai notice in full.
- *
- * Used twice: by `FirstVisitNotice`, which shows it once to somebody who has not
- * read it, and by `/legal`, which is the page it belongs to. The footer carries
- * neither — only the *Disclaimer* link under Legal, which is on every page. The
- * full text used to sit at the foot of all 4,700 of them, which is the surest way
- * to teach a reader to scroll past it.
- */
 export function Disclaimer() {
   return (
     <p className="disclaimer">
@@ -74,12 +65,6 @@ export default function Footer() {
           <div>
             <h3>Legal</h3>
             <ul>
-              {/*
-                Three separate pages, and not in the top nav on purpose. Discord and
-                Google each ask for a privacy URL and a terms URL when you register an
-                OAuth application, and they want two addresses, not one page that also
-                carries the trademark notice.
-              */}
               <li><Link href="/legal">Disclaimer</Link></li>
               <li><Link href="/privacy">Privacy</Link></li>
               <li><Link href="/terms">Terms of use</Link></li>

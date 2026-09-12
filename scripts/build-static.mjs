@@ -1,52 +1,16 @@
 #!/usr/bin/env node
-/**
- * Poneglyph — the static site, for GitHub Pages.
- *
- *   node scripts/build-static.mjs
- *
- * Produces out/: plain HTML, JSON and JS with no server behind it. What that costs,
- * and what it buys, is written up in src/app/not-found.tsx and src/lib/shards.ts.
- *
- * Two things have to happen around the Next build itself.
- *
- * **The art proxy has to go.** `src/app/art/[id]/route.ts` fetches card images from
- * the official CDN on first request and mirrors them; `output: 'export'` refuses to
- * build while any route handler exists, and rightly so — there is nothing to run it.
- * It is moved aside for the build and put back afterwards, including when the build
- * fails, because leaving a checkout without its art proxy would break `npm run dev`
- * in a way that looks unrelated.
- *
- * **`.nojekyll` has to be there.** GitHub Pages runs Jekyll by default, and Jekyll
- * skips every file and directory whose name starts with an underscore. Next puts the
- * entire application in `_next/`. Without this file the deploy succeeds, the HTML
- * loads, and the site is unstyled and inert.
- */
-
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { loadEnvFiles } from './env.mjs';
 
-/*
- * Before handing over to Next, because the guard below reads NEXT_PUBLIC_CDN_URL
- * and plain Node does not read `.env.local` — see scripts/env.mjs.
- */
 loadEnvFiles();
 
 const ART = path.resolve('src', 'app', 'art');
-/*
- * Outside src/app, and that is the whole point: anything under the app directory is
- * a route, dot-prefixed or not. Parking it in place got it collected as
- * `/.art-parked-during-export/[id]` and failed the export for the same reason.
- *
- * Project root rather than the system temp directory, so the rename stays on one
- * filesystem and cannot fail halfway.
- */
 const PARKED = path.resolve('.art-route-parked');
 const OUT = path.resolve('out');
 
-/** GitHub Pages refuses to publish a site over this, and warns well before it. */
 const SIZE_LIMIT = 1024 * 1024 * 1024;
 
 const log = (...m) => console.log('[static]', ...m);
@@ -68,18 +32,6 @@ async function measure(dir) {
   return { files, bytes };
 }
 
-/**
- * Drop the local card-art mirror from the export.
- *
- * Next copies all of `public/` into `out/`, and `public/cards` holds 4,843 source
- * PNGs at 1.66 GB — the mirror the art proxy builds up so a checkout with no CDN
- * still shows images. The static site has a CDN by definition (the build refuses to
- * start without one), so shipping them would be two gigabytes nobody requests.
- *
- * Only the image files go. `out/cards` is also where the 2,785 card pages live —
- * the mirror and the pages share one path, `/cards/OP01-025.png` next to
- * `/cards/op01-025/` — so removing the directory would take the archive with it.
- */
 async function stripArtMirror() {
   const dir = path.join(OUT, 'cards');
   if (!existsSync(dir)) return;
@@ -103,24 +55,6 @@ async function stripArtMirror() {
   }
 }
 
-/**
- * Give the router's prefetch files the names it actually asks for.
- *
- * Next's client asks for a page's payload at a flat path — `/decks/__next.decks.
- * __PAGE__.txt` — while the export writes it as nested directories,
- * `out/decks/__next.decks/__PAGE__.txt`. The segments are joined with dots in the
- * URL and with slashes on disk, so every prefetch misses.
- *
- * On a static host a miss is not free: the 404 is answered with 404.html, which is
- * a full 40 KB page. A screen with fifteen links quietly pulls half a megabyte of
- * error pages, which would undo the payload work this whole build is for.
- *
- * So each payload is rewritten under the flat name and the nested directory is
- * removed. Moved rather than copied: the nested path is not a URL the router ever
- * asks for — it asks for `__next._tree.txt` and the flat `__PAGE__` names, both of
- * which are files — so keeping both would be 89 MB of duplication in a repository
- * GitHub starts warning about at 750 MB.
- */
 async function flattenPrefetchPayloads() {
   let written = 0;
   let bytes = 0;
@@ -130,7 +64,6 @@ async function flattenPrefetchPayloads() {
       const full = path.join(dir, entry.name);
       if (!entry.isDirectory()) continue;
       if (entry.name.startsWith('__next.')) {
-        /* Everything under here becomes `<dirname>.<path with dots>` beside it. */
         const collect = async (inner, trail) => {
           for (const item of await readdir(inner, { withFileTypes: true })) {
             const here = path.join(inner, item.name);
@@ -145,7 +78,6 @@ async function flattenPrefetchPayloads() {
           }
         };
         await collect(full, []);
-        /* Nothing requests the nested form; leaving it is duplicated weight. */
         await rm(full, { recursive: true, force: true });
       } else {
         await walk(full);
@@ -160,46 +92,6 @@ async function flattenPrefetchPayloads() {
   );
 }
 
-/**
- * Prepend the content signals to the exported robots.txt.
- *
- * Not in `src/app/robots.ts` because `MetadataRoute.Robots` has no field for a
- * directive Next does not know about, and the path rules and the sitemap URL are
- * worth keeping there — the URL is built from `NEXT_PUBLIC_SITE_URL`, which changes
- * the day this moves to a domain, and a hand-written robots.txt would not.
- *
- * ## What the signals are
- *
- * A vocabulary layered on robots.txt: a crawler that reads it learns not only which
- * paths it may fetch but what it may then *do* with what it fetched. Three of them
- * are declared here and one is deliberately left out.
- *
- *   search=yes    index it and return links and short excerpts. That is how anybody
- *                 finds a card archive, and there is no version of this project that
- *                 wants to be harder to find.
- *   ai-input=yes  read it to answer a question now — retrieval, grounding, a cited
- *                 answer. That is search wearing a different coat, and a free public
- *                 archive is not made worse by being quoted accurately.
- *   ai-train=no   do not train on it. What is original here is not the card text,
- *                 which is Bandai's; it is the derived corpus — 152,890 matches
- *                 joined out of published brackets, 19,565 player records, the
- *                 sampling discipline. That took work and is not a training set.
- *
- * `use` is left unset. The policy defines it as how a system may consume the
- * content — immediate, reference or full — and unset means neither granted nor
- * restricted, which is the honest answer for a distinction this project has not
- * thought through. Saying nothing is a position; guessing is not.
- *
- * ## Why it is worth writing down at all
- *
- * Article 4 of EU Directive 2019/790 allows text and data mining **unless the
- * rightsholder has expressly reserved it in a machine-readable form**. The reservation
- * is the whole mechanism: without one the exception applies by default. That is why
- * the block is worded as a condition of access rather than as a polite request, and
- * why the `Disallow` lines in robots.ts sit beside it — those are the half a crawler
- * obeys today, this is the half that says why.
- */
-/** Named once, so the file and the line logged about it cannot disagree. */
 const SIGNALS = 'search=yes,ai-input=yes,ai-train=no';
 
 async function writeRobotsSignals() {
@@ -230,65 +122,23 @@ async function writeRobotsSignals() {
     '',
   ].join('\n');
 
-  /*
-   * Inserted into the group Next already wrote, rather than prepended as a second
-   * one. Two `User-agent: *` groups in one file is ambiguous: parsers disagree
-   * about whether a repeated name means "merge these" or "the first one wins".
-   * MTGGoldfish's own robots.txt has exactly that shape. One group cannot be read
-   * two ways.
-   */
   const held = await readFile(file, 'utf8');
   const signed = held.replace(/^(User-Agent: \*\r?\n)/im, `$1Content-Signal: ${SIGNALS}\n`);
   if (signed === held) {
     console.log('[static] ::warning::robots.txt has no `User-agent: *` group — not signed');
     return;
   }
-  /* A blank line between the note and the rules, so both read as what they are. */
   await writeFile(file, `${preamble}
 ${signed}`);
   console.log(`[static] robots.txt signed — ${SIGNALS}`);
 }
 
-/**
- * Where to report a security problem — RFC 9116.
- *
- * This project takes submissions from strangers, holds accounts, and runs one
- * Supabase policy between a signed-in reader and everybody else's data. The gap it
- * closes is the one where somebody competent finds a hole and has nowhere to send
- * it, so they either post it or drop it. Until now there was nowhere: the contact
- * address is published on three pages as *"write about this site"*, which is not
- * where a researcher looks.
- *
- * ## Why it is written here rather than kept in public/
- *
- * `Expires` is a required field, and the RFC says a consumer should treat an expired
- * file as stale — so a hand-written one is a file that quietly stops counting on a
- * date nobody has in their calendar. Generated on every build it cannot go stale
- * while the site is deploying at all, and a site that has stopped deploying is
- * caught within forty-eight hours by scripts/check-live.mjs.
- *
- * ## Where it lands, and the part that is out of our hands
- *
- * The RFC puts this at `/.well-known/security.txt` **on the origin**. Under a
- * GitHub project page the origin is `carminelaluna.github.io`, which belongs to a
- * user-page repository this project does not have — the same reason `robots.txt`
- * and `sitemap.xml` read as missing to anything that probes the root. So both
- * copies here sit under the base path, which is where the file honestly is, and
- * `Canonical` says so rather than claiming the root. A custom domain moves all
- * three to where a scanner looks, in one step and with no code change.
- */
 async function writeSecurityTxt() {
-  /*
-   * Read out of src/lib/contact.ts rather than typed again. A build script cannot
-   * import TypeScript, and the one thing worse than no security.txt is one naming
-   * an address that stopped being read.
-   */
   let email = null;
   try {
     const source = await readFile(path.resolve('src', 'lib', 'contact.ts'), 'utf8');
     email = source.match(/CONTACT_EMAIL\s*=\s*'([^']+)'/)?.[1] ?? null;
   } catch {
-    /* handled below — a missing address is a skip, never a guess. */
   }
   if (!email) {
     console.log('[static] ::warning::no contact address found in src/lib/contact.ts — no security.txt written');
@@ -296,7 +146,6 @@ async function writeSecurityTxt() {
   }
 
   const site = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/+$/, '');
-  /* A year, which is the longest the RFC recommends, refreshed by every deploy. */
   const expires = new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString().replace(/\.\d+Z$/, 'Z');
 
   const body = [
@@ -313,15 +162,6 @@ async function writeSecurityTxt() {
     `Contact: mailto:${email}`,
     `Expires: ${expires}`,
     'Preferred-Languages: en, it',
-    /*
-     * Both locations, because both are written. A Canonical that does not match
-     * where the file was found is what the RFC tells a consumer to distrust, and
-     * naming the origin root here would be exactly that: the file is not there.
-     *
-     * `Policy` is left out. It points at a disclosure policy, and there is no page
-     * here that is one — /legal is a trademark notice. An optional field aimed at
-     * the nearest page that is not what it asks for is worse than its absence.
-     */
     ...(site
       ? [`Canonical: ${site}/.well-known/security.txt`, `Canonical: ${site}/security.txt`]
       : []),
@@ -330,8 +170,6 @@ async function writeSecurityTxt() {
 
   await mkdir(path.join(OUT, '.well-known'), { recursive: true });
   await writeFile(path.join(OUT, '.well-known', 'security.txt'), body);
-  /* The pre-RFC location as well: it is explicitly allowed, and it is what a host
-     that will not serve a dot-directory can still answer. */
   await writeFile(path.join(OUT, 'security.txt'), body);
   console.log(`[static] security.txt written, expiring ${expires.slice(0, 10)}`);
 }
@@ -349,15 +187,8 @@ async function main() {
 
   await rm(OUT, { recursive: true, force: true });
 
-  /*
-   * And the previous build's cache with it. Next writes a type validator listing
-   * every route it found; a cache from a normal build still names the art proxy,
-   * and typechecking then fails on a module this script has just moved aside. The
-   * error points at a generated file and reads like a broken import.
-   */
   await rm(path.resolve('.next'), { recursive: true, force: true });
 
-  /* A build killed part-way leaves the route parked; put it back before starting. */
   if (existsSync(PARKED) && !existsSync(ART)) {
     log('restoring the art proxy left parked by an interrupted build');
     await rename(PARKED, ART);
@@ -369,19 +200,12 @@ async function main() {
   let status = 1;
   try {
     log('building — this generates about 4,700 pages, so give it a minute');
-    /*
-     * webpack, not Turbopack. Turbopack renames every chunk on every build even when
-     * nothing changed, so each deploy rewrote 23,667 of 24,176 files — 466 MB of new
-     * git objects, twice a day. webpack names chunks by content, so a build with the
-     * same input produces the same files and the push carries only what moved.
-     */
     status = spawnSync('npx', ['next', 'build', '--webpack'], {
       stdio: 'inherit',
       shell: process.platform === 'win32',
       env: { ...process.env, STATIC_EXPORT: '1' },
     }).status;
   } finally {
-    /* Always, including after a failed build — a checkout without the proxy is worse. */
     if (hadArt) await rename(PARKED, ART);
   }
 
@@ -390,34 +214,17 @@ async function main() {
     process.exit(status ?? 1);
   }
 
-  /* Jekyll would otherwise drop _next/ and take the whole application with it. */
   await writeFile(path.join(OUT, '.nojekyll'), '');
 
   await writeRobotsSignals();
   await writeSecurityTxt();
 
-  /*
-   * The custom domain, if there is one.
-   *
-   * GitHub Pages reads it from a CNAME file in the published branch — and adding one
-   * through their settings page writes it into that branch, which deploy-site.mjs
-   * replaces wholesale on the next deploy. The domain would then silently revert.
-   * Written here so it survives, which is the only way it can.
-   */
   if (process.env.PONEGLYPH_CNAME) {
     const domain = process.env.PONEGLYPH_CNAME.trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
     await writeFile(path.join(OUT, 'CNAME'), `${domain}\n`);
     log(`CNAME written for ${domain}`);
   }
 
-  /*
-   * Which source commit this was built from.
-   *
-   * The publish workflow reads it back off the deployed branch and skips the build
-   * when the source has not moved. Five ingest schedules finishing means twelve
-   * triggers a day, and most of them commit nothing — without this, twelve full
-   * builds a day to produce output identical to what is already published.
-   */
   const head = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' });
   if (head.status === 0) await writeFile(path.join(OUT, '.source'), head.stdout.trim());
 

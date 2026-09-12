@@ -1,48 +1,4 @@
 #!/usr/bin/env node
-/**
- * Poneglyph — card reveals from a Discord channel.
- *
- *   node scripts/ingest-discord.mjs [--limit N] [--all] [--fixture <file>]
- *
- * The web source we had publishes a leak article and then leaves it alone: both
- * of its articles were last *modified* twelve days before anybody noticed the
- * spoilers page had stopped moving. Reveals reach a community channel within
- * minutes and keep arriving one card at a time, which is the shape this archive
- * wants.
- *
- * ## What has to exist before this runs
- *
- * A Discord **bot**, not a user token — automating a user account is against
- * Discord's terms, and this reads with `GET /channels/{id}/messages` as an app.
- *
- * 1. Create an application at https://discord.com/developers/applications and add
- *    a bot to it.
- * 2. Turn on the **Message Content** privileged intent. It is a checkbox for an
- *    app this size, and it is not optional: without it Discord returns `content`,
- *    `embeds` and `attachments` **empty**, so this ingest reads a channel full of
- *    reveals and correctly finds nothing in it.
- * 3. Invite the bot to the server with **View Channel** and **Read Message
- *    History**. Inviting needs Manage Server on that guild.
- * 4. Set two repository secrets: `DISCORD_BOT_TOKEN` and `DISCORD_SPOILER_CHANNEL`.
- *
- * The token bypasses nothing but it reads a private channel, so it belongs in
- * Actions secrets and never in `.env.local` — and never under a `NEXT_PUBLIC_`
- * name, which would compile it into the browser bundle.
- *
- * ## What it writes
- *
- * `data/spoilers-discord.json`, its own corpus, which `ingest-spoilers.mjs` folds
- * in as a second source the way `build-indexes.mjs` folds in community decks. It
- * does not write any `public/data` payload: one writer per payload, which is the
- * rule the Top Decks ingest learned by leaving a 0 KB index behind.
- *
- * Images are **not** downloaded here. Discord's CDN links are signed and expire
- * within hours, so a URL saved into a static JSON file is dead by the time most
- * readers see it. What to do about that is a separate decision with a policy
- * attached — these are photographs of cards that are not out — so this records
- * the link it saw and leaves the choice to the step that would act on it.
- */
-
 import { writeFile, readFile, mkdir, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { filesOf, newestId, revealsFromMessages, textOf } from './discord.mjs';
@@ -57,42 +13,9 @@ const has = (name) => args.includes(`--${name}`);
 
 const DATA = path.resolve('data');
 
-/*
- * Where the thumbnails live, and why they live here rather than on the CDN.
- *
- * Discord's attachment URLs are signed and expire in hours, so the only moment a
- * reveal can be kept is the moment it is read. These are photographs of cards
- * that are not out, so the CDN — which serves official art and is meant to — is
- * the wrong home for them, and they are temporary by construction: the moment a
- * set reaches the card archive its thumbnails are deleted and the page serves the
- * official images instead.
- *
- * They are downscaled hard, and that is not only about weight. Git never forgets:
- * deleting a file removes it from what is served, never from history, and this
- * repository is public. 320px WebP is about 30 KB, so ~120 spoilers is under 4 MB
- * even counting a history that keeps every one of them forever — and at that size
- * they are thumbnails rather than usable scans, which for somebody else's photo
- * of an unreleased card is the right thing to be storing anyway.
- */
-/*
- * `--thumbs`, like `--out`, exists because the tests need somewhere else to write.
- * A spawned run prunes thumbnails no card points at, and a fixture corpus points
- * at none — so with this hardcoded, `npm test` deleted every real thumbnail in
- * `public/spoilers`. That is not hypothetical: `npm run verify` runs before
- * `build:static` in the publish workflow, so the deploy exported a site whose
- * twelve reveal images had been removed minutes earlier by the test suite, and
- * the only symptom was twelve 404s on the live page.
- */
 const THUMBS = path.resolve(flag('thumbs', path.join('public', 'spoilers')));
 const THUMB_WIDTH = 320;
-/* Nothing a phone produces is near this; anything that is, is not a card photo. */
 const MAX_DOWNLOAD = 25 * 1024 * 1024;
-/*
- * `--out` exists for the tests, and it exists because they wrote to the real one.
- * A test that spawns this script has to clean up after itself, and cleaning up
- * meant deleting `data/spoilers-discord.json` — which on any checkout that has a
- * corpus is not cleanup, it is data loss, one `npm test` away.
- */
 const OUT = path.resolve(flag('out', path.join(DATA, 'spoilers-discord.json')));
 const log = (...m) => console.log('[discord]', ...m);
 
@@ -100,42 +23,12 @@ const TOKEN = process.env.DISCORD_BOT_TOKEN ?? '';
 const CHANNEL = process.env.DISCORD_SPOILER_CHANNEL ?? '';
 const API = 'https://discord.com/api/v10';
 
-/** Discord's own cap on one page of message history. */
 const PAGE = 100;
 
-/**
- * Application flags that say the Message Content intent is on.
- *
- * `GATEWAY_MESSAGE_CONTENT` (1 << 18) is the approved one, for apps in 100 or
- * more servers; `GATEWAY_MESSAGE_CONTENT_LIMITED` (1 << 19) is the self-serve one
- * a small app switches on for itself. Either means content will arrive, so either
- * answers the question, and asking `GET /applications/@me` answers it about the
- * token we are actually holding rather than about whichever app somebody was
- * looking at in the portal.
- */
 const MESSAGE_CONTENT_FLAGS = { approved: 1 << 18, limited: 1 << 19 };
 
-/**
- * Message types a person actually wrote: DEFAULT, REPLY, and the two command
- * kinds. Everything else — joins, pins, boosts, and the `CHANNEL_FOLLOW_ADD` that
- * Discord posts when a channel is followed into this one — is written by Discord.
- *
- * The distinction is load-bearing, not tidiness. The check below asks whether the
- * messages came back blank, which is the signature of a missing Message Content
- * intent, and system messages carry text of their own that is not gated by it. A
- * single follow-add notice among twelve blank posts was enough to hide exactly
- * that failure on the first real run.
- */
 const WRITTEN_BY_A_PERSON = new Set([0, 19, 20, 23]);
 
-/**
- * How far back a first run reads.
- *
- * A channel that has been running for years is not worth walking to the start:
- * everything old is a set that shipped, and `revealsFromMessages` would drop all
- * of it anyway. Later runs read forward from the last id instead, so this cap
- * only ever applies once.
- */
 const FIRST_RUN_PAGES = 5;
 
 async function get(url, { retries = 4 } = {}) {
@@ -150,19 +43,7 @@ async function get(url, { retries = 4 } = {}) {
         signal: AbortSignal.timeout(30_000),
       });
 
-      /*
-       * 401 and 403 are ours to fix, not Discord's mood: a bad token, or a bot
-       * that was never invited to the channel. Failing on those is the point —
-       * they are silent forever otherwise, which is exactly how the last source
-       * went stale for five days under a wall of green ticks.
-       */
       if (res.status === 401) throw new Error('401 — DISCORD_BOT_TOKEN is missing or wrong');
-      /*
-       * Permissions, and only permissions. A missing Message Content intent does
-       * not produce a 403 — it produces a 200 whose fields are empty, which is
-       * caught further down. Saying both here sent somebody looking at the wrong
-       * checkbox, so this now says the one thing a 403 actually means.
-       */
       if (res.status === 403) {
         throw new Error(
           '403 — the bot is authenticated but cannot read this channel. It needs ' +
@@ -191,14 +72,6 @@ async function get(url, { retries = 4 } = {}) {
   return null;
 }
 
-/**
- * One attachment -> a thumbnail on disk, or null if it could not be made.
- *
- * A reveal we cannot picture is still a reveal, so every failure here is a
- * shrug rather than an error: the card keeps its number and the page draws an
- * empty frame. The one thing this must not do is take the run down over an
- * image, which is why nothing in it throws.
- */
 async function thumbnail(id, url, sharp) {
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
@@ -211,7 +84,7 @@ async function thumbnail(id, url, sharp) {
     if (body.byteLength > MAX_DOWNLOAD) return null;
 
     const out = await sharp(body)
-      .rotate() /* Phone photos carry EXIF orientation; honour it before resizing. */
+      .rotate()
       .resize({ width: THUMB_WIDTH, withoutEnlargement: true })
       .webp({ quality: 78 })
       .toBuffer();
@@ -224,7 +97,6 @@ async function thumbnail(id, url, sharp) {
   }
 }
 
-/** What the last run reached, so this one reads forward rather than again. */
 async function lastSeen() {
   try {
     return JSON.parse(await readFile(OUT, 'utf8')).lastMessageId ?? null;
@@ -242,11 +114,6 @@ async function readChannel() {
   let page = 0;
 
   while (page < pages) {
-    /*
-     * `after` walks forward from the last id and `before` walks backward from
-     * now. A first run has no id to walk from, so it pages backward and stops;
-     * every run after that walks forward and stops when it catches up.
-     */
     const query = cursor
       ? after
         ? `after=${cursor}`
@@ -270,11 +137,6 @@ async function readChannel() {
 async function main() {
   const started = Date.now();
 
-  /*
-   * The set prefixes already in the archive. A channel talks about released cards
-   * all day — deck advice, a reprint, a price — so without this the spoilers page
-   * would announce OP-01 as an unreleased set.
-   */
   const cards = JSON.parse(await readFile(path.join(DATA, 'cards.json'), 'utf8'));
   const released = new Set(cards.map((c) => c.id.split('-')[0].toUpperCase()));
   log(`${released.size} set prefixes already in the card archive`);
@@ -283,7 +145,6 @@ async function main() {
   let messages;
 
   if (fixture) {
-    /* The mapping and the merge, provable before a bot or a token exists. */
     log(`reading ${fixture}`);
     messages = JSON.parse(await readFile(path.resolve(fixture), 'utf8'));
   } else {
@@ -298,24 +159,7 @@ async function main() {
 
   log(`${messages.length} messages`);
 
-  /*
-   * `--inspect` answers the two questions you cannot answer from "0 cards": is the
-   * Message Content intent actually on, and do crossposted messages keep their
-   * attachments? Both are visible in the *shape* of what came back.
-   *
-   * It deliberately prints no message text. Actions logs on a public repository
-   * are public, and this is somebody's community channel: counts, lengths,
-   * message types and attachment filenames are enough to diagnose every failure
-   * this source has, and none of them is the conversation.
-   */
   if (has('inspect')) {
-    /*
-     * The definitive answer, from Discord, about this token. Two runs were spent
-     * inferring the intent from the shape of what came back; the application
-     * object simply says. It also names the app, which is the other thing that
-     * goes wrong: toggling the intent on one application and putting a different
-     * one's token in the secret looks exactly the same from the outside.
-     */
     if (!fixture) {
       const app = await get(`${API}/applications/@me`).catch(() => null);
       if (app) {
@@ -360,12 +204,6 @@ async function main() {
     log(`  ${webhooks}/${messages.length} arrived by webhook (a follow crossposts this way)`);
     log(`  ${forwards}/${messages.length} are forwards (content lives in message_snapshots)`);
     log(`  message types: ${[...kinds].map(([k, n]) => `${k}×${n}`).join(', ')}`);
-    /*
-     * Field names only, never values. A message whose content lives somewhere
-     * unexpected — a forward puts it in `message_snapshots`, a sticker in
-     * `sticker_items` — is indistinguishable from a blank one until you can see
-     * which keys are actually present.
-     */
     const shapes = new Map();
     for (const m of messages) {
       const keys = Object.keys(m ?? {}).sort().join(',');
@@ -373,20 +211,10 @@ async function main() {
     }
     for (const [keys, n] of shapes) log(`  ${n} message(s) carry: ${keys}`);
     if (files.length) log(`  files: ${files.slice(0, 40).join(' ')}`);
-    /* Text length only — enough to tell "blank" from "we did not match it". */
     log(`  text lengths: ${messages.map((m) => textOf(m).length).join(' ')}`);
     log('');
   }
 
-  /*
-   * The failure that looks like success, and the reason this check exists.
-   *
-   * Without the Message Content privileged intent Discord answers 200 and blanks
-   * `content`, `embeds` and `attachments`. Every message arrives, none of them
-   * says anything, and the run reports zero cards and goes green — which is
-   * indistinguishable from a quiet channel and would sit there for weeks. A
-   * channel of reveals whose every message is empty is not a quiet channel.
-   */
   const written = messages.filter((m) => WRITTEN_BY_A_PERSON.has(m?.type ?? 0));
   const silent = written.filter(
     (m) => !textOf(m) && filesOf(m).length === 0 && (m?.embeds ?? []).length === 0
@@ -403,13 +231,6 @@ async function main() {
   const sets = revealsFromMessages(messages, released);
   const cardCount = sets.reduce((n, s) => n + s.cards.length, 0);
 
-  /*
-   * An empty read is not a reason to forget what is recorded. Same rule as
-   * `corpus-guard.mjs`, and the same reason: an upstream having a quiet morning
-   * must not be able to empty the archive. Here it is simpler, because a channel
-   * genuinely can go quiet — so nothing found means nothing written, and what is
-   * on disk stands.
-   */
   if (sets.length === 0 && !fixture) {
     const held = await readFile(OUT, 'utf8').catch(() => null);
     if (held) {
@@ -425,7 +246,6 @@ async function main() {
     .then((raw) => JSON.parse(raw))
     .catch(() => ({ sets: [] }));
 
-  /* Merged, because a batch only carries what arrived since the last run. */
   const merged = new Map(previous.sets?.map((s) => [s.set, s]) ?? []);
   for (const set of sets) {
     const held = merged.get(set.set);
@@ -438,16 +258,8 @@ async function main() {
       if (!byId.has(card.id)) byId.set(card.id, card);
       else {
         const held = byId.get(card.id);
-        /* A fresh link replaces an expired one; a thumbnail already made stays. */
         if (card.image) held.image = card.image;
         if (card.thumb && !held.thumb) held.thumb = card.thumb;
-        /* A later post that finally explains the card fills in what was missing. */
-        /*
-         * A fresh parse wins, unlike the image. `name` and `text` are derived from
-         * the message rather than observed once: re-reading the same post with a
-         * better parser has to be able to improve them, and the first version of
-         * this stored the raw text with its code fences and role ping still in it.
-         */
         if (card.name) held.name = card.name;
         if (card.text) held.text = card.text;
       }
@@ -460,12 +272,6 @@ async function main() {
     });
   }
 
-  /*
-   * A set that shipped since the last run stops being a spoiler, and its
-   * thumbnails go with it — that is the whole bargain. They exist because the
-   * official art does not yet; the moment it does, the page serves that instead
-   * and these have no reason to be here.
-   */
   for (const set of [...merged.keys()]) {
     if (!released.has(set.toUpperCase())) continue;
     log(`  ${set} has shipped — dropping it and its thumbnails`);
@@ -475,23 +281,7 @@ async function main() {
     merged.delete(set);
   }
 
-  /*
-   * Thumbnails, fetched now because now is the only time the link works: an
-   * attachment URL is signed and expires within hours, so a run that records the
-   * link and comes back for it later finds nothing.
-   *
-   * `sharp` is a devDependency and is imported here rather than at the top, so a
-   * checkout without it — or a fixture run, which has no real URLs — still reads
-   * the channel and simply keeps no pictures.
-   */
   if (!fixture && !has('no-images')) {
-    /*
-     * `thumb` is a claim about a file, so it is checked against the file. The
-     * first run wrote twelve thumbnails and the commit step staged none of them:
-     * the corpus said every card had a picture, the files were gone, and the next
-     * run believed the corpus and made nothing. A record of a file that is not
-     * there has to mean "make it", or one bad run is permanent.
-     */
     const held = new Set(await readdir(THUMBS).catch(() => []));
     for (const set of merged.values()) {
       for (const card of set.cards) {
@@ -525,11 +315,6 @@ async function main() {
     }
   }
 
-  /*
-   * A thumbnail whose card is gone from the corpus is a file nothing points at.
-   * They are small, but a directory that only ever grows is a directory nobody
-   * ever looks at again.
-   */
   const keep = new Set([...merged.values()].flatMap((s) => s.cards.map((c) => c.thumb).filter(Boolean)));
   for (const file of await readdir(THUMBS).catch(() => [])) {
     if (file.endsWith('.webp') && !keep.has(file)) {

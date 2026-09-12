@@ -21,16 +21,12 @@ export type Deck = {
   colors: string[];
   total: number;
   unresolved: { set: string; number: string; name: string; count: number }[];
-  /** Which corpus this came from — shown as provenance on the deck page. */
   region?: string;
   source?: string;
   eventType?: string;
   sourceUrl?: string;
-  /** Who ran it, on a submitted event. Absent on the two automated sources. */
   organizer?: string;
-  /** Which event this list came from — see lib/events.ts. */
   eventId?: string;
-  /** How the event was played, and what kind of event it was. */
   venue?: string;
   tier?: string;
 };
@@ -39,9 +35,7 @@ export type ArchetypeCard = {
   id: string;
   name: string;
   category: string;
-  /** Share of this archetype's decks that run the card at all. */
   inclusion: number;
-  /** Average copies in the decks that run it. */
   avgCopies: number;
   decks: number;
 };
@@ -78,7 +72,6 @@ export type Tournament = {
 
 export type CardPlay = {
   decks: number;
-  /** Share of all recorded decks that run the card. */
   share: number;
   avgCopies: number;
   archetypes: number;
@@ -93,16 +86,8 @@ export type DecksMeta = {
 };
 
 export const archetypes = archetypesJson as Archetype[];
-/**
- * Every recorded deck, from one canonical file.
- *
- * `build-indexes.mjs` merges the corpora, drops the 223 lists Limitless and Top
- * Decks both carry, and writes the result. Reading that instead of re-merging here
- * is what keeps a player page from disagreeing with the table that linked to it.
- */
 type MergedDeck = {
   id: string;
-  /* Present in the file, and not the same thing as `id`. */
   tournamentId: string | null;
   date: string;
   leaderId: string;
@@ -115,19 +100,6 @@ type MergedDeck = {
   player: string;
   venue: string;
   tier: string;
-  /*
-   * No `cards`. This file carries no card lists — build-indexes.mjs strips them,
-   * because `resolveJsonModule` infers a literal type for every key and the whole
-   * corpus with its fifties was 83 MB, where `tsc --noEmit` dies with *Ineffective
-   * mark-compacts near heap limit*. Every page that shows the fifty fetches them.
-   *
-   * It was declared here as required anyway, and typechecked for months because
-   * the shape TypeScript infers from a generated file depends on which optional
-   * fields happen to appear in it. A Top Decks refresh changed that mix and the
-   * build stopped — a data refresh failing a typecheck, which is the wrong thing
-   * to be possible. The contract says what the file holds now, checked against all
-   * 69,952 rows rather than read off one of them.
-   */
   sampling: string;
   region?: string;
   source?: string;
@@ -135,7 +107,6 @@ type MergedDeck = {
   sourceUrl?: string;
   organizer?: string;
   eventId: string;
-  /* Written by build-indexes in place of the card list itself. */
   total: number;
 };
 
@@ -154,8 +125,6 @@ export const decks: Deck[] = merged.map((d) => ({
   leaderId: d.leaderId,
   leaderName: d.leaderName,
   colors: d.colors,
-  /* The corpus this comes from carries no card lists — see build-indexes.mjs.
-     Every page that shows the fifty cards fetches them instead. */
   cards: [],
   total: d.total,
   unresolved: [],
@@ -173,7 +142,6 @@ export const tournaments = tournamentsJson as Tournament[];
 export const cardPlay = cardPlayJson as Record<string, CardPlay>;
 export const decksMeta = decksMetaJson as DecksMeta;
 
-/** True once the deck ingest has run — every deck view is gated on this. */
 export const hasDeckData = decks.length > 0;
 
 const archetypeBySlug = new Map(archetypes.map((a) => [a.slug, a]));
@@ -190,7 +158,6 @@ export const getArchetype = (slug: string) => archetypeBySlug.get(slug.toLowerCa
 export const getDeck = (id: string) => deckById.get(id);
 export const getPlay = (cardId: string): CardPlay | null => cardPlay[cardId] ?? null;
 
-/** Which archetypes play a given card, and how heavily. */
 export function cardArchetypes(cardId: string, limit = 8) {
   return archetypes
     .map((a) => {
@@ -211,8 +178,3 @@ export const ordinal = (n: number) => {
   return n + (s[(v - 20) % 10] ?? s[v] ?? s[0]);
 };
 
-/*
- * `groupDeck` used to live here and grouped a deck's fifty cards by category. It
- * had no callers: the deck page is drawn in the browser and keeps its own copy,
- * working from the shard it fetches. It went with the card lists it read.
- */

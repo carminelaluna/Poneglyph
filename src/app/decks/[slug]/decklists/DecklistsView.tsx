@@ -6,26 +6,12 @@ import DeckTable from '../DeckTable';
 import { filterDecks } from '@/lib/meta';
 import { IndexError, WindowBar, useMetaIndex, useWindow, windowHref } from '../../useMeta';
 
-/**
- * Every recorded list for one archetype, ordered three ways.
- *
- * The archetype page draws ten, best finish first, and links here. That is what
- * moved: the ordering control and the growing limit used to sit on the archetype
- * page under a table sixty rows deep, between the cards that define the deck and
- * nothing at all. A reader who wants the oldest lists is asking a different
- * question from one reading the archetype, and this is where it gets asked.
- *
- * Both orders past the default exist for one reason: sorted by finish and capped,
- * a four-year window shows first places and nothing else, so every deck older than
- * the last N wins is unreachable however far back the window is set.
- */
 const ORDERS = [
   ['finish', 'Best finish'],
   ['newest', 'Newest'],
   ['oldest', 'Oldest'],
 ] as const;
 
-/** Rows drawn before the next click. Generous: this page exists to be long. */
 const PAGE = 100;
 
 export default function DecklistsView({ leaderId, slug }: { leaderId: string; slug: string }) {
@@ -42,15 +28,9 @@ export default function DecklistsView({ leaderId, slug }: { leaderId: string; sl
     .sort((a, b) => {
       if (order === 'newest') return b.d.localeCompare(a.d) || (a.p ?? 999) - (b.p ?? 999);
       if (order === 'oldest') return a.d.localeCompare(b.d) || (a.p ?? 999) - (b.p ?? 999);
-      /* A deck with no recorded placing sorts last rather than first. */
       return (a.p ?? 999) - (b.p ?? 999) || b.d.localeCompare(a.d) || b.w - a.w;
     });
 
-  /*
-   * Read off the dates rather than off the ends of the list — those are only
-   * oldest-to-newest while the sort happens to be by date, and printed straight
-   * they came out backwards.
-   */
   const days = decks.map((d) => d.d).sort();
   const span = days.length ? { from: days[0], to: days[days.length - 1] } : null;
 

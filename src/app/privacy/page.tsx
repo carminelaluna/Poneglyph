@@ -2,18 +2,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CONTACT_EMAIL, CONTACT_MAILTO } from '@/lib/contact';
 
-/**
- * Privacy policy.
- *
- * A separate page because Discord and Google each ask for a privacy URL when you
- * register an OAuth application, and pointing both at a page that also carries the
- * trademark disclaimer and the data attributions is not what they are asking for.
- *
- * Written as what actually happens. Most of this site collects nothing at all, and
- * saying so plainly is more useful — and more honest — than boilerplate that implies
- * a data operation nobody is running.
- */
-
 export const metadata: Metadata = {
   title: 'Privacy',
   description:

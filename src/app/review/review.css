@@ -1,7 +1,3 @@
-/* The review queue — see ReviewQueue.tsx. The submission rows themselves are
-   styled in submit.css, because an organizer and a reviewer are looking at the
-   same row from two sides. */
-
 .review-tabs {
   display: flex;
   flex-wrap: wrap;
@@ -57,18 +53,12 @@
   font-weight: 500;
 }
 
-/* Pushes the count or the complaint to the far edge, where the eye scans down. */
 .review-deck-head > :last-child {
   margin-left: auto;
   flex-shrink: 0;
   font-size: 0.74rem;
 }
 
-/*
- * Fifty cards, in columns. A reviewer reads these looking for one wrong line, so
- * they are dense and monospaced-by-number rather than laid out as a card grid —
- * pictures would make the page beautiful and the scan slower.
- */
 .review-cards {
   list-style: none;
   margin: 0.5rem 0 0;

@@ -1,22 +1,7 @@
-/**
- * The Limitless client, shared by the ingests that talk to it.
- *
- * Limitless advertises its own limit in a response header — `RateLimit:
- * "50-in-5min"; r=48; t=269` — so the budget here listens rather than guesses, and
- * pauses *before* the server would start refusing. Raising `--max` does not make a
- * run faster; it only makes it longer.
- *
- * This lived inside ingest-decks.mjs until a second ingest needed it. Copying it
- * would have meant two rate limiters against one server, each unaware of the other's
- * requests — which is the shape of an accidental ban rather than of a rate limit.
- */
-
-/** A run's request budget, and the server's own window. */
 export class Budget {
   constructor(max, log = () => {}) {
     this.remaining = max;
     this.spent = 0;
-    /** Seconds until the server's window resets, from the last RateLimit header. */
     this.resetIn = 0;
     this.serverRemaining = Infinity;
     this.log = log;
@@ -35,7 +20,6 @@ export class Budget {
     if (t) this.resetIn = Number(t[1]);
   }
 
-  /** Pause before the server would start refusing, rather than after. */
   async waitIfNeeded() {
     if (this.serverRemaining > 2) return;
     const seconds = Math.min(this.resetIn + 2, 320);
@@ -50,13 +34,6 @@ export class Budget {
   }
 }
 
-/**
- * One request, counted against `budget`.
- *
- * `optional` returns null instead of throwing, for endpoints a tournament may
- * genuinely not have — an event with no pairings published is a fact about that
- * event, not a failure of the run.
- */
 export async function apiGet(url, budget, { retries = 3, optional = false, agent } = {}) {
   await budget.waitIfNeeded();
   for (let attempt = 1; attempt <= retries; attempt++) {

@@ -21,22 +21,10 @@ import {
 import { dataUrl } from '@/lib/paths';
 import { getDeck, saveDeck, useAccount } from '@/lib/useAccount';
 
-/**
- * Build a deck.
- *
- * Everything happens in the page: the card index is the same 176 KB file the search
- * already downloads, the rules are in lib/deck-rules.ts, and there is nowhere to
- * save to — this site has no server and no accounts.
- *
- * And nothing is kept between visits. Reloading gives an empty deck; the way to keep
- * one is to copy it out for the simulator. See the note by the state below.
- */
-
 type Row = {
   i: string; n: string; c: string[]; y: string; o: number | null; l: number | null;
   p: number | null; u: number | null; t: string[]; r: string; s: string;
   q: string; f: 0 | 1;
-  /** Lowest listed price, when the price source has one for this card. */
   $: number | null;
 };
 
@@ -48,7 +36,6 @@ const toCard = (row: Row): DeckCard => ({
   standard: row.f,
 });
 
-/** Character, Event, Stage — the order the decklist pages use. */
 const ORDER = ['Character', 'Event', 'Stage'];
 
 export default function DeckBuilder() {
@@ -61,15 +48,12 @@ export default function DeckBuilder() {
   const [format, setFormat] = useState<'Standard' | 'Extra'>('Standard');
   const [query, setQuery] = useState('');
 
-  /* Saving. `savedId` is set when this deck came from — or has been written to —
-     an account, so Save updates that row instead of leaving a trail of copies. */
   const { signedIn, userId } = useAccount();
   const [savedId, setSavedId] = useState<string | null>(null);
   const [deckName, setDeckName] = useState('');
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  /* Importing a pasted list. */
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState('');
   const [importNote, setImportNote] = useState<string | null>(null);
@@ -81,7 +65,6 @@ export default function DeckBuilder() {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       }),
-      /* The banlist is small and optional — a builder without it still works. */
       fetch(dataUrl('banlist.json'))
         .then((r) => (r.ok ? r.json() : null))
         .catch(() => null),
@@ -99,12 +82,6 @@ export default function DeckBuilder() {
     };
   }, []);
 
-  /*
-   * `?deck=<id>` opens a saved deck. Not a contradiction of the paragraph below:
-   * that is about not restoring work you did not ask to keep. Reloading this URL
-   * reopens the *saved* version and throws away unsaved edits, which is what
-   * "reload starts over" should mean once a deck has somewhere to live.
-   */
   useEffect(() => {
     if (!signedIn) return;
     const id = new URLSearchParams(globalThis.location.search).get('deck');
@@ -120,32 +97,16 @@ export default function DeckBuilder() {
         setCounts(new Map(deck.cards.map((c) => [c.id, c.count])));
       })
       .catch(() => {
-        /* Someone else's deck, or a deleted one. An empty builder is the honest
-           result — the row-level policy is what returned nothing. */
       });
     return () => {
       cancelled = true;
     };
   }, [signedIn]);
 
-  /*
-   * Nothing else is kept. Reloading without `?deck=` starts an empty deck, on
-   * purpose.
-   *
-   * An earlier version wrote the deck into the address bar and into localStorage, so
-   * a refresh brought it back. That is the wrong default for a scratchpad: it makes
-   * "start over" the awkward operation, and it means a deck you abandoned weeks ago
-   * is what greets you. The way to keep a deck is to copy it out.
-   *
-   * That version left a key behind in the browsers of everyone who opened it, and
-   * nothing reads it now. Clearing it here is tidying up after ourselves rather than
-   * leaving dead data on someone's machine indefinitely.
-   */
   useEffect(() => {
     try {
       globalThis.localStorage?.removeItem('poneglyph:deck');
     } catch {
-      /* Private browsing refuses even to remove. Nothing to do about it. */
     }
   }, []);
 
@@ -177,15 +138,6 @@ export default function DeckBuilder() {
     [rows, leader, deck, banlist, format]
   );
 
-  /**
-   * Open the import box, with the clipboard already in it where that is allowed.
-   *
-   * A textarea rather than reading the clipboard straight into the deck.
-   * `navigator.clipboard.readText()` needs a secure context and a permission that
-   * Firefox does not grant to pages at all, so a button that only did that would be
-   * dead for a share of readers with no way to tell. Ctrl+V into a box always works,
-   * and the prefill makes it one click for everyone else.
-   */
   const openImport = useCallback(async () => {
     setImportOpen(true);
     setImportNote(null);
@@ -193,17 +145,9 @@ export default function DeckBuilder() {
       const text = await navigator.clipboard.readText();
       if (text.trim()) setImportText(text);
     } catch {
-      /* Not permitted here. The box is open; paste into it. */
     }
   }, []);
 
-  /**
-   * Read a pasted list into the builder.
-   *
-   * Counts are taken as written, **not clamped to four**. Importing a list with six
-   * copies and quietly trimming it to four would hide the very thing the reader
-   * needs to see; the validator says so instead, which is what it is for.
-   */
   const applyImport = useCallback(() => {
     const parsed = parseDeckList(importText);
     if (parsed.length === 0) {
@@ -222,7 +166,6 @@ export default function DeckBuilder() {
     setCounts(
       new Map(withRows.filter((c) => c !== leaderEntry).map((c) => [c.id, c.count]))
     );
-    /* An imported list is a new deck until it is saved deliberately. */
     setSavedId(null);
     setQuery('');
     setImportOpen(false);
@@ -244,7 +187,6 @@ export default function DeckBuilder() {
       const id = await saveDeck({
         id: savedId,
         userId,
-        /* A deck with no name is still worth keeping; it gets the Leader's. */
         name: deckName.trim() || leaderRow?.n || 'Untitled deck',
         leaderId,
         cards: [...counts.entries()].map(([cardId, count]) => ({ id: cardId, count })),
@@ -252,7 +194,6 @@ export default function DeckBuilder() {
       });
       setSavedId(id);
       setSaveState('saved');
-      /* Put the id in the address bar so a reload reopens what was just saved. */
       const params = new URLSearchParams(globalThis.location.search);
       params.set('deck', id);
       globalThis.history.replaceState(null, '', `?${params.toString()}`);
@@ -262,7 +203,6 @@ export default function DeckBuilder() {
     }
   }, [userId, leaderId, savedId, deckName, counts, format, leaderRow]);
 
-  /* Say "saved" for a moment, then go back to offering. */
   useEffect(() => {
     if (saveState !== 'saved') return;
     const timer = setTimeout(() => setSaveState('idle'), 2200);
@@ -279,7 +219,6 @@ export default function DeckBuilder() {
     });
   }, []);
 
-  /* The pool: everything this Leader could legally play, minus Leaders themselves. */
   const pool = useMemo(() => {
     if (!rows || !leader) return [];
     const needle = query.trim().toLowerCase();
@@ -329,16 +268,8 @@ export default function DeckBuilder() {
 
   if (!rows) return <p className="muted">Loading the card archive…</p>;
 
-  /*
-   * Everything except "you need N more cards", which the running `12 / 50` two
-   * lines above already says — and says better, since it is a count rather than a
-   * red box telling somebody who has just picked a Leader that they are wrong.
-   * The rule is untouched in `validate()`, so "Legal in Standard" still means
-   * fifty cards; it is only kept out of this list.
-   */
   const errors = problems.filter((p) => p.kind === 'error' && p.rule !== 'size');
   const warnings = problems.filter((p) => p.kind === 'warning');
-  /* Including the size, so an unfinished deck is never announced as legal. */
   const legal = problems.length === 0;
 
   return (
@@ -529,12 +460,6 @@ export default function DeckBuilder() {
                       </dd>
                     </div>
                     <div>
-                      {/*
-                        "Lowest listed", not "value". It is the cheapest printing on
-                        the price source, summed over every copy — the number that
-                        answers "what would this cost me", and it says outright when
-                        it could not price part of the deck.
-                      */}
                       <dt>Lowest listed</dt>
                       <dd className="mono">
                         {stats.price > 0 ? `$${stats.price.toFixed(2)}` : '—'}
@@ -554,13 +479,6 @@ export default function DeckBuilder() {
           )}
         </div>
 
-        {/*
-          Nothing until a Leader is chosen. `validate()` says "Pick a Leader to
-          start" and it is right to — the submission form needs that refusal — but
-          the panel directly above already says "No Leader yet. Pick one on the
-          left." in plain words, so repeating it in a red box tells a reader who
-          has just arrived that they have done something wrong.
-        */}
         {leader && (errors.length > 0 || warnings.length > 0) ? (
           <ul className="build-problems">
             {errors.map((p, i) => (
@@ -619,11 +537,6 @@ export default function DeckBuilder() {
 
         {leader && total > 0 ? (
           <>
-            {/*
-              Saving appears only when there is an account to save to. Showing a
-              disabled Save to a signed-out reader would be advertising a feature by
-              greying it out, which is the least useful way to mention it.
-            */}
             {signedIn ? (
               <div className="build-save">
                 <input

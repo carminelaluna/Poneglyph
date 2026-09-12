@@ -3,7 +3,6 @@ import Link from 'next/link';
 import MetaBrowser from './MetaBrowser';
 import { decksMeta, hasDeckData, tournaments } from '@/lib/decks';
 import '../decks.css';
-/* The events section below the table is a directory table; see directory.css. */
 import '../tournaments/directory.css';
 
 export const metadata: Metadata = {
@@ -21,17 +20,6 @@ export default function DecksPage() {
       <h1 className="display" style={{ fontSize: 'clamp(1.7rem, 3.4vw, 2.5rem)', margin: '0.5rem 0 0' }}>
         What people are actually playing
       </h1>
-      {/*
-        The corpus sizes and the five-figure stat row used to sit here. The controls
-        below already report the count for whatever is chosen, and every figure the
-        row held is answered by the table or by /data — so it was five numbers a
-        reader had to scroll past to reach the one they came for.
-      */}
-      {/*
-        The two directories are not in the top bar — eight entries is already what a
-        phone will hold — so they are linked from the page someone is on when the
-        question occurs to them: which event was that, and who is this player.
-      */}
       <p className="muted" style={{ fontSize: '0.78rem', marginTop: '1rem' }}>
         Browse the sources of all this: <Link href="/tournaments">every recorded tournament</Link>{' '}
         · <Link href="/players">everyone with a result</Link>

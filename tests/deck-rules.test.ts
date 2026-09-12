@@ -1,13 +1,3 @@
-/**
- * The deck rules, checked against the cases that produced them.
- *
- * `src/lib/deck-rules.ts` is free of imports precisely so it can run here the way
- * the builder and the submission form run it — no DOM, no fetch, no card archive.
- * Every case below is either a rule Bandai states or a bug this repo has actually
- * shipped; the banned-Leader ones are the second kind.
- *
- *   npm test
- */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
@@ -23,8 +13,6 @@ import {
   type Leader,
   type Problem,
 } from '../src/lib/deck-rules.ts';
-
-/* ---------------------------------------------------------------- fixtures */
 
 const card = (over: Partial<DeckCard> & { id: string }): DeckCard => ({
   name: over.id,
@@ -46,7 +34,6 @@ const leader = (over: Partial<Leader> = {}): Leader => ({
 
 const EMPTY: Banlist = { banned: [], restricted: [], pairs: [] };
 
-/** Fifty legal cards, as four-ofs plus a remainder — the shape of a real deck. */
 function fiftyCards(total = DECK_SIZE): Counted[] {
   const deck: Counted[] = [];
   let left = total;
@@ -62,8 +49,6 @@ function fiftyCards(total = DECK_SIZE): Counted[] {
 
 const errors = (problems: Problem[]) => problems.filter((p) => p.kind === 'error');
 const warnings = (problems: Problem[]) => problems.filter((p) => p.kind === 'warning');
-
-/* ------------------------------------------------------------------ counts */
 
 describe('deck size', () => {
   it('accepts a legal deck without complaint', () => {
@@ -95,7 +80,6 @@ describe('deck size', () => {
 
 describe('copy limit', () => {
   it('refuses a fifth copy of one card number', () => {
-    /* 45 + 5 is fifty, so the only thing wrong here is the copy count. */
     const deck = fiftyCards(45);
     deck.push({ card: card({ id: 'OP01-025', name: 'Nami' }), count: 5 });
     const found = errors(validate(leader(), deck, EMPTY, 'Standard'));
@@ -112,8 +96,6 @@ describe('copy limit', () => {
   });
 });
 
-/* ----------------------------------------------------------------- banlist */
-
 describe('the banned list', () => {
   const banlist: Banlist = {
     banned: ['OP03-040', 'OP04-104'],
@@ -129,11 +111,6 @@ describe('the banned list', () => {
     assert.match(found[0].message, /Rob Lucci is banned/);
   });
 
-  /*
-   * The regression this file exists for. `validate` compared the banlist against
-   * the fifty only, so a Leader that is itself banned — two of the five are —
-   * reported the deck as legal.
-   */
   it('refuses a banned Leader', () => {
     const found = errors(
       validate(leader({ id: 'OP03-040', name: 'Nami' }), fiftyCards(), banlist, 'Standard')
@@ -170,8 +147,6 @@ describe('the banned list', () => {
   });
 });
 
-/* ---------------------------------------------------------------- rotation */
-
 describe('rotation', () => {
   it('refuses a rotated card in Standard and allows it in Extra', () => {
     const deck = fiftyCards(46);
@@ -186,8 +161,6 @@ describe('rotation', () => {
     assert.match(found[0].message, /rotated out of Standard/);
   });
 });
-
-/* ------------------------------------------------------------------ colour */
 
 describe('the colour rule', () => {
   it('is a warning, never an error', () => {
@@ -205,8 +178,6 @@ describe('the colour rule', () => {
     assert.ok(!colorsMatch(twoColour, card({ id: 'OP01-027', colors: ['Red', 'Blue'] })));
   });
 });
-
-/* -------------------------------------------------------------- the parser */
 
 describe('parseDeckList', () => {
   it('reads the four shapes that turn up in the wild', () => {

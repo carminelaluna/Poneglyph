@@ -4,32 +4,11 @@ import type { Session } from '@supabase/supabase-js';
 import { useCallback, useEffect, useState } from 'react';
 import { accountsEnabled, authRedirectTo, supabase } from './supabase';
 
-/**
- * Who is signed in, for any page that needs to know.
- *
- * Extracted from the account page once the deck builder needed the same answer.
- * Both ask the same question and neither should be the place the other imports it
- * from.
- *
- * `checked` is separate from `session` on purpose: "nobody is signed in" and "we have
- * not looked yet" render differently, and conflating them makes a Save button flash
- * into existence a moment after the page settles.
- *
- * `profile` needed the same distinction and did not have it, which is the same bug
- * one layer down. It was `null` both while the row was being read and when there
- * was none, so the account page fell through to the name the OAuth provider sent
- * and showed *Carmine La Luna* for a moment before settling on the display name —
- * and `/review` and `/submit`, whose gates are `isAdmin` and `isOrganizer`, told an
- * admin they were not one until the row landed. `undefined` is now "not looked
- * yet", `null` is "no row", and `roleKnown` is the answer both of those want.
- */
-
 export type Role = 'user' | 'organizer' | 'admin';
 export type Profile = { display_name: string | null; role: Role };
 
 export function useAccount() {
   const [session, setSession] = useState<Session | null>(null);
-  /* undefined until the row has been read; null once we know there is none. */
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [checked, setChecked] = useState(!accountsEnabled);
 
@@ -42,7 +21,6 @@ export function useAccount() {
       setChecked(true);
     });
 
-    /* Also fires when the token in the fragment is picked up after a redirect. */
     const { data: sub } = client.auth.onAuthStateChange((_event, next) => {
       setSession(next);
       setChecked(true);
@@ -50,15 +28,12 @@ export function useAccount() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  /* The profile row is made by a trigger on sign-up, so it is read, never written. */
   useEffect(() => {
     const client = supabase();
     if (!client || !session) {
-      /* No session is a settled answer: there is no profile to wait for. */
       setProfile(null);
       return;
     }
-    /* A new session means a new row to read, and until it lands we know nothing. */
     setProfile(undefined);
     let cancelled = false;
     client
@@ -80,14 +55,6 @@ export function useAccount() {
     setProfile(null);
   }, []);
 
-  /**
-   * The one field of a profile its owner may change.
-   *
-   * `role` is deliberately not in the payload. The update policy re-reads the
-   * stored role in its `with check`, so sending a different one is refused by the
-   * database rather than by this function — but not sending it at all is what makes
-   * the common case obviously correct.
-   */
   const rename = useCallback(
     async (displayName: string) => {
       const client = supabase();
@@ -103,20 +70,6 @@ export function useAccount() {
     [session]
   );
 
-  /**
-   * Attach another provider to *this* account.
-   *
-   * Supabase gives a Discord sign-in and a Google sign-in two separate users, even
-   * when the address is the same, and that is deliberate on its part: automatically
-   * merging on a matching email is an account takeover waiting for a provider that
-   * does not verify addresses. Linking is therefore something the person has to ask
-   * for while signed in, which is what this does.
-   *
-   * It only ever adds a provider to the account you are already using. Two accounts
-   * that both exist cannot be merged this way — the second sign-in comes back as
-   * "already linked to another user", and the way out of that is to delete the one
-   * you do not want.
-   */
   const linkProvider = useCallback(async (provider: 'discord' | 'google') => {
     const client = supabase();
     if (!client) return;
@@ -127,7 +80,6 @@ export function useAccount() {
     if (error) throw new Error(error.message);
   }, []);
 
-  /** Detach one, which Supabase refuses if it is the only way back in. */
   const unlinkProvider = useCallback(
     async (provider: string) => {
       const client = supabase();
@@ -146,27 +98,11 @@ export function useAccount() {
     session,
     profile,
     checked,
-    /*
-     * Whether the role is settled. `checked` says we know about the session;
-     * this says we know about the row behind it, which is what a gate on
-     * `isAdmin` or a heading showing a name actually needs.
-     */
     roleKnown: !session || profile !== undefined,
     signedIn: Boolean(session),
-    /*
-     * Exactly what the insert policy on `submissions` checks, and not a superset:
-     * an admin is not implicitly an organizer there, so offering them the form
-     * would be the page promising something the database then refuses.
-     */
-    /*
-     * An admin may submit too, matching the insert policy on `submissions`. The
-     * role is a single column rather than a set, so without this the person who
-     * runs the site could review submissions or send them and never both.
-     */
     isOrganizer: profile?.role === 'organizer' || profile?.role === 'admin',
     isAdmin: profile?.role === 'admin',
     userId: session?.user.id ?? null,
-    /* Which providers can currently open this account. */
     providers: (session?.user.identities ?? []).map((i) => i.provider),
     signOut,
     rename,
@@ -174,8 +110,6 @@ export function useAccount() {
     unlinkProvider,
   };
 }
-
-/* ---------------------------------------------------------------- decks */
 
 export type SavedDeck = {
   id: string;
@@ -186,14 +120,6 @@ export type SavedDeck = {
   updated_at: string;
 };
 
-/**
- * Someone's saved decks.
- *
- * No user filter in the query, deliberately: the row-level policy already restricts
- * this to the signed-in account, and adding `.eq('user_id', …)` here would suggest
- * that the filtering happens in the browser — which would be the wrong thing to
- * believe about where the boundary is.
- */
 export async function listDecks(): Promise<SavedDeck[]> {
   const client = supabase();
   if (!client) return [];
@@ -237,7 +163,6 @@ export async function saveDeck(deck: {
     updated_at: new Date().toISOString(),
   };
 
-  /* An id means this is the deck being edited; without one it is a new row. */
   const { data, error } = deck.id
     ? await client.from('decks').update(row).eq('id', deck.id).select('id').single()
     : await client.from('decks').insert(row).select('id').single();
@@ -252,8 +177,6 @@ export async function deleteDeck(id: string) {
   const { error } = await client.from('decks').delete().eq('id', id);
   if (error) throw new Error(error.message);
 }
-
-/* ---------------------------------------------------------- submissions */
 
 export type SubmissionStatus = 'pending' | 'approved' | 'rejected';
 
@@ -270,7 +193,6 @@ export type Submission = {
   review_note: string | null;
   reviewed_at: string | null;
   created_at: string;
-  /* PostgREST returns an aggregate as a one-element array of counts. */
   submission_decks: { count: number }[];
 };
 
@@ -289,18 +211,6 @@ const SUBMISSION_COLUMNS =
   'id, event_name, event_date, venue, tier, region, sampling, players, status, ' +
   'review_note, reviewed_at, created_at, submission_decks(count)';
 
-/**
- * What an organizer has sent, and what happened to it.
- *
- * The form used to be write-only: you submitted a tournament and the site never
- * mentioned it again, so "was it approved, rejected, or did I misclick" had no
- * answer anywhere. The policy to read your own submissions existed from the first
- * schema; nothing had ever called it.
- *
- * No `organizer_id` filter, for the same reason `listDecks` has no `user_id` one —
- * the row-level policy is the boundary, and writing the filter here would suggest
- * the boundary is in the browser.
- */
 export async function listSubmissions(): Promise<Submission[]> {
   const client = supabase();
   if (!client) return [];
@@ -312,15 +222,12 @@ export async function listSubmissions(): Promise<Submission[]> {
   return (data ?? []) as unknown as Submission[];
 }
 
-/** Taking one back. Only possible while it is pending — the policy says so too. */
 export async function withdrawSubmission(id: string) {
   const client = supabase();
   if (!client) return;
   const { error } = await client.from('submissions').delete().eq('id', id);
   if (error) throw new Error(error.message);
 }
-
-/* ------------------------------------------------- becoming an organizer */
 
 export type OrganizerRequest = {
   id: string;
@@ -337,22 +244,6 @@ export type OrganizerRequest = {
 const REQUEST_COLUMNS =
   'id, user_id, organizer_name, events, link, status, review_note, reviewed_at, created_at';
 
-/**
- * Asking for the organizer role.
- *
- * The site used to answer "how do I submit results" with an email address on the
- * legal page — off the record, easy to lose, and visible to nobody but whoever
- * received it. This is the same question as a row.
- *
- * Asking is not being granted: nothing here touches a role. A unique index allows
- * one open request per account, so a second attempt while one is pending comes back
- * as a duplicate rather than as a queue.
- *
- * And once it is sent it stands: there is no update and no delete for the person who
- * sent it. A request that could be rewritten — or taken back and replaced — after a
- * reviewer had read it is a request nobody can rely on having read. The way out of a
- * mistaken one is a refusal, which carries a note and allows another.
- */
 export async function requestOrganizer(request: {
   userId: string;
   organizerName: string;
@@ -374,7 +265,6 @@ export async function requestOrganizer(request: {
   }
 }
 
-/** The most recent one this account sent, or null. */
 export async function myOrganizerRequest(): Promise<OrganizerRequest | null> {
   const client = supabase();
   if (!client) return null;
@@ -388,7 +278,6 @@ export async function myOrganizerRequest(): Promise<OrganizerRequest | null> {
   return (data as OrganizerRequest) ?? null;
 }
 
-/** Everything waiting, for whoever holds the admin role — same query, more rows. */
 export async function listOrganizerRequests(
   status: SubmissionStatus | 'all' = 'pending'
 ): Promise<OrganizerRequest[]> {
@@ -401,17 +290,6 @@ export async function listOrganizerRequests(
   return (data ?? []) as OrganizerRequest[];
 }
 
-/**
- * Answering one, which for an approval means actually granting the role.
- *
- * The role moves **first**. If that write is refused — a policy changed, the
- * account is gone — the request stays pending and can be tried again; the other
- * order would leave a request marked approved next to an account that never got
- * anything, which is the failure nobody would notice.
- *
- * The policy behind that update allows `user` and `organizer` and no third value,
- * so this cannot produce an admin however it is called.
- */
 export async function decideOrganizerRequest(
   request: OrganizerRequest,
   status: Exclude<SubmissionStatus, 'pending'>,
@@ -421,13 +299,6 @@ export async function decideOrganizerRequest(
   if (!client) throw new Error('Accounts are not configured.');
 
   if (status === 'approved') {
-    /*
-     * Read back, and check. A row that row-level security filters out is not an
-     * error in PostgREST — the update affects nothing and returns cleanly — so
-     * without this a missing policy would report the role as granted while the
-     * account stayed exactly where it was, and nobody would find out until the
-     * person tried to submit something.
-     */
     const { data, error } = await client
       .from('profiles')
       .update({ role: 'organizer' })
@@ -455,17 +326,6 @@ export async function decideOrganizerRequest(
   if (!data || data.length === 0) throw new Error('The request was not updated.');
 }
 
-/* --------------------------------------------------------------- review */
-
-/**
- * Everything waiting, for whoever holds the admin role.
- *
- * This is the same table and the same query as `listSubmissions`; what differs is
- * which rows come back, and that is decided by the policies rather than by an
- * argument passed from the browser. A reader without the role gets their own rows
- * and nothing else, which is why this cannot be used to look at other people's
- * submissions by calling it from the console.
- */
 export async function listForReview(status: SubmissionStatus | 'all' = 'pending') {
   const client = supabase();
   if (!client) return [];
@@ -476,7 +336,6 @@ export async function listForReview(status: SubmissionStatus | 'all' = 'pending'
   return (data ?? []) as unknown as Submission[];
 }
 
-/** The decks inside one submission, for reading before saying yes to them. */
 export async function submittedDecks(submissionId: string): Promise<SubmittedDeck[]> {
   const client = supabase();
   if (!client) return [];
@@ -489,14 +348,6 @@ export async function submittedDecks(submissionId: string): Promise<SubmittedDec
   return (data ?? []) as SubmittedDeck[];
 }
 
-/**
- * Approving or rejecting one submission.
- *
- * Approving does not publish anything. `ingest-submissions.mjs` reads rows in this
- * state on its next scheduled run and `build-indexes.mjs` folds them in, so the
- * gap between saying yes here and seeing it on the site is one ingest cycle —
- * which is the same gap every other source has.
- */
 export async function reviewSubmission(
   id: string,
   status: Exclude<SubmissionStatus, 'pending'>,
@@ -504,7 +355,6 @@ export async function reviewSubmission(
 ) {
   const client = supabase();
   if (!client) throw new Error('Accounts are not configured.');
-  /* Read back for the same reason as above: RLS filtering is not an error. */
   const { data, error } = await client
     .from('submissions')
     .update({
@@ -523,28 +373,9 @@ export async function reviewSubmission(
   }
 }
 
-/**
- * Putting a decided submission back in the queue.
- *
- * A decision had no way back through the site. The buttons that make one render
- * only while the row is `pending`, so an approval was final from here — and an
- * approved row is what `ingest-submissions.mjs` reads on its next run, twice a
- * day, after which it is in the corpus and the way out is a hand-edit in the
- * Supabase table editor. That is the operation `/review` exists to replace.
- *
- * The database always allowed it: `admins review submissions` is
- * `using (has_role('admin'))` with no condition on the status, so this is the
- * page catching up with the policy rather than a widening of it.
- *
- * The verdict is cleared along with the status. A note reading "rejected because
- * the placings do not add up" under a row that is waiting again describes a
- * decision that no longer stands, and the reviewer writes a new one when they
- * decide again — the caller keeps the old text in the box so nothing is retyped.
- */
 export async function reopenSubmission(id: string) {
   const client = supabase();
   if (!client) throw new Error('Accounts are not configured.');
-  /* Read back for the same reason as above: RLS filtering is not an error. */
   const { data, error } = await client
     .from('submissions')
     .update({ status: 'pending', review_note: null, reviewed_at: null })

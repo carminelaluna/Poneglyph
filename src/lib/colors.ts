@@ -1,4 +1,3 @@
-/** The game's six colours, mapped to the pigment tokens defined in globals.css. */
 export const PIGMENT: Record<string, string> = {
   Red: 'var(--c-red)',
   Green: 'var(--c-green)',

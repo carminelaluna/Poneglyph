@@ -12,33 +12,18 @@ import {
   sets,
 } from '@/lib/cards';
 
-/** When each set arrived, newest first — see the note in build-indexes.mjs. */
 const releases = (regionsJson as { releases?: { code: string; from: string }[] }).releases ?? [];
 
-/**
- * The six most recently released Leaders, in their best art.
- *
- * This used to be one Leader per colour, taken as the last match in `cards` — but
- * that array is ordered by card number, not by release, so "last" meant the highest
- * starter-deck number and the fan showed three different Monkey.D.Luffy.
- *
- * `data/regions.json` carries a dated, newest-first list of set releases, derived
- * from when each set first appeared in recorded results. Those are **play dates
- * rather than print dates** — near enough for "what is new", and the honest thing to
- * call it, which is why nothing on the page claims a release date.
- */
 function heroCards() {
   const picked: { card: (typeof cards)[number]; artId: string }[] = [];
   const seen = new Set<string>();
 
   for (const release of releases) {
-    /* Within one set, low card numbers first — Leaders are numbered from 001. */
     const leaders = cards
       .filter((c) => c.category === 'Leader' && c.setCode === release.code)
       .sort((a, b) => a.id.localeCompare(b.id));
 
     for (const leader of leaders) {
-      /* The same Leader can be reprinted; show each name once. */
       if (seen.has(leader.name)) continue;
       seen.add(leader.name);
 
@@ -49,11 +34,6 @@ function heroCards() {
     }
   }
 
-  /*
-   * A set with no recorded results yet has no date, so it is not in `releases` and
-   * its Leaders are missed. Fill from the card archive rather than showing a short
-   * fan — this only bites on a checkout with no deck data at all.
-   */
   for (const card of cards) {
     if (picked.length === 6) break;
     if (card.category !== 'Leader' || seen.has(card.name)) continue;
@@ -65,7 +45,6 @@ function heroCards() {
   return picked;
 }
 
-/** One shelf of sets. The two on the home page differ only by what is in them. */
 function SetShelf({
   title,
   sets: shelf,
@@ -106,14 +85,6 @@ export default function HomePage() {
   const heroes = heroCards();
   const newest = sets.find((s) => s.group === 'Booster Set');
   const newestCards = newest ? getSetCards(newest.code).slice(0, 12) : [];
-  /*
-   * Two shelves, because they are two things you buy.
-   *
-   * There used to be one, "Booster sets", showing 17 of the 60 — which left the 36
-   * starter decks, the larger half of the catalogue, off the front page entirely.
-   * Extra and Premium boosters sit with the boosters: they are packs, and nobody
-   * thinks of them as a third category.
-   */
   const boosters = sets.filter((s) => /Booster/.test(s.group)).slice(0, 8);
   const starters = sets.filter((s) => s.group === 'Starter Deck').slice(0, 8);
   const boosterCount = sets.filter((s) => /Booster/.test(s.group)).length;
@@ -197,7 +168,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Signature: the six pigments, sized by how much of the card pool each holds. */}
       <section className="shell section" style={{ paddingTop: 0 }}>
         <div className="section-head">
           <h2 className="display">The six colours</h2>

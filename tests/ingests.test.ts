@@ -1,23 +1,3 @@
-/**
- * The ingest scripts, tested for the two things that can be tested without a
- * network — and they are the two things that have actually broken.
- *
- * **Their imports resolve.** Four modules have been extracted out of these scripts
- * over time (`limitless`, `refusal`, `dedupe`, `deck-corpus`), and an extraction
- * that renames or moves one leaves a script that parses fine and dies on its first
- * run. `node --check` cannot see it, `tsc` does not read `.mjs`, and the scheduled
- * run finds it hours later after spending a request budget. This is the cheap sweep
- * that catches it.
- *
- * **Their offline paths run.** `ingest-decks --rebuild` re-derives everything from
- * stored decks with no network at all, which is the whole write path including
- * `deck-corpus.mjs` — the module that now stands between the archive and losing it.
- * It runs here against a fixture in a temp directory, never the real `data/`.
- *
- * What is deliberately not here: anything that fetches. A test suite that hammers
- * Limitless and Top Decks on every push would be a worse citizen than the ingests
- * are, and would fail for their bad mornings rather than for our bugs.
- */
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { mkdtemp, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
@@ -49,7 +29,6 @@ describe('every script can find what it imports', () => {
     const broken: string[] = [];
     for (const file of files) {
       const source = await readFile(path.join(scripts, file), 'utf8');
-      /* `import … from './x.mjs'` and `await import('./x.mjs')` alike. */
       for (const m of source.matchAll(/(?:from|import)\s*\(?\s*['"](\.[^'"]+)['"]/g)) {
         const target = path.resolve(scripts, m[1]);
         if (!existsSync(target)) broken.push(`${file} -> ${m[1]}`);
@@ -58,10 +37,6 @@ describe('every script can find what it imports', () => {
     assert.deepEqual(broken, [], 'an import points at a file that is not there');
   });
 
-  /*
-   * The shared modules exist because two copies would drift. If one stops being
-   * imported by the script it was extracted for, the copy came back.
-   */
   it('keeps the extracted modules shared rather than re-inlined', async () => {
     const expected: [string, string][] = [
       ['ingest-decks.mjs', 'limitless.mjs'],
@@ -81,12 +56,6 @@ describe('every script can find what it imports', () => {
   });
 });
 
-/**
- * A corpus small enough to reason about, in the shape ingest-decks stores.
- *
- * Two years, so the split is exercised; a tournament each, because the rebuild
- * derives archetypes and card play from them.
- */
 async function fixture(dir: string) {
   await mkdir(path.join(dir, 'data'), { recursive: true });
   const write = (name: string, value: unknown) =>
@@ -131,11 +100,6 @@ async function fixture(dir: string) {
 }
 
 describe('ingest-decks --rebuild, offline', () => {
-  /*
-   * The mode that spends no requests, and the one CLAUDE.md points at for
-   * re-deriving. It is also the only way to run the real write path in a test —
-   * spawned with its own cwd so it can never touch the archive.
-   */
   it('re-derives from stored decks without a network, and keeps every one', async () => {
     const dir = await scratch();
     await fixture(dir);
@@ -176,10 +140,6 @@ describe('ingest-decks --rebuild, offline', () => {
     assert.equal(archetypes[0].leaderId, 'OP01-001');
   });
 
-  /*
-   * It writes nothing under public/. build-indexes owns every browser payload, and
-   * this script writing one is the failure that left a 0 KB index behind.
-   */
   it('writes no browser payload', async () => {
     const dir = await scratch();
     await fixture(dir);
@@ -190,11 +150,6 @@ describe('ingest-decks --rebuild, offline', () => {
     assert.ok(!existsSync(path.join(dir, 'public')), 'ingest-decks wrote into public/');
   });
 
-  /*
-   * Without cards.json it must say so and exit 1, not throw. That guard is only
-   * reached by running the script: `--fixture`-style flags evaluate neither it nor
-   * the loader above it, which is how a broken extraction once reached a schedule.
-   */
   it('refuses clearly when the card archive is missing', async () => {
     const dir = await scratch();
     await mkdir(path.join(dir, 'data'), { recursive: true });
@@ -204,7 +159,6 @@ describe('ingest-decks --rebuild, offline', () => {
           cwd: dir,
           timeout: 60_000,
         }),
-      /* console.error, so stderr — checked across both rather than guessed at. */
       (err: { code?: number; stdout?: string; stderr?: string }) => {
         assert.equal(err.code, 1, 'expected exit 1');
         assert.match(

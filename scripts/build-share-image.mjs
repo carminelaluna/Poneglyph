@@ -1,38 +1,4 @@
 #!/usr/bin/env node
-/**
- * Poneglyph — the link preview image.
- *
- *   node scripts/build-share-image.mjs
- *
- * Run by hand, and the PNG is committed. It is not a build step because it does
- * not need to be: the mark does not change with the data, and making CI render
- * text would put a system font dependency into a build that is otherwise
- * byte-identical between two runs of the same commit. See `generateBuildId` in
- * next.config.mjs for why that property is worth protecting.
- *
- * ## Why 1200×630 rather than the square one
- *
- * `share-1024.png` is 1024×1024, and every unfurl — Twitter, Discord, Slack,
- * Facebook, a search result — is built for 1.91:1. A square gets cropped top and
- * bottom or letterboxed at the sides, and the picture that is cropped is the one
- * that goes everywhere this site is pasted.
- *
- * The square is kept: it is the right shape for an avatar and for the icon slots,
- * and `apple-icon.png` and friends are generated from the same artwork.
- *
- * ## What it draws
- *
- * The mark on the left at the height of the safe area, the wordmark and one line
- * of what the site is on the right, on `--void`. No card art: those images are
- * Bandai's, and this is the one picture that gets copied into every preview and
- * every search result — the single place where using theirs would read as a claim
- * to be them. The same reasoning is already written on the metadata in layout.tsx.
- *
- * The font is a condensed system stack rather than the site's Big Shoulders. A
- * webfont cannot be relied on inside librsvg, and a near-miss on letterforms in a
- * 1200px image is more obvious than an honest substitute.
- */
-
 import path from 'node:path';
 import sharp from 'sharp';
 
@@ -41,13 +7,11 @@ const H = 630;
 const OUT = path.resolve('public', 'brand', 'share-1200x630.png');
 const MARK = path.resolve('public', 'brand', 'share-1024.png');
 
-/* Straight from globals.css, so the preview and the page it opens agree. */
 const VOID = '#0a0c10';
 const GLYPH = '#e6e0d2';
 const GLYPH_DIM = '#79818f';
 const RUNE = '#c0512e';
 
-/** Breathing room the platforms are known to crop into on some layouts. */
 const PAD = 64;
 const MARK_SIZE = H - PAD * 2;
 
@@ -99,16 +63,6 @@ async function main() {
   await refuseOverflow();
 }
 
-/**
- * Refuse an image whose text runs off the edge.
- *
- * The first render of this cut the eyebrow at "…CARD GAME ARC", because a string
- * at a chosen letter-spacing either fits the space left of the frame or does not
- * and nothing in an SVG says which. A font substitution on another machine moves
- * that line again. So the picture is measured rather than looked at: the outer
- * columns and rows have to be the background they were painted, and anything
- * touching them means a glyph left the frame.
- */
 async function refuseOverflow() {
   const edge = 8;
   const { data, info } = await sharp(OUT).raw().toBuffer({ resolveWithObject: true });
@@ -116,7 +70,6 @@ async function refuseOverflow() {
     const i = (y * info.width + x) * info.channels;
     return [data[i], data[i + 1], data[i + 2]];
   };
-  /* The background it was painted, read from the picture rather than re-parsed. */
   const [br, bg, bb] = at(edge, Math.floor(info.height / 2));
 
   const strays = [];

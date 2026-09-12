@@ -8,15 +8,6 @@ import { pigment } from '@/lib/colors';
 import { formatRecord, isNamedPlayer, ordinal, playerSlug } from '@/lib/meta';
 import { getEvent, loadLeaders, type Leaders, type ShardEvent } from '@/lib/shards';
 
-/**
- * One tournament, drawn in the browser.
- *
- * There are 7,150 events and only the largest few hundred are prerendered, so this
- * fetches its own slice — see lib/shards.ts for why. The shapes and the wording
- * match the build-time version deliberately: a prerendered event and a fetched one
- * are the same page.
- */
-
 const VENUES: Record<string, string> = {
   simulator: 'Played on a simulator',
   webcam: 'Played over webcam',
@@ -97,11 +88,6 @@ export default function EventView({ id }: { id: string }) {
   }
 
   const withPlacing = event.decks.filter((d) => d.p !== null).length;
-  /*
-   * Sampling is per deck — `f` — and every corpus carries it, so it is read off
-   * the rows rather than guessed from which site the rows came from. That guess
-   * held only while the two automated sources happened to disagree about it.
-   */
   const wholeField = event.decks.every((d) => d.f === 1);
 
   return (
@@ -149,18 +135,6 @@ export default function EventView({ id }: { id: string }) {
         </div>
       </dl>
 
-      {/*
-        Lists held is not the size of the field. Limitless publishes whole Swiss
-        fields; Top Decks publishes the decks that placed. Saying "17 decks" without
-        that distinction would read as a 17-player event.
-
-        Both halves of this line used to be decided by `source === 'limitless'`,
-        which was a two-way question asked of three corpora: a submitted tournament
-        fell through to the Limitless branch and was credited to a site that had
-        never seen it, under a sentence claiming whole-field results it had not
-        been asked about. Attribution comes from the source now, and the sampling
-        from the rows themselves — where an organizer's own answer already lives.
-      */}
       <p className="muted" style={{ fontSize: '0.76rem', marginTop: '0.9rem', maxWidth: '74ch' }}>
         {event.recorded} decklist{event.recorded === 1 ? '' : 's'} on record
         {event.players ? ` from a field of ${event.players}` : ''},{' '}

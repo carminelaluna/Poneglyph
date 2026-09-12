@@ -1,18 +1,3 @@
-/**
- * The three functions that exist twice, checked against each other.
- *
- * `shardOf`, `playerSlugOf`, the not-a-player list and `cdnShardOf` are written once in
- * `scripts/build-indexes.mjs` (which writes the payloads) and again in
- * `src/lib/shards.ts` / `src/lib/meta.ts` (which read them). They are duplicated on
- * purpose — a build script cannot import a browser module here — and CLAUDE.md says
- * what happens when they drift: every lookup lands in the wrong bucket and every
- * event, player and deck page reads "not found". Nothing fails loudly.
- *
- * So this test does not import the script. It lifts the source text of each copy
- * and runs the two against the same keys, which is the drift the comment warns
- * about. The last case goes further and checks the payloads actually on disk, since
- * agreeing implementations still miss if the files were written by an older one.
- */
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -24,9 +9,6 @@ import { toEvent, toPlayer, type EventRow, type PlayerRow } from '../src/lib/dir
 const root = path.resolve(import.meta.dirname, '..');
 const read = (file: string) => readFile(path.join(root, file), 'utf8');
 
-/* ------------------------------------------------------------- extraction */
-
-/** The body of `function name(...) { … }`, by balancing braces from the first one. */
 function functionBody(source: string, name: string): string {
   const at = source.indexOf(`function ${name}(`);
   assert.notEqual(at, -1, `${name} is not declared in this file any more`);
@@ -39,7 +21,6 @@ function functionBody(source: string, name: string): string {
   throw new Error(`unbalanced braces in ${name}`);
 }
 
-/** The initialiser of `const name = … ;`, by scanning to the semicolon at depth 0. */
 function constExpression(source: string, name: string): string {
   const at = source.indexOf(`const ${name} = `);
   assert.notEqual(at, -1, `${name} is not declared in this file any more`);
@@ -58,9 +39,6 @@ function constExpression(source: string, name: string): string {
 const compile = <T>(body: string, ...params: string[]): T =>
   new Function(...params, body) as T;
 
-/* ------------------------------------------------------------------- keys */
-
-/** Real keys, plus the shapes that break naive string handling. */
 async function sampleKeys(): Promise<string[]> {
   const edges = [
     '',
@@ -83,7 +61,6 @@ async function sampleKeys(): Promise<string[]> {
   const corpus = JSON.parse(await readFile(file, 'utf8')) as {
     decks: { id: string; player: string; eventId: string }[];
   };
-  /* Every 7th row, so the sample spans the whole corpus rather than one event. */
   const real: string[] = [];
   for (let i = 0; i < corpus.decks.length; i += 7) {
     const deck = corpus.decks[i];
@@ -92,20 +69,7 @@ async function sampleKeys(): Promise<string[]> {
   return [...edges, ...real];
 }
 
-/* ------------------------------------------------------------------ tests */
-
 describe('cdnShardOf', () => {
-  /*
-   * Which of the two art bundles a printing lives in, written once in
-   * scripts/cdn-shard.mjs (which builds them) and again as `bundleOf` in
-   * src/lib/art.ts (which links to them). Duplicated for the same reason as
-   * shardOf: a build script cannot import TypeScript, and art.ts ships to the
-   * browser so it stays small.
-   *
-   * Drift here is louder than a wrong bucket but just as silent to a build: every
-   * image in one half of the archive 404s, and nothing fails — the pages render
-   * with holes where the art should be.
-   */
   it('agrees between the build script and the browser copy', async () => {
     const script = await read('scripts/cdn-shard.mjs');
     const lib = await read('src/lib/art.ts');
@@ -133,10 +97,6 @@ describe('cdnShardOf', () => {
     const keys = await sampleKeys();
     const inFirst = keys.filter((k) => shard(k) === 0).length;
     const share = inFirst / keys.length;
-    /*
-     * The point of splitting is that neither bundle reaches 20,000 files. A hash
-     * that put 90% on one side would move the wall rather than remove it.
-     */
     assert.ok(share > 0.4 && share < 0.6, `one bundle would hold ${Math.round(share * 100)}%`);
   });
 
@@ -146,7 +106,6 @@ describe('cdnShardOf', () => {
       functionBody(script, 'cdnShardOf').replace(/CDN_BUNDLES/g, '2'),
       'printingId'
     );
-    /* It hashes the printing, not the file, so the widths cannot be separated. */
     assert.equal(shard('OP01-025'), shard('OP01-025'));
     assert.notEqual(typeof shard('OP01-025'), 'undefined');
   });
@@ -157,12 +116,6 @@ describe('shardOf', () => {
     const script = await read('scripts/build-indexes.mjs');
     const lib = await read('src/lib/shards.ts');
 
-    /*
-     * The script reads its bucket count from a constant and the browser copy has
-     * the number written in. Carrying the declaration over is what makes changing
-     * SHARDS on one side show up here as a mismatch rather than as a silent
-     * re-bucketing of every payload.
-     */
     const shards = constExpression(script, 'SHARDS');
     const fromScript = compile<(key: string) => string>(
       `const SHARDS = ${shards};\n${functionBody(script, 'shardOf')}`,
@@ -177,12 +130,6 @@ describe('shardOf', () => {
     }
   });
 
-  /*
-   * The width and the range both matter, and they moved together: 64 buckets fitted
-   * two digits, 256 needs three. Reading the count out of the script rather than
-   * writing it here again is what keeps this test true the next time the corpus
-   * outgrows its shards.
-   */
   it('answers with a fixed-width bucket inside the range', async () => {
     const script = await read('scripts/build-indexes.mjs');
     const lib = await read('src/lib/shards.ts');
@@ -213,11 +160,6 @@ describe('playerSlugOf', () => {
     }
   });
 
-  /*
-   * Not the script's own `slugify`, which truncates at 48. Reusing that one would
-   * quietly break every handle longer than 48 characters, which is the kind of bug
-   * that only shows up for one unlucky person.
-   */
   it('truncates at 64, not at 48', () => {
     assert.equal(playerSlug('a'.repeat(120)).length, 64);
   });
@@ -227,7 +169,6 @@ describe('the not-a-player list', () => {
   it('agrees between the build script and lib/meta.ts', async () => {
     const script = await read('scripts/build-indexes.mjs');
 
-    /* Both are arrows in the script, so the initialiser is what gets compiled. */
     const named = compile<(name: string) => boolean>(
       `const NOT_A_PLAYER = ${constExpression(script, 'NOT_A_PLAYER')};\n` +
         `return (${constExpression(script, 'namedPlayer')})(name);`,
@@ -259,7 +200,6 @@ describe('the payloads on disk', () => {
     if (!existsSync(merged)) return t.skip('no corpus on this checkout');
     const corpus = JSON.parse(await readFile(merged, 'utf8')) as { decks: { id: string }[] };
 
-    /* Enough to catch a whole-file drift without reading all 64 buckets. */
     const step = Math.max(1, Math.floor(corpus.decks.length / 40));
     const buckets = new Map<string, Record<string, unknown>>();
     for (let i = 0; i < corpus.decks.length; i += step) {
@@ -275,22 +215,8 @@ describe('the payloads on disk', () => {
   });
 });
 
-/*
- * The directory payloads are arrays, read back positionally by lib/directory.ts.
- * A column inserted on one side and not the other does not throw: it renders a
- * venue where a tier should be and a date in the games column, which looks like a
- * styling bug rather than like the data being read wrong.
- *
- * So this checks the values, not the shape. A date that parses as a date and a
- * slug that matches the name beside it can only both be true if every position
- * lines up.
- */
 describe('the directory payloads', () => {
   const dated = /^\d{4}-\d{2}-\d{2}$/;
-  /*
-   * `OP01-001` and also `P-117`: the promo Leaders carry no set number, and three
-   * of the 139 archetypes in the corpus are one of those.
-   */
   const cardId = /^[A-Z]{1,4}\d{0,2}-\d{3}$/;
 
   it('reads tournament rows back into the fields they were written from', async (t) => {
@@ -322,11 +248,6 @@ describe('the directory payloads', () => {
     assert.ok(index.players.length > 0, 'no players listed');
     for (const row of index.players) {
       const player = toPlayer(row);
-      /*
-       * The strongest of these: the slug was derived from a spelling of this name,
-       * so if the two columns ever drifted apart this is what would catch it — and
-       * every link on the page would be pointing at a shard that has nothing in it.
-       */
       assert.equal(player.slug, playerSlug(player.name), `slug and name disagree: ${player.slug}`);
       assert.ok(isNamedPlayer(player.name), `${player.name} is a placeholder, not a player`);
       assert.ok(player.results >= index.minResults);

@@ -1,14 +1,3 @@
-/**
- * Reading the price history back.
- *
- * The file is stored sparsely — a point only on a day the price moved — so every
- * question about it is really a question about the fill-forward. Getting that wrong
- * does not throw; it draws a plausible line with the wrong shape, which is the kind
- * of failure this repository cares most about.
- *
- * The store is built here rather than read from `data/`, so these do not depend on
- * how many days the ingest happens to have recorded.
- */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { listPrice, priceMove, readSeries, sparkline, type Stored } from '../src/lib/prices.ts';
@@ -17,14 +6,11 @@ const store: Stored = {
   generatedAt: '2026-08-26T00:00:00.000Z',
   days: ['2026-08-20', '2026-08-21', '2026-08-22', '2026-08-23', '2026-08-24'],
   prices: {
-    /* Moved on day 0 and again on day 3. */
     'OP01-025': [
       [0, 1.5],
       [3, 2.25],
     ],
-    /* Recorded from day 2 only — the card had no price before that. */
     'OP02-001': [[2, 10]],
-    /* Never moved. */
     'OP03-001': [[0, 0.05]],
     'OP04-001': [],
   },
@@ -73,11 +59,6 @@ describe('priceMove', () => {
     assert.equal(move.high, 2.25);
   });
 
-  /*
-   * Points and span are different numbers and the page prints both. The archive
-   * records a day because a price moved on it, so three points can cover sixty
-   * days — and calling that "3 days" would read as a chart of last week.
-   */
   it('separates how many points it has from how long they cover', () => {
     const sparse = priceMove([
       { day: '2026-06-01', price: 10 },
@@ -100,8 +81,6 @@ describe('priceMove', () => {
     assert.equal(priceMove([]), null);
   });
 
-  /* A ratio against zero is infinity, and printing that as a percentage is worse
-     than printing nothing. */
   it('refuses a percentage when the earlier price was zero', () => {
     const move = priceMove([
       { day: '2026-08-20', price: 0 },
@@ -121,8 +100,6 @@ describe('sparkline', () => {
     assert.match(points[4], /^L120\.0,/);
   });
 
-  /* Down the middle, not along the floor: a card that has not moved has not
-     fallen to nothing. */
   it('draws a flat series through the middle', () => {
     const path = sparkline(readSeries(store, 'OP03-001'), 120, 32);
     for (const point of path.split(' ')) assert.match(point, /,16\.0$/);
@@ -132,12 +109,6 @@ describe('sparkline', () => {
     assert.equal(sparkline([{ day: '2026-08-20', price: 1 }]), '');
   });
 
-  /*
-   * Placed by date, not by position. A fortnight of stillness and an overnight
-   * jump drawn the same width is the one thing a price chart is read to tell
-   * apart — and the store records days on which something moved, so the gaps
-   * between them are uneven by construction.
-   */
   it('spaces the points by how far apart the days are', () => {
     const path = sparkline(
       [
@@ -151,7 +122,6 @@ describe('sparkline', () => {
     const xs = path.split(' ').map((point) => Number(point.slice(1).split(',')[0]));
     assert.equal(xs[0], 0);
     assert.equal(xs[2], 120);
-    /* One day of sixty, so the middle point sits near the left edge. */
     assert.ok(xs[1] > 0 && xs[1] < 4, `middle point at ${xs[1]}, expected near the start`);
   });
 });
@@ -170,7 +140,6 @@ describe('listPrice', () => {
     assert.deepEqual(listPrice(cards, { $: 10 }), { total: 16.5, unpriced: 0 });
   });
 
-  /* The number that must never be quietly folded in as zero. */
   it('counts the copies it could not price', () => {
     assert.deepEqual(listPrice([{ count: 3, price: null }, { count: 1, price: 2 }]), {
       total: 2,

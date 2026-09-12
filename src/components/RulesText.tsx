@@ -1,17 +1,5 @@
 import { Fragment } from 'react';
 
-/**
- * Rules text arrives in the official site's own notation:
- *
- *   [On Play]           a timing or keyword
- *   {Straw Hat Crew}    a trait reference
- *   <Slash>             an attribute reference
- *   <br>                a line break between separate abilities
- *
- * Each is given its own treatment so a long ability can be scanned rather than
- * read. The text is tokenised, never injected as HTML.
- */
-
 const TOKEN = /(\[[^\]]+\]|\{[^}]+\}|<[A-Za-z][^>]*>)/g;
 
 export default function RulesText({ text, className }: { text: string | null; className?: string }) {

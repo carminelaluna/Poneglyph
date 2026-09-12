@@ -6,7 +6,6 @@ import './review.css';
 export const metadata: Metadata = {
   title: 'Review submissions',
   description: 'Approve or reject tournaments submitted by organizers.',
-  /* Useful to the one or two people holding the role, and to nobody else. */
   robots: { index: false, follow: false },
 };
 

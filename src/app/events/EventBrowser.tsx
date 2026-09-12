@@ -2,15 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-/**
- * The event list, filtered in the page.
- *
- * All 67 events are already here — filtering is a re-render, not a request. The
- * chosen filters go in the address bar so a view can be linked to, written with the
- * History API rather than the router for the same reason the metagame page does it:
- * a navigation would fetch a page this one can already draw.
- */
-
 export type BrowserEvent = {
   name: string;
   label?: string | null;
@@ -20,9 +11,7 @@ export type BrowserEvent = {
   start: string | null;
   venue: string | null;
   link: string | null;
-  /** When registration opens, from Bandai's month table. A guideline, not a promise. */
   opens?: string | null;
-  /** A note this event carries itself, which is exact where the table is not. */
   registrationNote?: string | null;
 };
 
@@ -36,7 +25,6 @@ type When = (typeof WHEN)[number]['id'];
 
 const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-/** "Sunday 26 July" — the weekday matters, since these always land on one. */
 function openingLabel(iso: string) {
   const date = new Date(`${iso}T12:00:00Z`);
   return `${dayNames[date.getUTCDay()]} ${date.getUTCDate()} ${date.toLocaleDateString('en-GB', {
@@ -57,11 +45,6 @@ export default function EventBrowser({
   const [when, setWhen] = useState<When>('upcoming');
   const [ready, setReady] = useState(false);
 
-  /*
-   * Today, read in the browser. The build-time date would be right for a few hours
-   * and then quietly start calling tomorrow's events yesterday's — and this is the
-   * control people use most, so it has to be true whenever the page is opened.
-   */
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   useEffect(() => {
@@ -93,7 +76,6 @@ export default function EventBrowser({
 
   const inWhen = (event: BrowserEvent) => {
     if (when === 'all') return true;
-    /* An event whose date could not be read is shown rather than hidden. */
     if (!event.start) return true;
     return when === 'past' ? event.start < today : event.start >= today;
   };
@@ -109,8 +91,6 @@ export default function EventBrowser({
     [events, region, type, when, today]
   );
 
-  /* Counts on the chips describe the other two filters, so a chip never reads zero
-     while showing results — the count is what you would get by clicking it. */
   const countFor = (key: 'region' | 'type', value: string) =>
     events.filter(
       (e) =>
@@ -243,11 +223,6 @@ export default function EventBrowser({
                       <span className={event.venue ? 'muted' : 'muted none'}>
                         {event.venue ?? 'Venue not announced'}
                       </span>
-                      {/*
-                        When you can buy a ticket. The per-event note is what the
-                        organiser said; the month table is Bandai's own guideline and
-                        is labelled as one, because they say it varies by organiser.
-                      */}
                       {event.registrationNote ? (
                         <span className="event-opens">{event.registrationNote}</span>
                       ) : event.opens && !past ? (

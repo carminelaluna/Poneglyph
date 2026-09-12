@@ -3,12 +3,9 @@ import setsJson from '@data/sets.json';
 import filtersJson from '@data/filters.json';
 import metaJson from '@data/meta.json';
 
-/** One printing of a card: the same rules text on a different piece of cardboard. */
 export type Printing = {
   id: string;
-  /** 1 for the original printing, 2+ for each later art. */
   version: number;
-  /** How the printing is named in the interface: `OP01-025`, `OP01-025 V2`, … */
   label: string;
   variant: string;
   rarity: string;
@@ -19,7 +16,6 @@ export type Printing = {
   price: { market: number | null; low: number | null; updated: string | null } | null;
 };
 
-/** A card: the gameplay entity, with every printing of it attached. */
 export type Card = {
   id: string;
   slug: string;
@@ -39,10 +35,8 @@ export type Card = {
   blockNumber: number | null;
   rarity: string;
   rarityCode: string;
-  /** Which formats the card may be played in today. */
   formats: string[];
   standardLegal: boolean;
-  /** `block` when the block allows it, `block-update` for Bandai's published exception. */
   legalBy: 'block' | 'block-update' | null;
   setId: string;
   setCode: string;
@@ -134,7 +128,6 @@ export const getSetCards = (code: string) => bySetCode.get(code) ?? [];
 
 export const CARD_COLORS = ['Red', 'Green', 'Blue', 'Purple', 'Black', 'Yellow'] as const;
 
-/** Cards per colour, in the game's own colour order — drives the spectrum band. */
 export function colorSpectrum() {
   const counts = new Map<string, number>();
   for (const card of cards) for (const c of card.colors) counts.set(c, (counts.get(c) ?? 0) + 1);
@@ -146,8 +139,6 @@ export function colorSpectrum() {
   }));
 }
 
-/* Art URLs live in their own module so client components can use them without
-   pulling the card JSON into the browser bundle. Re-exported for convenience. */
 export { art, artSrcSet, ART_WIDTHS, cdnEnabled, type ArtWidth } from './art';
 
 export const formatPrice = (n: number | null | undefined) =>
