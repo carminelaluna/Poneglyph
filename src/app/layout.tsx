@@ -52,7 +52,20 @@ export const metadata: Metadata = {
     default: 'Poneglyph — ONE PIECE CARD GAME archive',
     template: '%s · Poneglyph',
   },
-  description: `Search every ONE PIECE CARD GAME card by colour, cost, power, counter, attribute, trait, keyword, rarity and set. ${meta.counts.cards.toLocaleString('en-US')} cards, ${meta.counts.printings.toLocaleString('en-US')} printings. Unofficial fan project, not affiliated with Bandai.`,
+  /*
+   * The fallback description, inherited by any page that does not write its own.
+   *
+   * It was 195 characters, and a search engine shows about 160 — so the last third
+   * was written, shipped and never seen by anybody. What it spent that third on was
+   * *"Unofficial fan project, not affiliated with Bandai"*, which every page already
+   * reaches through the footer and the first-visit notice, and which this file is
+   * not the place to restate. The counts stay: they are the one part no other
+   * archive's description can copy.
+   *
+   * The budget is ~160. Both counts are five characters and gain one somewhere past
+   * ten thousand printings, so there is room here for years rather than for months.
+   */
+  description: `Search ${meta.counts.cards.toLocaleString('en-US')} ONE PIECE CARD GAME cards and ${meta.counts.printings.toLocaleString('en-US')} printings by colour, cost, power, counter, trait and set, with the metagame beside them.`,
   keywords: ['One Piece Card Game', 'OPTCG', 'card database', 'card list', 'Leader', 'TCG'],
   openGraph: {
     title: 'Poneglyph — ONE PIECE CARD GAME archive',
@@ -84,6 +97,30 @@ export const metadata: Metadata = {
     images: ['/brand/share-1200x630.png'],
   },
   robots: { index: true, follow: true },
+  /*
+   * The canonical URL of whichever page this is.
+   *
+   * There was none anywhere, which leaves a search engine to pick for itself which
+   * address a page lives at — and this site hands it several chances to pick wrong.
+   * `trailingSlash` is on, so every page has a `/`-terminated address and a bare one;
+   * the metagame views encode their window in the query string, so `/decks/` and
+   * `/decks/?w=30d` are the same page under two URLs; and `basePath` means the whole
+   * site sits one directory deep.
+   *
+   * `'./'` is the only value that can be written once here and be right on all 8,700
+   * pages. Next resolves a leading `./` against the **current** pathname rather than
+   * against the root (`resolveRelativeUrl` in its metadata resolver), then joins
+   * `metadataBase`'s own path — so `/cards` under a base of
+   * `https://…/Poneglyph` comes out as `https://…/Poneglyph/cards/`, basePath and
+   * trailing slash included. A literal `'/'` here would declare every page in the
+   * archive to be the home page, which is worse than declaring nothing.
+   *
+   * No page overrides `alternates`, so this reaches all of them. The exception is
+   * `404.html`, which is also how /event, /player and /deck are served: it carries
+   * the canonical of `/_not-found/`. That costs nothing, because those addresses
+   * answer with a real HTTP 404 and a 404 is not indexed whatever it claims.
+   */
+  alternates: { canonical: './' },
 };
 
 export const viewport: Viewport = {

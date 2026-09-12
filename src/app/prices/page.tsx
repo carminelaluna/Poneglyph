@@ -29,7 +29,7 @@ const stored = history as unknown as Stored;
 export const metadata: Metadata = {
   title: 'Price movers',
   description:
-    'Which ONE PIECE CARD GAME cards gained and lost the most, by percentage and in cash, over the last week and over everything on record. Lowest listed prices, with the days they actually changed.',
+    'Which ONE PIECE CARD GAME cards gained and lost the most, ranked by percentage and in cash, over the last week and over everything on record.',
 };
 
 /**

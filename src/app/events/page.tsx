@@ -48,7 +48,7 @@ const events = eventsJson as Events;
 export const metadata: Metadata = {
   title: 'Events',
   description:
-    'Official ONE PIECE CARD GAME events: Regionals, Finals, Treasure Cups and more, filterable by region and type, with venues, registration links and when registration opens.',
+    'Official ONE PIECE CARD GAME events: Regionals, Finals and Treasure Cups, filterable by region and type, with venues and when registration opens.',
 };
 
 /**

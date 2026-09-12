@@ -6,7 +6,7 @@ import '../decks.css';
 export const metadata: Metadata = {
   title: 'Japanese and English, side by side',
   description:
-    'What is winning in the Japanese ONE PIECE CARD GAME metagame and what is winning in English, counted the same way — share of recorded first places, with the sample beside every figure.',
+    'What is winning in the Japanese ONE PIECE CARD GAME metagame and what is winning in English, counted the same way: share of recorded first places.',
 };
 
 export default function ComparePage() {
