@@ -16,9 +16,11 @@
  *   - **A payload was written empty.** Two writers raced and left a 0 KB index; the
  *     pages that read it said "not found" and nothing failed.
  *
- * So this asks four things instead: the pages answer, the payloads parse and are
- * not empty, the deployed commit is the one that should be deployed, and the
- * archive is not older than it has any reason to be.
+ * So this asks six things instead: the pages answer, the payloads parse and are
+ * not empty, the deployed commit is the one that should be deployed, the archive is
+ * not older than it has any reason to be, every page declares the address it is
+ * actually at, and the file saying how to report a security problem is reachable
+ * and in date.
  *
  * Exit 1 on anything wrong. Nothing here writes.
  */
@@ -102,8 +104,30 @@ const PAYLOADS = [
   { path: '/data/events-official.json', has: (d) => (d.groups ?? d.events ?? []).length > 0 },
 ];
 
+/**
+ * Pages whose `<head>` is checked, and the budget it is checked against.
+ *
+ * Two things here are invisible from inside the build and only wrong once
+ * published. The canonical URL is written once in the root layout as `'./'`, which
+ * Next resolves against each page's own pathname — if that ever resolves to the
+ * root instead, all 8,700 pages declare themselves to be the home page and the
+ * archive quietly stops being indexable as an archive. And a description is a
+ * string nobody reads again: the home page carried 195 characters for months, of
+ * which a search engine shows about 160, so the last third existed only in the
+ * source.
+ *
+ * One page of each kind rather than all of them — this failure is systematic or it
+ * is not there at all.
+ */
+const HEADS = ['/', '/cards/', '/decks/', '/prices/'];
+
+/** Roughly what a search engine shows of a description. Advisory, so this warns. */
+const DESCRIPTION_BUDGET = 160;
+
 const problems = [];
 const note = (m) => console.log(`[live] ${m}`);
+/* Worth saying, not worth a red tick — the budget is advisory. */
+const warn = (m) => console.log(`[live] ::warning::${m}`);
 const fail = (m) => {
   problems.push(m);
   console.log(`[live] ::error::${m}`);
@@ -184,6 +208,56 @@ async function main() {
     }
   } catch (err) {
     fail(`could not read the deck index: ${err.message}`);
+  }
+
+  /* 5 — each page says which address it is, and says it about itself. */
+  let canonical = 0;
+  for (const page of HEADS) {
+    try {
+      const res = await get(page);
+      if (!res.ok) continue; /* already reported by the first check */
+      const head = res.body.slice(0, res.body.indexOf('</head>'));
+
+      const href = head.match(/<link[^>]*rel="canonical"[^>]*href="([^"]+)"/)?.[1] ?? null;
+      const want = `${BASE}${page}`;
+      if (!href) fail(`${page} declares no canonical URL`);
+      else if (href !== want) fail(`${page} says its canonical URL is ${href}, not ${want}`);
+      else canonical++;
+
+      const description = head.match(/<meta name="description" content="([^"]*)"/)?.[1] ?? '';
+      if (!description) fail(`${page} carries no meta description`);
+      else if (description.length > DESCRIPTION_BUDGET) {
+        warn(
+          `${page} has a ${description.length}-character description; ` +
+            `about ${DESCRIPTION_BUDGET} of it is shown`
+        );
+      }
+    } catch (err) {
+      fail(`could not read the head of ${page}: ${err.message}`);
+    }
+  }
+  note(`${canonical}/${HEADS.length} pages declare their own canonical URL`);
+
+  /*
+   * 6 — the way to report a security problem is reachable, and in date.
+   *
+   * build-static.mjs writes it on every deploy, so an expired one does not mean
+   * somebody forgot; it means the site has stopped deploying. The dot-directory is
+   * the part worth asking a live host about: whether GitHub Pages serves one is not
+   * something the build can find out for itself.
+   */
+  try {
+    const res = await get('/.well-known/security.txt');
+    if (!res.ok) fail(`/.well-known/security.txt answered ${res.status}`);
+    else {
+      const expires = Date.parse(res.body.match(/^Expires:[ \t]*(\S+)/m)?.[1] ?? '');
+      if (!Number.isFinite(expires)) fail('security.txt carries no readable Expires');
+      else if (expires < Date.now()) {
+        fail('security.txt has expired — every deploy rewrites it, so nothing has deployed');
+      } else note(`security.txt in date until ${new Date(expires).toISOString().slice(0, 10)}`);
+    }
+  } catch (err) {
+    fail(`could not read security.txt: ${err.message}`);
   }
 
   if (problems.length) {

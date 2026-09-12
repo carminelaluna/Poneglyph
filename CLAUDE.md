@@ -424,6 +424,22 @@ Next already wrote, rather than adding a second one — two groups of one name i
 Eight training crawlers are disallowed in `robots.ts`, `ClaudeBot` among them, which is
 the same request this project honours when it is on the other side of it.
 
+It also writes `security.txt` (RFC 9116), to `.well-known/` and to the root of `out/`.
+`Expires` is a required field and a hand-written one goes stale on a date nobody has in
+their calendar, so it is generated at build: a year out, refreshed by every deploy. The
+address is read out of `src/lib/contact.ts` rather than typed again, and no address
+means no file rather than a guess. `Policy` is deliberately absent — it names a
+disclosure policy and `/legal` is a trademark notice.
+
+**Three root files are only root files on a domain.** `robots.txt`, `sitemap.xml` and
+`security.txt` are read by crawlers and scanners at the **origin** root. On a project
+page the origin is `carminelaluna.github.io`, whose root belongs to a user-page
+repository this project does not have, so all three answer 404 there and 200 under
+`/Poneglyph/`. That is not a bug and not fixable here: the Content-Signal block, the
+eight `Disallow` lines and the sitemap reference reach nothing until there is a custom
+domain or a user-page repository pointing at them. An audit tool calling them missing is
+reading the situation correctly.
+
 `out/cards` holds both the card pages and the mirrored PNGs. The build strips the images
 only; removing the directory takes the archive with it.
 
@@ -671,6 +687,21 @@ export while `NEXT_PUBLIC_BASE_PATH` was set for everyone, so every payload 404e
 **A new top-level route needs a line in `sitemap.ts`**, and nothing enforces it. Six pages
 have been missed that way.
 
+**The canonical URL is `'./'`, written once.** Next resolves a leading `./` against the
+page's own pathname and then joins `metadataBase`'s path, so one line in the root layout
+gives 8,700 pages their own address, basePath and trailing slash included. A literal
+`'/'` there would declare every page in the archive to be the home page — worse than the
+nothing that was there before. No page overrides `alternates`, which is what makes one
+line enough; `404.html` gets `/_not-found/` and that costs nothing, because those
+addresses answer with a real 404 and a 404 is not indexed whatever it claims.
+
+**A meta description has a budget of about 160 characters**, and five pages were over it
+— the home page by 35, which meant a third of it had never been seen by anybody. What
+goes first is the tail, never the subject. `check-live.mjs` measures four pages against
+the budget on the published site, because this is invisible from inside the build: it
+also asserts each of them declares its own canonical, which is the failure mode that
+would otherwise be silent and total.
+
 ---
 
 ## Sources, and what they allow
@@ -745,3 +776,11 @@ session, and `/privacy` and `/legal` both promise in writing that nothing is col
 installing any analytics makes two published pages false. No sticky mobile call to action
 either: the two on the home page are above the fold at 375×812, measured, and a bar that
 follows a reader down a card list is a conversion pattern on a site with nothing to convert.
+
+No `ads.txt`: it authorises sellers of advertising inventory, there is none, and
+`/privacy` and `/legal` both say so in writing. No `ai.txt`: the Content-Signal block in
+`robots.txt` states the same policy in the vocabulary that is actually being adopted, and
+two files saying it is one more chance for them to disagree. No `humans.txt`, which is a
+credits file for a one-person project whose footer already credits it. `llms.txt` is the
+one worth revisiting, and only generated from the same source as `sitemap.ts` — a second
+hand-maintained list of routes on a project that has already missed six.
