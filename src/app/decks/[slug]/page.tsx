@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   if (!a) return { title: 'Archetype not found' };
   return {
     title: `${a.colors.join('/')} ${a.name} decks`,
-    description: `${a.name} (${a.leaderId}) in the ONE PIECE CARD GAME metagame: core list, win rate and tournament decklists over the last 7, 15, 30 or 90 days, or since a set entered play.`,
+    description: `${a.name} (${a.leaderId}) in the ONE PIECE CARD GAME metagame: win rate, share, core list, matchups and tournament decklists.`,
   };
 }
 

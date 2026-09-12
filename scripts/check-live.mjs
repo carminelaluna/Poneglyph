@@ -49,7 +49,7 @@ const PAYLOADS = [
   { path: '/data/events-official.json', has: (d) => (d.groups ?? d.events ?? []).length > 0 },
 ];
 
-const HEADS = ['/', '/cards/', '/decks/', '/prices/'];
+const HEADS = ['/', '/cards/', '/decks/', '/decks/op05-041/', '/prices/'];
 
 const DESCRIPTION_BUDGET = 160;
 
