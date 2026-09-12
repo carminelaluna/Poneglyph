@@ -24,7 +24,7 @@
 
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { loadEnvFiles } from './env.mjs';
 
@@ -249,6 +249,93 @@ ${signed}`);
   console.log(`[static] robots.txt signed — ${SIGNALS}`);
 }
 
+/**
+ * Where to report a security problem — RFC 9116.
+ *
+ * This project takes submissions from strangers, holds accounts, and runs one
+ * Supabase policy between a signed-in reader and everybody else's data. The gap it
+ * closes is the one where somebody competent finds a hole and has nowhere to send
+ * it, so they either post it or drop it. Until now there was nowhere: the contact
+ * address is published on three pages as *"write about this site"*, which is not
+ * where a researcher looks.
+ *
+ * ## Why it is written here rather than kept in public/
+ *
+ * `Expires` is a required field, and the RFC says a consumer should treat an expired
+ * file as stale — so a hand-written one is a file that quietly stops counting on a
+ * date nobody has in their calendar. Generated on every build it cannot go stale
+ * while the site is deploying at all, and a site that has stopped deploying is
+ * caught within forty-eight hours by scripts/check-live.mjs.
+ *
+ * ## Where it lands, and the part that is out of our hands
+ *
+ * The RFC puts this at `/.well-known/security.txt` **on the origin**. Under a
+ * GitHub project page the origin is `carminelaluna.github.io`, which belongs to a
+ * user-page repository this project does not have — the same reason `robots.txt`
+ * and `sitemap.xml` read as missing to anything that probes the root. So both
+ * copies here sit under the base path, which is where the file honestly is, and
+ * `Canonical` says so rather than claiming the root. A custom domain moves all
+ * three to where a scanner looks, in one step and with no code change.
+ */
+async function writeSecurityTxt() {
+  /*
+   * Read out of src/lib/contact.ts rather than typed again. A build script cannot
+   * import TypeScript, and the one thing worse than no security.txt is one naming
+   * an address that stopped being read.
+   */
+  let email = null;
+  try {
+    const source = await readFile(path.resolve('src', 'lib', 'contact.ts'), 'utf8');
+    email = source.match(/CONTACT_EMAIL\s*=\s*'([^']+)'/)?.[1] ?? null;
+  } catch {
+    /* handled below — a missing address is a skip, never a guess. */
+  }
+  if (!email) {
+    console.log('[static] ::warning::no contact address found in src/lib/contact.ts — no security.txt written');
+    return;
+  }
+
+  const site = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/+$/, '');
+  /* A year, which is the longest the RFC recommends, refreshed by every deploy. */
+  const expires = new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString().replace(/\.\d+Z$/, 'Z');
+
+  const body = [
+    '# How to report a security problem with Poneglyph.',
+    '#',
+    '# Unofficial fan project, run by one person. There is no bounty and no SLA;',
+    '# there is somebody who reads the address below and will fix what you find.',
+    '# What is worth reporting: anything that reaches data belonging to another',
+    '# account, any way to publish a tournament result without review, anything',
+    '# that mints a role. The site itself is static files and a JSON archive.',
+    '#',
+    '# Regenerated on every deploy, so Expires below is never stale by neglect.',
+    '',
+    `Contact: mailto:${email}`,
+    `Expires: ${expires}`,
+    'Preferred-Languages: en, it',
+    /*
+     * Both locations, because both are written. A Canonical that does not match
+     * where the file was found is what the RFC tells a consumer to distrust, and
+     * naming the origin root here would be exactly that: the file is not there.
+     *
+     * `Policy` is left out. It points at a disclosure policy, and there is no page
+     * here that is one — /legal is a trademark notice. An optional field aimed at
+     * the nearest page that is not what it asks for is worse than its absence.
+     */
+    ...(site
+      ? [`Canonical: ${site}/.well-known/security.txt`, `Canonical: ${site}/security.txt`]
+      : []),
+    '',
+  ].join('\n');
+
+  await mkdir(path.join(OUT, '.well-known'), { recursive: true });
+  await writeFile(path.join(OUT, '.well-known', 'security.txt'), body);
+  /* The pre-RFC location as well: it is explicitly allowed, and it is what a host
+     that will not serve a dot-directory can still answer. */
+  await writeFile(path.join(OUT, 'security.txt'), body);
+  console.log(`[static] security.txt written, expiring ${expires.slice(0, 10)}`);
+}
+
 async function main() {
   if (!process.env.NEXT_PUBLIC_CDN_URL) {
     console.error(
@@ -307,6 +394,7 @@ async function main() {
   await writeFile(path.join(OUT, '.nojekyll'), '');
 
   await writeRobotsSignals();
+  await writeSecurityTxt();
 
   /*
    * The custom domain, if there is one.
