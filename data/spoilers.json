@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-11T11:12:53.184Z",
+  "generatedAt": "2026-09-13T11:56:07.212Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,11 +8,11 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 27,
-    "named": 22,
+    "cards": 28,
+    "named": 23,
     "articles": 3
   },
-  "durationMs": 2511,
+  "durationMs": 2160,
   "sets": [
     {
       "set": "OP18",
@@ -71,7 +71,7 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 21,
+      "revealed": 22,
       "cards": [
         {
           "id": "EB05-002",
@@ -145,6 +145,13 @@
           "image": null,
           "thumb": "EB05-025.webp",
           "text": "Blue Character C"
+        },
+        {
+          "id": "EB05-027",
+          "name": "Hibari",
+          "image": null,
+          "thumb": "EB05-027.webp",
+          "text": "Blue Character R"
         },
         {
           "id": "EB05-035",
