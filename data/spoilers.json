@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-13T11:56:07.212Z",
+  "generatedAt": "2026-09-14T05:05:09.097Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,11 +8,11 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 28,
-    "named": 23,
+    "cards": 29,
+    "named": 24,
     "articles": 3
   },
-  "durationMs": 2160,
+  "durationMs": 1929,
   "sets": [
     {
       "set": "OP18",
@@ -71,7 +71,7 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 22,
+      "revealed": 23,
       "cards": [
         {
           "id": "EB05-002",
@@ -105,6 +105,13 @@
           "image": null,
           "thumb": "EB05-011.webp",
           "text": "Green Character C"
+        },
+        {
+          "id": "EB05-012",
+          "name": "Camie",
+          "image": null,
+          "thumb": "EB05-012.webp",
+          "text": "Green Character R"
         },
         {
           "id": "EB05-013",
