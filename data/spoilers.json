@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-14T05:05:09.097Z",
+  "generatedAt": "2026-09-15T04:57:28.033Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,11 +8,11 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 29,
-    "named": 24,
+    "cards": 30,
+    "named": 25,
     "articles": 3
   },
-  "durationMs": 1929,
+  "durationMs": 12654,
   "sets": [
     {
       "set": "OP18",
@@ -71,7 +71,7 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 23,
+      "revealed": 24,
       "cards": [
         {
           "id": "EB05-002",
@@ -187,6 +187,13 @@
           "image": null,
           "thumb": "EB05-042.webp",
           "text": "Black Character C 4 Cost / 5000 Power (Special) Land of Wano Counter +2000 [On Play] Draw 2 cards and trash 2 cards from your hand."
+        },
+        {
+          "id": "EB05-044",
+          "name": "Ms. Father's Day",
+          "image": null,
+          "thumb": "EB05-044.webp",
+          "text": "Black Character (R) 2 Cost / 2000 Power [+2000 Counter] {Baroque Works}"
         },
         {
           "id": "EB05-045",
