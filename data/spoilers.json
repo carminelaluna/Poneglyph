@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-15T04:57:28.033Z",
+  "generatedAt": "2026-09-16T13:31:50.270Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,11 +8,11 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 30,
-    "named": 25,
+    "cards": 31,
+    "named": 26,
     "articles": 3
   },
-  "durationMs": 12654,
+  "durationMs": 1964,
   "sets": [
     {
       "set": "OP18",
@@ -71,7 +71,7 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 24,
+      "revealed": 25,
       "cards": [
         {
           "id": "EB05-002",
@@ -158,6 +158,13 @@
           "name": "Hibari",
           "image": null,
           "thumb": "EB05-027.webp",
+          "text": "Blue Character R"
+        },
+        {
+          "id": "EB05-028",
+          "name": "Boa Hancock",
+          "image": null,
+          "thumb": "EB05-028.webp",
           "text": "Blue Character R"
         },
         {
