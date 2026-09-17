@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-16T18:12:47.241Z",
+  "generatedAt": "2026-09-17T07:42:40.822Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,11 +8,11 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 33,
+    "cards": 34,
     "named": 28,
     "articles": 3
   },
-  "durationMs": 2165,
+  "durationMs": 10860,
   "sets": [
     {
       "set": "OP18",
@@ -71,7 +71,7 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 27,
+      "revealed": 28,
       "cards": [
         {
           "id": "EB05-002",
@@ -180,6 +180,13 @@
           "image": null,
           "thumb": "EB05-036.webp",
           "text": "Purple Character 4 Cost / 0 Power +1000 Counter Navy"
+        },
+        {
+          "id": "EB05-037",
+          "name": null,
+          "image": null,
+          "thumb": "EB05-037.webp",
+          "text": "Black Maria Purple Character R"
         },
         {
           "id": "EB05-038",
