@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T07:42:40.822Z",
+  "generatedAt": "2026-09-19T10:52:24.262Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,11 +8,11 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 34,
-    "named": 28,
+    "cards": 35,
+    "named": 29,
     "articles": 3
   },
-  "durationMs": 10860,
+  "durationMs": 16915,
   "sets": [
     {
       "set": "OP18",
@@ -71,7 +71,7 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 28,
+      "revealed": 29,
       "cards": [
         {
           "id": "EB05-002",
@@ -166,6 +166,13 @@
           "image": null,
           "thumb": "EB05-028.webp",
           "text": "Blue Character R"
+        },
+        {
+          "id": "EB05-029",
+          "name": "Feather Cage",
+          "image": null,
+          "thumb": "EB05-029.webp",
+          "text": "Blue Event 5 Cost {Navy} [Main] You may trash 1 card from your hand: Negate the effects of up to one of your opponent's characters with a cost of 6 or less during this turn, and return it to their hand. [Trigger] Draw 2 cards and trash 1 from your hand."
         },
         {
           "id": "EB05-035",
