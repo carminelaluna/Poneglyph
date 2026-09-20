@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-20T00:09:48.376Z",
+  "generatedAt": "2026-09-20T04:48:42.115Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,30 +8,33 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 45,
-    "named": 38,
+    "cards": 48,
+    "named": 30,
     "articles": 3
   },
-  "durationMs": 11044,
+  "durationMs": 9034,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 9,
+      "revealed": 10,
       "cards": [
         {
           "id": "OP18-001",
-          "name": "Karoo",
-          "image": null,
-          "thumb": "OP18-001.webp",
-          "text": "Red / Blue Leader 4 Life / 5000 Power Animal / Alabasta"
+          "name": null,
+          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/op18-001.jpg"
         },
         {
           "id": "OP18-021",
           "name": "Franky",
           "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/OP18-021.jpg"
+        },
+        {
+          "id": "OP18-022",
+          "name": null,
+          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/op18-022-690x1024.jpg"
         },
         {
           "id": "OP18-031",
@@ -41,9 +44,7 @@
         {
           "id": "OP18-041",
           "name": null,
-          "image": null,
-          "thumb": "OP18-041.webp",
-          "text": "Ms. All Sunday Blur Leader 5 Life / 5000 Power Baroque Works"
+          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/op18-041-750x1024.jpg"
         },
         {
           "id": "OP18-060",
@@ -62,10 +63,8 @@
         },
         {
           "id": "OP18-079",
-          "name": "Spandam",
-          "image": null,
-          "thumb": "OP18-079.webp",
-          "text": "Black / Yellow Leader 4 Life / 5000 Power CP9"
+          "name": null,
+          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/op18-079-l.jpeg"
         },
         {
           "id": "OP18-119",
@@ -92,14 +91,12 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 36,
+      "revealed": 38,
       "cards": [
         {
           "id": "EB05-001",
-          "name": "Jewelry Bonney",
-          "image": null,
-          "thumb": "EB05-001.webp",
-          "text": "Red Character SR"
+          "name": null,
+          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-001-st.jpg"
         },
         {
           "id": "EB05-002",
@@ -117,10 +114,8 @@
         },
         {
           "id": "EB05-006",
-          "name": "Miss Buckinham Stussy",
-          "image": null,
-          "thumb": "EB05-006.webp",
-          "text": "Red Character SR"
+          "name": null,
+          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-006-sr.jpg"
         },
         {
           "id": "EB05-007",
@@ -156,6 +151,11 @@
           "text": "Green Character C"
         },
         {
+          "id": "EB05-014",
+          "name": null,
+          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-014-sr.jpg"
+        },
+        {
           "id": "EB05-016",
           "name": null,
           "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/EB05-016_p2.jpg"
@@ -169,10 +169,8 @@
         },
         {
           "id": "EB05-021",
-          "name": "Alvida",
-          "image": null,
-          "thumb": "EB05-021.webp",
-          "text": "Blue Character SR"
+          "name": null,
+          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-021-sr.jpg"
         },
         {
           "id": "EB05-022",
@@ -222,6 +220,11 @@
           "image": null,
           "thumb": "EB05-029.webp",
           "text": "Blue Event 5 Cost {Navy} [Main] You may trash 1 card from your hand: Negate the effects of up to one of your opponent's characters with a cost of 6 or less during this turn, and return it to their hand. [Trigger] Draw 2 cards and trash 1 from your hand."
+        },
+        {
+          "id": "EB05-034",
+          "name": null,
+          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-034-sr.jpg"
         },
         {
           "id": "EB05-035",
@@ -281,10 +284,8 @@
         },
         {
           "id": "EB05-046",
-          "name": "Yamato",
-          "image": null,
-          "thumb": "EB05-046.webp",
-          "text": "Black Character SR"
+          "name": null,
+          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-046-sr.jpg"
         },
         {
           "id": "EB05-047",
@@ -302,10 +303,8 @@
         },
         {
           "id": "EB05-052",
-          "name": "Gloriosa",
-          "image": null,
-          "thumb": "EB05-052.webp",
-          "text": "Yellow Character SR"
+          "name": null,
+          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-052-sr.jpg"
         },
         {
           "id": "EB05-053",
@@ -323,10 +322,8 @@
         },
         {
           "id": "EB05-055",
-          "name": "Nami",
-          "image": null,
-          "thumb": "EB05-055.webp",
-          "text": "Yellow Character SR"
+          "name": null,
+          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-055-sr.jpg"
         },
         {
           "id": "EB05-056",
