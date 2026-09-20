@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-19T10:52:24.262Z",
+  "generatedAt": "2026-09-20T00:09:48.376Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,19 +8,26 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 35,
-    "named": 29,
+    "cards": 45,
+    "named": 38,
     "articles": 3
   },
-  "durationMs": 16915,
+  "durationMs": 11044,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 6,
+      "revealed": 9,
       "cards": [
+        {
+          "id": "OP18-001",
+          "name": "Karoo",
+          "image": null,
+          "thumb": "OP18-001.webp",
+          "text": "Red / Blue Leader 4 Life / 5000 Power Animal / Alabasta"
+        },
         {
           "id": "OP18-021",
           "name": "Franky",
@@ -30,6 +37,13 @@
           "id": "OP18-031",
           "name": "Nico Robin",
           "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/OP18-031_p2.jpg"
+        },
+        {
+          "id": "OP18-041",
+          "name": null,
+          "image": null,
+          "thumb": "OP18-041.webp",
+          "text": "Ms. All Sunday Blur Leader 5 Life / 5000 Power Baroque Works"
         },
         {
           "id": "OP18-060",
@@ -45,6 +59,13 @@
           "id": "OP18-078",
           "name": "Mini-Merry",
           "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/op18-078.jpg"
+        },
+        {
+          "id": "OP18-079",
+          "name": "Spandam",
+          "image": null,
+          "thumb": "OP18-079.webp",
+          "text": "Black / Yellow Leader 4 Life / 5000 Power CP9"
         },
         {
           "id": "OP18-119",
@@ -71,8 +92,15 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 29,
+      "revealed": 36,
       "cards": [
+        {
+          "id": "EB05-001",
+          "name": "Jewelry Bonney",
+          "image": null,
+          "thumb": "EB05-001.webp",
+          "text": "Red Character SR"
+        },
         {
           "id": "EB05-002",
           "name": "Doll",
@@ -86,6 +114,13 @@
           "image": null,
           "thumb": "EB05-005.webp",
           "text": "Red Character C"
+        },
+        {
+          "id": "EB05-006",
+          "name": "Miss Buckinham Stussy",
+          "image": null,
+          "thumb": "EB05-006.webp",
+          "text": "Red Character SR"
         },
         {
           "id": "EB05-007",
@@ -133,6 +168,13 @@
           "text": "Green Characters C"
         },
         {
+          "id": "EB05-021",
+          "name": "Alvida",
+          "image": null,
+          "thumb": "EB05-021.webp",
+          "text": "Blue Character SR"
+        },
+        {
           "id": "EB05-022",
           "name": "Octopako",
           "image": null,
@@ -145,6 +187,13 @@
           "image": null,
           "thumb": "EB05-023.webp",
           "text": "Blue Character"
+        },
+        {
+          "id": "EB05-024",
+          "name": "Shirahoshi",
+          "image": null,
+          "thumb": "EB05-024.webp",
+          "text": "Green Character SR"
         },
         {
           "id": "EB05-025",
@@ -231,6 +280,13 @@
           "text": "Black Character C"
         },
         {
+          "id": "EB05-046",
+          "name": "Yamato",
+          "image": null,
+          "thumb": "EB05-046.webp",
+          "text": "Black Character SR"
+        },
+        {
           "id": "EB05-047",
           "name": "Ripley",
           "image": null,
@@ -245,6 +301,13 @@
           "text": "Yellow Character C"
         },
         {
+          "id": "EB05-052",
+          "name": "Gloriosa",
+          "image": null,
+          "thumb": "EB05-052.webp",
+          "text": "Yellow Character SR"
+        },
+        {
           "id": "EB05-053",
           "name": "Charlotte Praline",
           "image": null,
@@ -257,6 +320,13 @@
           "image": null,
           "thumb": "EB05-054.webp",
           "text": "Yellow Character C"
+        },
+        {
+          "id": "EB05-055",
+          "name": "Nami",
+          "image": null,
+          "thumb": "EB05-055.webp",
+          "text": "Yellow Character SR"
         },
         {
           "id": "EB05-056",
