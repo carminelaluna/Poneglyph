@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-20T04:48:42.115Z",
+  "generatedAt": "2026-09-20T11:15:39.516Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,11 +8,11 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 48,
-    "named": 30,
+    "cards": 49,
+    "named": 31,
     "articles": 3
   },
-  "durationMs": 9034,
+  "durationMs": 2186,
   "sets": [
     {
       "set": "OP18",
@@ -91,7 +91,7 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 38,
+      "revealed": 39,
       "cards": [
         {
           "id": "EB05-001",
@@ -166,6 +166,13 @@
           "image": null,
           "thumb": "EB05-017.webp",
           "text": "Green Characters C"
+        },
+        {
+          "id": "EB05-020",
+          "name": "My name is Shirahoshi!!",
+          "image": null,
+          "thumb": "EB05-020.webp",
+          "text": "Green Event R"
         },
         {
           "id": "EB05-021",
