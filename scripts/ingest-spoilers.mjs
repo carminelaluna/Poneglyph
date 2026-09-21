@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { writeFile, readFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
-import { cleanMarkup } from './discord.mjs';
+import { cleanMarkup, corrected } from './discord.mjs';
 import { SPOILER_SOURCES } from './sources.mjs';
 import { BACKOFF, exitOnFailure, finalError, refusal, TURNED_AWAY, writtenAt } from './refusal.mjs';
 
@@ -197,6 +197,7 @@ async function main() {
 
   if (fromDiscord?.sets?.length) {
     let added = 0;
+    let completed = 0;
     for (const set of fromDiscord.sets) {
       if (released.has(set.set.toUpperCase())) continue;
 
@@ -210,19 +211,28 @@ async function main() {
         });
       }
       const entry = upcoming.get(set.set);
-      for (const card of set.cards) {
-        if (entry.cards.has(card.id)) continue;
+      for (const card of set.cards.map(corrected)) {
+        const text = card.text ? cleanMarkup(card.text) || null : null;
+        const known = entry.cards.get(card.id);
+        if (known) {
+          const before = `${known.name}|${known.text}`;
+          if (!known.name && card.name) known.name = card.name;
+          if (!known.text && text) known.text = text;
+          if (`${known.name}|${known.text}` !== before) completed++;
+          continue;
+        }
         entry.cards.set(card.id, {
           id: card.id,
           name: card.name ?? null,
           image: null,
           thumb: card.thumb ?? null,
-          text: card.text ? cleanMarkup(card.text) || null : null,
+          text,
         });
         added++;
       }
     }
     log(`  ${added} cards from Discord that the articles did not have`);
+    log(`  ${completed} cards the articles had, named or described from Discord`);
   }
 
   const spoilers = [...upcoming.values()]
