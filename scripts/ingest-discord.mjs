@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { writeFile, readFile, mkdir, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
-import { filesOf, newestId, revealsFromMessages, textOf } from './discord.mjs';
+import { corrected, filesOf, newestId, revealsFromMessages, textOf } from './discord.mjs';
 import { BACKOFF, exitOnFailure, finalError, refusal, TURNED_AWAY, writtenAt } from './refusal.mjs';
 
 const args = process.argv.slice(2);
@@ -246,8 +246,9 @@ async function main() {
     .then((raw) => JSON.parse(raw))
     .catch(() => ({ sets: [] }));
 
-  const merged = new Map(previous.sets?.map((s) => [s.set, s]) ?? []);
-  for (const set of sets) {
+  const fixIds = (s) => ({ ...s, cards: s.cards.map(corrected) });
+  const merged = new Map(previous.sets?.map((s) => [s.set, fixIds(s)]) ?? []);
+  for (const set of sets.map(fixIds)) {
     const held = merged.get(set.set);
     if (!held) {
       merged.set(set.set, set);

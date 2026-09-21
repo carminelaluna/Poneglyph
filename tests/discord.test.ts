@@ -9,6 +9,7 @@ import {
   cardIds,
   cardsFromMessage,
   cleanMarkup,
+  corrected,
   describe as describeCard,
   newestId,
   revealsFromMessages,
@@ -279,5 +280,31 @@ describe('the ingest script', () => {
       assert.match(err.stderr ?? '', /DISCORD_BOT_TOKEN and DISCORD_SPOILER_CHANNEL/);
       return true;
     });
+  });
+});
+
+describe('a reveal posted under the wrong number', () => {
+  const shirahoshi = { id: 'EB05-024', source: '1551022414694064158', name: 'Shirahoshi' };
+
+  it('is filed under the number the card actually has', () => {
+    const card = corrected(shirahoshi);
+    assert.equal(card.id, 'EB05-014');
+    assert.equal(card.name, 'Shirahoshi');
+    assert.equal(card.source, shirahoshi.source);
+  });
+
+  it('leaves the real EB05-024 alone when it is revealed', () => {
+    const real = { id: 'EB05-024', source: '1600000000000000000', name: 'Someone else' };
+    assert.equal(corrected(real), real);
+  });
+
+  it('touches no other card, even from the same message', () => {
+    const other = { id: 'EB05-001', source: '1551022414694064158' };
+    assert.equal(corrected(other), other);
+  });
+
+  it('does not change the card it was handed', () => {
+    corrected(shirahoshi);
+    assert.equal(shirahoshi.id, 'EB05-024');
   });
 });

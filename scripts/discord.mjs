@@ -149,6 +149,13 @@ export function revealsFromMessages(messages, released = new Set()) {
     .sort((a, b) => String(b.last ?? '').localeCompare(String(a.last ?? '')));
 }
 
+const CORRECTIONS = new Map([['1551022414694064158:EB05-024', 'EB05-014']]);
+
+export function corrected(card) {
+  const id = CORRECTIONS.get(`${card.source}:${card.id}`);
+  return id ? { ...card, id } : card;
+}
+
 export function newestId(messages) {
   let newest = null;
   for (const message of messages) {
