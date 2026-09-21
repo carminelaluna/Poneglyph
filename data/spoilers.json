@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-20T11:15:39.516Z",
+  "generatedAt": "2026-09-21T04:58:58.949Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,11 +8,11 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 49,
-    "named": 31,
+    "cards": 50,
+    "named": 32,
     "articles": 3
   },
-  "durationMs": 2186,
+  "durationMs": 2511,
   "sets": [
     {
       "set": "OP18",
@@ -91,7 +91,7 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 39,
+      "revealed": 40,
       "cards": [
         {
           "id": "EB05-001",
@@ -123,6 +123,13 @@
           "image": null,
           "thumb": "EB05-007.webp",
           "text": "Red Character C"
+        },
+        {
+          "id": "EB05-009",
+          "name": "Fight and Die with Me!!!",
+          "image": null,
+          "thumb": "EB05-009.webp",
+          "text": "Red Event R"
         },
         {
           "id": "EB05-010",
