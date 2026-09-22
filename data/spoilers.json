@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-21T04:58:58.949Z",
+  "generatedAt": "2026-09-22T04:59:45.563Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,23 +8,30 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 50,
-    "named": 32,
+    "cards": 51,
+    "named": 33,
     "articles": 3
   },
-  "durationMs": 2511,
+  "durationMs": 2236,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 10,
+      "revealed": 11,
       "cards": [
         {
           "id": "OP18-001",
           "name": null,
           "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/op18-001.jpg"
+        },
+        {
+          "id": "OP18-003",
+          "name": "Sea Cat",
+          "image": null,
+          "thumb": "OP18-003.webp",
+          "text": "Red Character C"
         },
         {
           "id": "OP18-021",
