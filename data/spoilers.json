@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-22T04:59:45.563Z",
+  "generatedAt": "2026-09-23T07:47:35.929Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -7,19 +7,19 @@
     "category": "Card Leaks"
   },
   "counts": {
-    "sets": 2,
-    "cards": 51,
-    "named": 33,
+    "sets": 3,
+    "cards": 53,
+    "named": 35,
     "articles": 3
   },
-  "durationMs": 2236,
+  "durationMs": 10646,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 11,
+      "revealed": 12,
       "cards": [
         {
           "id": "OP18-001",
@@ -42,6 +42,13 @@
           "id": "OP18-022",
           "name": null,
           "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/op18-022-690x1024.jpg"
+        },
+        {
+          "id": "OP18-028",
+          "name": "Chimney",
+          "image": null,
+          "thumb": "OP18-028.webp",
+          "text": "Green Character C"
         },
         {
           "id": "OP18-031",
@@ -369,6 +376,24 @@
         }
       ],
       "lastCoverage": "2026-08-23T08:36:00"
+    },
+    {
+      "set": "EBO5",
+      "code": "EBO-5",
+      "release": null,
+      "kind": "Extra booster",
+      "revealed": 1,
+      "cards": [
+        {
+          "id": "EBO5-048",
+          "name": "Hedgehog Stinger",
+          "image": null,
+          "thumb": "EBO5-048.webp",
+          "text": "Black Event R"
+        }
+      ],
+      "articles": [],
+      "lastCoverage": null
     }
   ],
   "released": [
