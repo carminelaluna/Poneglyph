@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-24T11:38:46.275Z",
+  "generatedAt": "2026-09-24T17:05:35.014Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,11 +8,11 @@
   },
   "counts": {
     "sets": 3,
-    "cards": 54,
-    "named": 36,
+    "cards": 57,
+    "named": 39,
     "articles": 3
   },
-  "durationMs": 13272,
+  "durationMs": 3452,
   "sets": [
     {
       "set": "OP18",
@@ -112,7 +112,7 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 40,
+      "revealed": 43,
       "cards": [
         {
           "id": "EB05-001",
@@ -124,6 +124,13 @@
           "name": "Doll",
           "image": null,
           "thumb": "EB05-002.webp",
+          "text": "Red Character R"
+        },
+        {
+          "id": "EB05-004",
+          "name": "Baby 5",
+          "image": null,
+          "thumb": "EB05-004.webp",
           "text": "Red Character R"
         },
         {
@@ -304,6 +311,13 @@
           "text": "Black Character C 4 Cost / 5000 Power (Special) Land of Wano Counter +2000 [On Play] Draw 2 cards and trash 2 cards from your hand."
         },
         {
+          "id": "EB05-043",
+          "name": "Perona",
+          "image": null,
+          "thumb": "EB05-043.webp",
+          "text": "Black Character R"
+        },
+        {
           "id": "EB05-044",
           "name": "Ms. Father's Day",
           "image": null,
@@ -328,6 +342,13 @@
           "image": null,
           "thumb": "EB05-047.webp",
           "text": "Black character 4 Cost / 4000 Power [+2000 Counter]"
+        },
+        {
+          "id": "EB05-050",
+          "name": "Atlas",
+          "image": null,
+          "thumb": "EB05-050.webp",
+          "text": "Yellow Character R"
         },
         {
           "id": "EB05-051",
