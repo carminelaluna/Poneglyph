@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-23T07:47:35.929Z",
+  "generatedAt": "2026-09-24T11:38:46.275Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 3,
-    "cards": 53,
-    "named": 35,
+    "cards": 54,
+    "named": 36,
     "articles": 3
   },
-  "durationMs": 10646,
+  "durationMs": 13272,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 12,
+      "revealed": 13,
       "cards": [
         {
           "id": "OP18-001",
@@ -59,6 +59,13 @@
           "id": "OP18-041",
           "name": null,
           "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/op18-041-750x1024.jpg"
+        },
+        {
+          "id": "OP18-056",
+          "name": "Mr.13 & Ms.Friday",
+          "image": null,
+          "thumb": "OP18-056.webp",
+          "text": "Blue Character C"
         },
         {
           "id": "OP18-060",
