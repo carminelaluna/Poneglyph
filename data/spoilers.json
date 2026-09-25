@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-24T17:14:07.581Z",
+  "generatedAt": "2026-09-25T11:44:47.746Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 3,
-    "cards": 57,
-    "named": 39,
+    "cards": 58,
+    "named": 40,
     "articles": 3
   },
-  "durationMs": 2192,
+  "durationMs": 10598,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 13,
+      "revealed": 14,
       "cards": [
         {
           "id": "OP18-001",
@@ -76,6 +76,13 @@
           "id": "OP18-065",
           "name": null,
           "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/OP18-065_p1.jpg"
+        },
+        {
+          "id": "OP18-066",
+          "name": "Zambai",
+          "image": null,
+          "thumb": "OP18-066.webp",
+          "text": "Purple Character C"
         },
         {
           "id": "OP18-078",
