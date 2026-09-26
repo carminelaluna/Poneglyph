@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-25T22:30:39.975Z",
+  "generatedAt": "2026-09-26T12:17:33.335Z",
   "source": {
     "id": "limitless",
     "label": "Limitless TCG",
@@ -23,13 +23,13 @@
     "requests": 7
   },
   "coverage": {
-    "tournamentsRead": 2394,
+    "tournamentsRead": 2395,
     "oldest": "2023-03-23T23:15:00.000Z",
     "newest": "2026-09-24T19:00:00.000Z"
   },
   "filters": {
     "minPlayers": 8,
-    "since": "2026-06-25"
+    "since": "2026-06-26"
   },
   "venues": {
     "simulator": 429,
@@ -46,5 +46,5 @@
     "regional": 30,
     "treasure": 12
   },
-  "durationMs": 1413
+  "durationMs": 1647
 }
