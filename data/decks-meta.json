@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-27T22:21:12.493Z",
+  "generatedAt": "2026-09-28T15:38:13.956Z",
   "source": {
     "id": "limitless",
     "label": "Limitless TCG",
@@ -29,7 +29,7 @@
   },
   "filters": {
     "minPlayers": 8,
-    "since": "2026-06-27"
+    "since": "2026-06-28"
   },
   "venues": {
     "offline": 228,
@@ -46,5 +46,5 @@
     "regional": 30,
     "treasure": 12
   },
-  "durationMs": 2214
+  "durationMs": 1520
 }
