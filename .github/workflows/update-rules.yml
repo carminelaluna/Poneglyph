@@ -1,7 +1,13 @@
 name: Update rules data
 
-# The banlist changes rarely but matters immediately when it does, and Japanese
-# deck-list pages gain entries daily. Both are cheap, so they share a schedule.
+# The banlist changes rarely and matters immediately when it does.
+#
+# This used to run the Top Decks ingest as well, on the grounds that both were
+# cheap. They are, but they do not fail the same way: Top Decks is fetched from a
+# host that filters GitHub's addresses, and when that ingest went red the commit
+# step below was never reached - so the banlist was rebuilt and discarded every
+# eight hours for five days while the published list stayed on April's. It has
+# its own workflow now, `Update Top Decks archives`.
 on:
   schedule:
     - cron: '25 */8 * * *' # every 8 hours
@@ -23,20 +29,11 @@ jobs:
         with:
           node-version: 22
 
-      # Each refuses to write a broken result, so a bad answer here leaves the last
-      # good data in place rather than clearing the page.
-      #
-      # That was aspirational for the Top Decks ingest until it was not: this host
-      # answers some datacenter IPs with a challenge, and on 2026-09-02 it served
-      # every one of its forty pages to this runner as a clean 200 holding no
-      # decks. The ingest wrote both corpora away to nothing and build-indexes
-      # then died on a null date, which is the only reason the commit step never
-      # ran. `scripts/corpus-guard.mjs` is the check that was missing, and it
-      # warns rather than failing — a refusal upstream is not a breakage here,
-      # and a job that goes red every eight hours for someone else's filter is a
-      # job nobody reads.
+      # Refuses to write a broken result, so a bad answer leaves the last good
+      # banlist in place rather than clearing the page. An entirely empty parse
+      # fails instead, because it means the layout changed - and a banlist with
+      # nothing on it is a claim rather than an absence.
       - run: node scripts/ingest-banlist.mjs
-      - run: node scripts/ingest-topdecks.mjs
 
       # Region indexes are derived from every corpus, so they rebuild after any ingest.
       - run: node scripts/build-indexes.mjs
@@ -56,5 +53,5 @@ jobs:
             echo 'Nothing changed.'
             exit 0
           fi
-          git commit -m 'data: refresh banlist and Top Decks archives'
+          git commit -m 'data: refresh banlist'
           git push

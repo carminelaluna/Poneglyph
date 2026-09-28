@@ -1,0 +1,63 @@
+name: Update Top Decks archives
+
+# Split out of `Update rules data`, because the two ingests that shared that job
+# do not fail the same way and one was taking the other hostage.
+#
+# onepiecetopdecks.com answers GitHub's datacenter addresses with a clean 200
+# holding no links. It did it on 2026-09-02 and has done it again since
+# 2026-09-23; from a home connection the same page serves 156 KB and forty-nine
+# links, so it is their filter rather than our parser. corpus-guard.mjs catches
+# the empty answer and refusal.mjs turns it red once the data passes 72 hours,
+# which is right and is not something this repository can fix.
+#
+# What was wrong is what that took with it. The banlist ingest ran first in the
+# same job and succeeded every time; the commit step ran last and was never
+# reached. For five days the banlist was rebuilt and thrown away while the
+# published one stayed on April's list. One ingest must not be able to do that
+# to another.
+#
+# Daily, not three times a day. The archive gains entries at most daily, so the
+# old cadence bought nothing and cost three red ticks a day for somebody else's
+# filter - and a job that goes red on a schedule nobody believes is a job nobody
+# reads.
+on:
+  schedule:
+    - cron: '45 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-topdecks
+  cancel-in-progress: true
+
+jobs:
+  topdecks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      # Refuses to write a broken result: an index page carrying no links is an
+      # upstream decision and not an empty archive, so the corpus already on disk
+      # stays exactly where it is.
+      - run: node scripts/ingest-topdecks.mjs
+
+      # Region indexes are derived from every corpus, so they rebuild after any ingest.
+      - run: node scripts/build-indexes.mjs
+
+      - name: Commit what moved
+        run: |
+          git config user.name 'poneglyph-bot'
+          git config user.email 'poneglyph-bot@users.noreply.github.com'
+          git add data public/data
+          if ! node scripts/substantive-change.mjs; then
+            git reset
+            echo 'Nothing changed.'
+            exit 0
+          fi
+          git commit -m 'data: refresh Top Decks archives'
+          git push

@@ -37,6 +37,7 @@ on:
       - Update decklists
       - Update card archive
       - Update rules data
+      - Update Top Decks archives
       - Update spoilers
       - Update spoilers from Discord
       - Refresh prices
