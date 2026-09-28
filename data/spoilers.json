@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-28T05:27:17.859Z",
+  "generatedAt": "2026-09-28T23:11:34.565Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -7,12 +7,12 @@
     "category": "Card Leaks"
   },
   "counts": {
-    "sets": 3,
-    "cards": 61,
-    "named": 43,
+    "sets": 2,
+    "cards": 60,
+    "named": 52,
     "articles": 3
   },
-  "durationMs": 2153,
+  "durationMs": 1998,
   "sets": [
     {
       "set": "OP18",
@@ -23,8 +23,9 @@
       "cards": [
         {
           "id": "OP18-001",
-          "name": null,
-          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/op18-001.jpg"
+          "name": "Karoo",
+          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/op18-001.jpg",
+          "text": "Red / Blue Leader 4 Life / 5000 Power Animal / Alabasta"
         },
         {
           "id": "OP18-003",
@@ -65,7 +66,8 @@
         {
           "id": "OP18-041",
           "name": null,
-          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/op18-041-750x1024.jpg"
+          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/op18-041-750x1024.jpg",
+          "text": "Ms. All Sunday Blur Leader 5 Life / 5000 Power Baroque Works"
         },
         {
           "id": "OP18-056",
@@ -98,8 +100,9 @@
         },
         {
           "id": "OP18-079",
-          "name": null,
-          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/op18-079-l.jpeg"
+          "name": "Spandam",
+          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/op18-079-l.jpeg",
+          "text": "Black / Yellow Leader 4 Life / 5000 Power CP9"
         },
         {
           "id": "OP18-086",
@@ -144,8 +147,9 @@
       "cards": [
         {
           "id": "EB05-001",
-          "name": null,
-          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-001-st.jpg"
+          "name": "Jewelry Bonney",
+          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-001-st.jpg",
+          "text": "Red Character SR"
         },
         {
           "id": "EB05-002",
@@ -170,8 +174,9 @@
         },
         {
           "id": "EB05-006",
-          "name": null,
-          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-006-sr.jpg"
+          "name": "Miss Buckinham Stussy",
+          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-006-sr.jpg",
+          "text": "Red Character SR"
         },
         {
           "id": "EB05-007",
@@ -215,8 +220,9 @@
         },
         {
           "id": "EB05-014",
-          "name": null,
-          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-014-sr.jpg"
+          "name": "Shirahoshi",
+          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-014-sr.jpg",
+          "text": "Green Character SR"
         },
         {
           "id": "EB05-016",
@@ -239,8 +245,9 @@
         },
         {
           "id": "EB05-021",
-          "name": null,
-          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-021-sr.jpg"
+          "name": "Alvida",
+          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-021-sr.jpg",
+          "text": "Blue Character SR"
         },
         {
           "id": "EB05-022",
@@ -255,13 +262,6 @@
           "image": null,
           "thumb": "EB05-023.webp",
           "text": "Blue Character"
-        },
-        {
-          "id": "EB05-024",
-          "name": "Shirahoshi",
-          "image": null,
-          "thumb": "EB05-024.webp",
-          "text": "Green Character SR"
         },
         {
           "id": "EB05-025",
@@ -293,8 +293,9 @@
         },
         {
           "id": "EB05-034",
-          "name": null,
-          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-034-sr.jpg"
+          "name": "Sugar",
+          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-034-sr.jpg",
+          "text": "Purple Character SR"
         },
         {
           "id": "EB05-035",
@@ -361,8 +362,9 @@
         },
         {
           "id": "EB05-046",
-          "name": null,
-          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-046-sr.jpg"
+          "name": "Yamato",
+          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-046-sr.jpg",
+          "text": "Black Character SR"
         },
         {
           "id": "EB05-047",
@@ -370,6 +372,13 @@
           "image": null,
           "thumb": "EB05-047.webp",
           "text": "Black character 4 Cost / 4000 Power [+2000 Counter]"
+        },
+        {
+          "id": "EB05-048",
+          "name": "Hedgehog Stinger",
+          "image": null,
+          "thumb": "EBO5-048.webp",
+          "text": "Black Event R"
         },
         {
           "id": "EB05-050",
@@ -387,8 +396,9 @@
         },
         {
           "id": "EB05-052",
-          "name": null,
-          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-052-sr.jpg"
+          "name": "Gloriosa",
+          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-052-sr.jpg",
+          "text": "Yellow Character SR"
         },
         {
           "id": "EB05-053",
@@ -406,8 +416,9 @@
         },
         {
           "id": "EB05-055",
-          "name": null,
-          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-055-sr.jpg"
+          "name": "Nami",
+          "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-055-sr.jpg",
+          "text": "Yellow Character SR"
         },
         {
           "id": "EB05-056",
@@ -432,24 +443,6 @@
         }
       ],
       "lastCoverage": "2026-08-23T08:36:00"
-    },
-    {
-      "set": "EBO5",
-      "code": "EBO-5",
-      "release": null,
-      "kind": "Extra booster",
-      "revealed": 1,
-      "cards": [
-        {
-          "id": "EBO5-048",
-          "name": "Hedgehog Stinger",
-          "image": null,
-          "thumb": "EBO5-048.webp",
-          "text": "Black Event R"
-        }
-      ],
-      "articles": [],
-      "lastCoverage": null
     }
   ],
   "released": [
