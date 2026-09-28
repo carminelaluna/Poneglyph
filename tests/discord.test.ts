@@ -6,6 +6,7 @@ import path from 'node:path';
 import { describe, it } from 'node:test';
 import { promisify } from 'node:util';
 import {
+  canonicalId,
   cardIds,
   cardsFromMessage,
   cleanMarkup,
@@ -306,5 +307,39 @@ describe('a reveal posted under the wrong number', () => {
   it('does not change the card it was handed', () => {
     corrected(shirahoshi);
     assert.equal(shirahoshi.id, 'EB05-024');
+  });
+});
+
+describe('a letter O typed where the set number goes', () => {
+  it('is a zero, because no set code has a letter there', () => {
+    assert.equal(canonicalId('EBO5-048'), 'EB05-048');
+    assert.equal(canonicalId('OPO8-001'), 'OP08-001');
+  });
+
+  it('leaves an id that is already right exactly as it is', () => {
+    for (const id of ['EB05-048', 'OP18-001', 'ST36-002', 'PRB01-004', 'P-117']) {
+      assert.equal(canonicalId(id), id);
+    }
+  });
+
+  it('does not touch the letters of the set itself', () => {
+    assert.equal(canonicalId('OP18-001'), 'OP18-001');
+    assert.equal(canonicalId('OP01-025'), 'OP01-025');
+  });
+
+  it('hands back anything it cannot read, rather than guessing', () => {
+    assert.equal(canonicalId('not-a-card'), 'not-a-card');
+    assert.equal(canonicalId(''), '');
+  });
+
+  it('is applied where a number is read out of a message', () => {
+    assert.deepEqual([...cardIds('reveal: EBO5-048 Hedgehog Stinger')], ['EB05-048']);
+  });
+
+  it('re-files a stored reveal that carries the typo', () => {
+    const card = { id: 'EBO5-048', source: '1700000000000000000', name: 'Hedgehog Stinger' };
+    assert.equal(corrected(card).id, 'EB05-048');
+    assert.equal(corrected(card).name, 'Hedgehog Stinger');
+    assert.equal(card.id, 'EBO5-048');
   });
 });

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { writeFile, readFile, mkdir, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
-import { corrected, filesOf, newestId, revealsFromMessages, textOf } from './discord.mjs';
+import { corrected, filesOf, newestId, revealsFromMessages, setOf, textOf } from './discord.mjs';
 import { BACKOFF, exitOnFailure, finalError, refusal, TURNED_AWAY, writtenAt } from './refusal.mjs';
 
 const args = process.argv.slice(2);
@@ -246,9 +246,25 @@ async function main() {
     .then((raw) => JSON.parse(raw))
     .catch(() => ({ sets: [] }));
 
-  const fixIds = (s) => ({ ...s, cards: s.cards.map(corrected) });
-  const merged = new Map(previous.sets?.map((s) => [s.set, fixIds(s)]) ?? []);
-  for (const set of sets.map(fixIds)) {
+  const regroup = (list) => {
+    const at = new Map();
+    for (const group of list ?? []) {
+      for (const raw of group.cards ?? []) {
+        const card = corrected(raw);
+        const name = setOf(card.id);
+        if (!at.has(name)) {
+          at.set(name, { set: name, cards: [], first: group.first ?? null, last: group.last ?? null });
+        }
+        const held = at.get(name);
+        held.cards.push(card);
+        if (group.first && (!held.first || group.first < held.first)) held.first = group.first;
+        if (group.last && (!held.last || group.last > held.last)) held.last = group.last;
+      }
+    }
+    return [...at.values()];
+  };
+  const merged = new Map(regroup(previous.sets).map((s) => [s.set, s]));
+  for (const set of regroup(sets)) {
     const held = merged.get(set.set);
     if (!held) {
       merged.set(set.set, set);

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { writeFile, readFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
-import { cleanMarkup, corrected } from './discord.mjs';
+import { cleanMarkup, corrected, setOf } from './discord.mjs';
 import { SPOILER_SOURCES } from './sources.mjs';
 import { BACKOFF, exitOnFailure, finalError, refusal, TURNED_AWAY, writtenAt } from './refusal.mjs';
 
@@ -198,20 +198,21 @@ async function main() {
   if (fromDiscord?.sets?.length) {
     let added = 0;
     let completed = 0;
-    for (const set of fromDiscord.sets) {
-      if (released.has(set.set.toUpperCase())) continue;
+    for (const group of fromDiscord.sets) {
+      for (const card of group.cards.map(corrected)) {
+        const set = setOf(card.id);
+        if (released.has(set.toUpperCase())) continue;
 
-      if (!upcoming.has(set.set)) {
-        upcoming.set(set.set, {
-          set: set.set,
-          code: set.set.replace(/^([A-Z]+)(\d+)$/, '$1-$2'),
-          release: null,
-          cards: new Map(),
-          articles: [],
-        });
-      }
-      const entry = upcoming.get(set.set);
-      for (const card of set.cards.map(corrected)) {
+        if (!upcoming.has(set)) {
+          upcoming.set(set, {
+            set,
+            code: set.replace(/^([A-Z]+)(\d+)$/, '$1-$2'),
+            release: null,
+            cards: new Map(),
+            articles: [],
+          });
+        }
+        const entry = upcoming.get(set);
         const text = card.text ? cleanMarkup(card.text) || null : null;
         const known = entry.cards.get(card.id);
         if (known) {

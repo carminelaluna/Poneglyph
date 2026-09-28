@@ -1,9 +1,19 @@
 const CARD_ID = /\b([A-Z]{1,4}\d{0,2})-(\d{3})(?![\dx])/gi;
 
+const SET_TOKEN = /^[A-Z]{1,4}(?:\d{2})?$/;
+
+export function canonicalId(id) {
+  const m = /^([A-Z]{1,4}[0-9O]{0,2})-(\d{3})$/.exec(String(id ?? '').toUpperCase());
+  if (!m) return id;
+  if (SET_TOKEN.test(m[1])) return `${m[1]}-${m[2]}`;
+  const fixed = m[1].replace(/O(?=[0-9O]*$)/g, '0');
+  return SET_TOKEN.test(fixed) ? `${fixed}-${m[2]}` : `${m[1]}-${m[2]}`;
+}
+
 export function cardIds(text) {
   const out = new Set();
   for (const m of String(text ?? '').matchAll(CARD_ID)) {
-    out.add(`${m[1].toUpperCase()}-${m[2]}`);
+    out.add(canonicalId(`${m[1].toUpperCase()}-${m[2]}`));
   }
   return out;
 }
@@ -152,8 +162,8 @@ export function revealsFromMessages(messages, released = new Set()) {
 const CORRECTIONS = new Map([['1551022414694064158:EB05-024', 'EB05-014']]);
 
 export function corrected(card) {
-  const id = CORRECTIONS.get(`${card.source}:${card.id}`);
-  return id ? { ...card, id } : card;
+  const id = CORRECTIONS.get(`${card.source}:${card.id}`) ?? canonicalId(card.id);
+  return id === card.id ? card : { ...card, id };
 }
 
 export function newestId(messages) {
