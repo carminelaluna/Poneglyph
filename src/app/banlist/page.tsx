@@ -15,9 +15,18 @@ type Entry = {
   known: boolean;
 };
 
+type Announced = {
+  effectiveFrom: string | null;
+  announcedAt: string | null;
+  banned: Entry[];
+  restricted: Entry[];
+  pairs: [Entry, Entry][];
+};
+
 type Banlist = {
   generatedAt: string;
   effectiveFrom: string | null;
+  announced?: Announced | null;
   source: { label: string; url: string; home: string };
   counts: { banned: number; restricted: number; pairs: number };
   banned: Entry[];
@@ -34,7 +43,7 @@ export const metadata: Metadata = {
 };
 
 export default function BanlistPage() {
-  const { banned, restricted, pairs, effectiveFrom, source } = banlist;
+  const { banned, restricted, pairs, announced, effectiveFrom, source } = banlist;
 
   return (
     <div className="shell" style={{ paddingBlock: '2rem 3rem' }}>
@@ -45,6 +54,43 @@ export default function BanlistPage() {
       >
         Banned &amp; restricted
       </h1>
+
+      {announced ? (
+        <section className="section" style={{ paddingBottom: 0 }}>
+          <div className="section-head">
+            <h2 className="display">
+              Changing{' '}
+              <span className="muted">
+                {announced.effectiveFrom
+                  ? `— from ${announced.effectiveFrom}`
+                  : '— on a date not yet given'}
+              </span>
+            </h2>
+          </div>
+          <p className="muted" style={{ maxWidth: '74ch', margin: '0 0 1rem' }}>
+            Not in force yet — everything below this panel is what applies today.
+            {announced.announcedAt ? ` Announced on ${announced.announcedAt}.` : ''} The official
+            rules page lists the additions; the whole change, removals included, is in Bandai&rsquo;s
+            own announcement.
+          </p>
+          <Group label="To be banned" cards={announced.banned} />
+          <Group label="To be restricted" cards={announced.restricted} />
+          {announced.pairs.length > 0 ? (
+            <div className="pair-list">
+              {announced.pairs.map(([a, b]) => (
+                <div key={`${a.id}+${b.id}`} className="pair">
+                  <BanCard card={a} />
+                  <span className="pair-join" aria-label="cannot be played with">
+                    +
+                  </span>
+                  <BanCard card={b} />
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
       <Section
         title="Banned"
         count={banned.length}
@@ -92,7 +138,32 @@ export default function BanlistPage() {
         restriction only changes what is legal in{' '}
         <Link href="/cards?format=Extra">Extra / Grand Battle</Link>.
       </p>
+
+      <p className="muted source-line" style={{ maxWidth: '74ch', marginTop: '1.2rem' }}>
+        {effectiveFrom ? `In force since ${effectiveFrom}. ` : ''}
+        Read from{' '}
+        <a href={source.url} target="_blank" rel="noreferrer noopener">
+          {source.label}
+        </a>
+        .
+      </p>
     </div>
+  );
+}
+
+function Group({ label, cards }: { label: string; cards: Entry[] }) {
+  if (cards.length === 0) return null;
+  return (
+    <>
+      <p className="muted" style={{ margin: '0 0 0.5rem', fontSize: '0.78rem' }}>
+        {label}
+      </p>
+      <div className="card-grid" style={{ marginBottom: '1rem' }}>
+        {cards.map((card) => (
+          <BanCard key={card.id} card={card} />
+        ))}
+      </div>
+    </>
   );
 }
 

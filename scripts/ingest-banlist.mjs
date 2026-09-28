@@ -49,16 +49,13 @@ const HEADINGS = {
   'banned pair cards': 'pairs',
 };
 
-function parse(lines) {
-  const start = lines.findIndex((l) => /cards with active restrictions/i.test(l));
-  if (start === -1) throw new Error('could not find the "Active Restrictions" section');
+const ANNOUNCEMENT = /banned\/restricted cards effective from/i;
 
+function sectionsIn(lines) {
   const sections = { banned: [], restricted: [], pairs: [] };
   let current = null;
 
-  for (const line of lines.slice(start + 1)) {
-    if (/^history of banned/i.test(line)) break;
-
+  for (const line of lines) {
     const heading = HEADINGS[line.toLowerCase().replace(/[^a-z ]/g, '').trim()];
     if (heading) {
       current = heading;
@@ -80,12 +77,41 @@ function parse(lines) {
   return { banned: sections.banned, restricted: sections.restricted, pairs };
 }
 
-function effectiveDate(lines) {
+function dateIn(lines) {
   for (const line of lines) {
     const m = line.match(/effective from ([A-Z][a-z]+ \d{1,2}, 20\d\d)/i);
     if (m) return m[1];
   }
   return null;
+}
+
+function announcedIn(lines) {
+  const at = lines.findIndex((l) => ANNOUNCEMENT.test(l));
+  if (at === -1) return null;
+
+  const block = sectionsIn(lines.slice(at + 1));
+  if (!block.banned.length && !block.restricted.length && !block.pairs.length) return null;
+
+  const announcedAt = lines
+    .slice(at, at + 4)
+    .map((l) => l.match(/announced at ([A-Z][a-z]+ \d{1,2}, 20\d\d)/i)?.[1])
+    .find(Boolean);
+
+  return { effectiveFrom: dateIn([lines[at]]), announcedAt: announcedAt ?? null, ...block };
+}
+
+function parse(lines) {
+  const start = lines.findIndex((l) => /cards with active restrictions/i.test(l));
+  if (start === -1) throw new Error('could not find the "Active Restrictions" section');
+
+  const history = lines.findIndex((l) => /^history of banned/i.test(l));
+  const end = history === -1 ? lines.length : history;
+
+  return {
+    ...sectionsIn(lines.slice(start + 1, end)),
+    effectiveFrom: dateIn(lines.slice(start, end)),
+    announced: announcedIn(lines.slice(0, start)),
+  };
 }
 
 async function main() {
@@ -94,7 +120,8 @@ async function main() {
   log(`reading ${SRC.restrictionUrl}`);
   const html = await fetchText(SRC.restrictionUrl);
   const lines = toLines(html);
-  const { banned, restricted, pairs } = parse(lines);
+  const parsed = parse(lines);
+  const { banned, restricted, pairs } = parsed;
 
   if (banned.length === 0 && restricted.length === 0 && pairs.length === 0) {
     throw new Error('parsed an entirely empty banlist — the page layout has probably changed');
@@ -124,18 +151,25 @@ async function main() {
 
   const payload = {
     generatedAt: new Date().toISOString(),
-    effectiveFrom: effectiveDate(lines),
+    effectiveFrom: parsed.effectiveFrom,
     source: { label: SRC.label, url: SRC.restrictionUrl, home: SRC.home },
     counts: { banned: banned.length, restricted: restricted.length, pairs: pairs.length },
     banned: banned.map(enrich),
     restricted: restricted.map(enrich),
     pairs: pairs.map(([a, b]) => [enrich(a), enrich(b)]),
+    announced: parsed.announced && {
+      effectiveFrom: parsed.announced.effectiveFrom,
+      announcedAt: parsed.announced.announcedAt,
+      banned: parsed.announced.banned.map(enrich),
+      restricted: parsed.announced.restricted.map(enrich),
+      pairs: parsed.announced.pairs.map(([a, b]) => [enrich(a), enrich(b)]),
+    },
     durationMs: Date.now() - started,
   };
 
-  const unknown = [...payload.banned, ...payload.restricted, ...payload.pairs.flat()].filter(
-    (c) => !c.known
-  );
+  const listed = (block) =>
+    block ? [...block.banned, ...block.restricted, ...block.pairs.flat()] : [];
+  const unknown = [...listed(payload), ...listed(payload.announced)].filter((c) => !c.known);
 
   await mkdir(DATA, { recursive: true });
   await writeFile(path.join(DATA, 'banlist.json'), JSON.stringify(payload, null, 2));
@@ -156,6 +190,13 @@ async function main() {
   for (const c of payload.banned) log(`  banned      ${c.id.padEnd(10)} ${c.name ?? ''}`);
   for (const c of payload.restricted) log(`  restricted  ${c.id.padEnd(10)} ${c.name ?? ''}`);
   for (const [a, b] of payload.pairs) log(`  pair        ${a.id} + ${b.id}`);
+  if (payload.announced) {
+    const { effectiveFrom, announcedAt } = payload.announced;
+    log(`announced ${announcedAt ?? 'at an unstated date'}, effective from ${effectiveFrom ?? 'unknown'}`);
+    for (const c of payload.announced.banned) log(`  to be banned      ${c.id.padEnd(10)} ${c.name ?? ''}`);
+    for (const c of payload.announced.restricted) log(`  to be restricted  ${c.id.padEnd(10)} ${c.name ?? ''}`);
+    for (const [a, b] of payload.announced.pairs) log(`  to be a pair      ${a.id} + ${b.id}`);
+  }
   if (unknown.length) log(`${unknown.length} listed cards are not in the archive: ${unknown.map((c) => c.id).join(', ')}`);
 }
 
