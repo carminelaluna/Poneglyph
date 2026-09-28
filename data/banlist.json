@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-25T05:06:27.046Z",
-  "effectiveFrom": "October 12, 2026",
+  "generatedAt": "2026-09-28T23:08:39.636Z",
+  "effectiveFrom": "April 10, 2026",
   "source": {
     "label": "ONE PIECE CARD GAME — official site",
     "url": "https://en.onepiece-cardgame.com/rules/restriction/",
@@ -157,5 +157,25 @@
       }
     ]
   ],
-  "durationMs": 2036
+  "announced": {
+    "effectiveFrom": "October 12, 2026",
+    "announcedAt": "September 24, 2026",
+    "banned": [
+      {
+        "id": "OP14-020",
+        "name": "Dracule Mihawk",
+        "colors": [
+          "Green"
+        ],
+        "category": "Leader",
+        "setCode": "OP14-EB04",
+        "blockNumber": 4,
+        "standardLegal": true,
+        "known": true
+      }
+    ],
+    "restricted": [],
+    "pairs": []
+  },
+  "durationMs": 1725
 }
