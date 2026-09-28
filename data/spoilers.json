@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-27T08:13:49.467Z",
+  "generatedAt": "2026-09-28T05:27:17.859Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 3,
-    "cards": 60,
-    "named": 42,
+    "cards": 61,
+    "named": 43,
     "articles": 3
   },
-  "durationMs": 10599,
+  "durationMs": 2153,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 16,
+      "revealed": 17,
       "cards": [
         {
           "id": "OP18-001",
@@ -31,6 +31,13 @@
           "name": "Sea Cat",
           "image": null,
           "thumb": "OP18-003.webp",
+          "text": "Red Character C"
+        },
+        {
+          "id": "OP18-016",
+          "name": "Monkey.D.Luffy",
+          "image": null,
+          "thumb": "OP18-016.webp",
           "text": "Red Character C"
         },
         {
