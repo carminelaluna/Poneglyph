@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-28T23:11:34.565Z",
+  "generatedAt": "2026-09-29T08:34:13.305Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 60,
-    "named": 52,
+    "cards": 61,
+    "named": 53,
     "articles": 3
   },
-  "durationMs": 1998,
+  "durationMs": 13548,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 17,
+      "revealed": 18,
       "cards": [
         {
           "id": "OP18-001",
@@ -50,6 +50,13 @@
           "id": "OP18-022",
           "name": null,
           "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/op18-022-690x1024.jpg"
+        },
+        {
+          "id": "OP18-025",
+          "name": "Gonbe",
+          "image": null,
+          "thumb": "OP18-025.webp",
+          "text": "Green Character C"
         },
         {
           "id": "OP18-028",
