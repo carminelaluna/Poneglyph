@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-29T08:34:13.305Z",
+  "generatedAt": "2026-09-30T12:38:19.055Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 61,
-    "named": 53,
+    "cards": 62,
+    "named": 54,
     "articles": 3
   },
-  "durationMs": 13548,
+  "durationMs": 10931,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 18,
+      "revealed": 19,
       "cards": [
         {
           "id": "OP18-001",
@@ -75,6 +75,13 @@
           "name": null,
           "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/op18-041-750x1024.jpg",
           "text": "Ms. All Sunday Blur Leader 5 Life / 5000 Power Baroque Works"
+        },
+        {
+          "id": "OP18-044",
+          "name": "Mr.Beans & Miss.Katherina",
+          "image": null,
+          "thumb": "OP18-044.webp",
+          "text": "Blue Character C"
         },
         {
           "id": "OP18-056",
