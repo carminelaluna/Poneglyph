@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-01T05:59:08.450Z",
+  "generatedAt": "2026-10-01T19:33:35.734Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,11 +8,11 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 63,
-    "named": 55,
+    "cards": 64,
+    "named": 56,
     "articles": 3
   },
-  "durationMs": 1941,
+  "durationMs": 8172,
   "sets": [
     {
       "set": "OP18",
@@ -164,7 +164,7 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 43,
+      "revealed": 44,
       "cards": [
         {
           "id": "EB05-001",
@@ -454,6 +454,13 @@
           "image": null,
           "thumb": "EB05-057.webp",
           "text": "Yellow Character 2 Cost / 0 Power [+2000 Counter]"
+        },
+        {
+          "id": "EB05-061",
+          "name": "Nami",
+          "image": null,
+          "thumb": "EB05-061.webp",
+          "text": "Red Character SEC 3 Cost / 4000 Power (Special) Counter +2000 (?) Straw Hat Crew [Once Per Turn] If your Character with 6000 base power or less would be removed from the field by your opponent, you may add 1 card from the top of your Life cards to your hand instead. [On Play] Play up to 1 red Character card with a cost of 2 or less from your hand."
         }
       ],
       "articles": [
