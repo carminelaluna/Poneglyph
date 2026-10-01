@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-30T12:38:19.055Z",
+  "generatedAt": "2026-10-01T05:59:08.450Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 62,
-    "named": 54,
+    "cards": 63,
+    "named": 55,
     "articles": 3
   },
-  "durationMs": 10931,
+  "durationMs": 1941,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 19,
+      "revealed": 20,
       "cards": [
         {
           "id": "OP18-001",
@@ -106,6 +106,13 @@
           "image": null,
           "thumb": "OP18-066.webp",
           "text": "Purple Character C"
+        },
+        {
+          "id": "OP18-076",
+          "name": "Shark Submerge 3",
+          "image": null,
+          "thumb": "OP18-076.webp",
+          "text": "Purple Stage UC"
         },
         {
           "id": "OP18-078",
