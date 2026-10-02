@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-01T19:33:35.734Z",
+  "generatedAt": "2026-10-02T05:41:17.947Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 64,
-    "named": 56,
+    "cards": 65,
+    "named": 57,
     "articles": 3
   },
-  "durationMs": 8172,
+  "durationMs": 2183,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 20,
+      "revealed": 21,
       "cards": [
         {
           "id": "OP18-001",
@@ -130,6 +130,13 @@
           "name": "Goldberg",
           "image": null,
           "thumb": "OP18-086.webp",
+          "text": "Black Character C"
+        },
+        {
+          "id": "OP18-089",
+          "name": "Dorry",
+          "image": null,
+          "thumb": "OP18-089.webp",
           "text": "Black Character C"
         },
         {
