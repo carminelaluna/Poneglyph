@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-02T05:41:17.947Z",
+  "generatedAt": "2026-10-03T11:34:35.494Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 65,
-    "named": 57,
+    "cards": 67,
+    "named": 59,
     "articles": 3
   },
-  "durationMs": 2183,
+  "durationMs": 9874,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 21,
+      "revealed": 22,
       "cards": [
         {
           "id": "OP18-001",
@@ -140,6 +140,13 @@
           "text": "Black Character C"
         },
         {
+          "id": "OP18-106",
+          "name": "Doberman",
+          "image": null,
+          "thumb": "OP18-106.webp",
+          "text": "Yellow Character"
+        },
+        {
           "id": "OP18-112",
           "name": "Yamakaji",
           "image": null,
@@ -171,7 +178,7 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 44,
+      "revealed": 45,
       "cards": [
         {
           "id": "EB05-001",
@@ -407,6 +414,13 @@
           "image": null,
           "thumb": "EBO5-048.webp",
           "text": "Black Event R"
+        },
+        {
+          "id": "EB05-049",
+          "name": "Special Hollow",
+          "image": null,
+          "thumb": "EB05-049.webp",
+          "text": "Black Event C"
         },
         {
           "id": "EB05-050",
