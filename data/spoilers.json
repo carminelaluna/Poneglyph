@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-04T08:28:54.539Z",
+  "generatedAt": "2026-10-04T21:17:53.319Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 74,
-    "named": 66,
+    "cards": 78,
+    "named": 70,
     "articles": 3
   },
-  "durationMs": 2164,
+  "durationMs": 2079,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 28,
+      "revealed": 32,
       "cards": [
         {
           "id": "OP18-001",
@@ -83,6 +83,13 @@
           "id": "OP18-031",
           "name": "Nico Robin",
           "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/OP18-031_p2.jpg"
+        },
+        {
+          "id": "OP18-034",
+          "name": "Franky",
+          "image": null,
+          "thumb": "OP18-034.webp",
+          "text": "Green Character SR 6 Cost / 7000 Power (Strike) Water Seven / Franky Family / Straw Hat Crew [On Play] Play up to 1 {Franky Family} or {Straw Hat Crew} type card with a cost of 5 or less from your hand. Then, if you have a Stage with a cost of 5 or more, rest up to 1 of your opponent’s Characters with a cost of 6 or less."
         },
         {
           "id": "OP18-041",
@@ -182,6 +189,20 @@
           "text": "Black Character C"
         },
         {
+          "id": "OP18-093",
+          "name": "MMA",
+          "image": null,
+          "thumb": "OP18-093.webp",
+          "text": "Black Character R 9 Cost / 3000 Power (Special) Counter +2000 Elbaph Under the rules of this game, you may have any number of this card in your deck. [Blocker] (After your opponent declares an attack, you may rest this card to make it the new target of the attack.)"
+        },
+        {
+          "id": "OP18-100",
+          "name": "Khalifa",
+          "image": null,
+          "thumb": "OP18-100.webp",
+          "text": "Yellow Character (SR) 6 Cost / 7000 Power (Special) [+1000 Counter] CP9 [On Play] Draw 1 card and add up to 1 card with a type including \"CP\" from your hand face-up to the top or bottom of your Life cards. [Trigger] If your Leader has a type including \"CP\", draw 1 card and rest up to 1 of your opponent's Leader or Character cards."
+        },
+        {
           "id": "OP18-106",
           "name": "Doberman",
           "image": null,
@@ -194,6 +215,13 @@
           "image": null,
           "thumb": "OP18-112.webp",
           "text": "Yellow Character C"
+        },
+        {
+          "id": "OP18-113",
+          "name": "Rob Lucci",
+          "image": null,
+          "thumb": "OP18-113.webp",
+          "text": "Yellow Character SR 8 Cost / 10000 Power (Strike) CP9 [On Play]/[On K.O.] Trash up to 1 card from the top of your opponent's Life cards. [Trigger] If your Leader has a type including \"CP\", draw 1 card and place up to 1 Character with a cost of 8 or less at the bottom of the owner's deck."
         },
         {
           "id": "OP18-119",
