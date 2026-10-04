@@ -1,7 +1,7 @@
 {
   "site": "Poneglyph",
   "language": "english",
-  "generatedAt": "2026-10-03T20:10:57.369Z",
+  "generatedAt": "2026-10-04T11:16:33.581Z",
   "upstreamBuiltAt": "2026-10-02T11:10:08.000Z",
   "counts": {
     "cards": 2785,
@@ -44,5 +44,5 @@
       "role": "prices & set names"
     }
   ],
-  "durationMs": 28483
+  "durationMs": 23671
 }
