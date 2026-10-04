@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-03T11:34:35.494Z",
+  "generatedAt": "2026-10-04T08:28:54.539Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 67,
-    "named": 59,
+    "cards": 74,
+    "named": 66,
     "articles": 3
   },
-  "durationMs": 9874,
+  "durationMs": 2164,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 22,
+      "revealed": 28,
       "cards": [
         {
           "id": "OP18-001",
@@ -35,10 +35,24 @@
           "text": "Red Character C"
         },
         {
+          "id": "OP18-011",
+          "name": "Nefertari Vivi",
+          "image": null,
+          "thumb": "OP18-011.webp",
+          "text": "Red Character SR 2 Cost / 0 Power (Wisdom) Counter +1000 Alabasta All of your Characters with both the {Animal} and {Alabasta} type gain +1000 power. [Opponent’s Turn] This Character gains [Blocker] and +6000 power."
+        },
+        {
           "id": "OP18-016",
           "name": "Monkey.D.Luffy",
           "image": null,
           "thumb": "OP18-016.webp",
+          "text": "Red Character C"
+        },
+        {
+          "id": "OP18-017",
+          "name": "Roronoa Zoro",
+          "image": null,
+          "thumb": "OP18-017.webp",
           "text": "Red Character C"
         },
         {
@@ -84,6 +98,20 @@
           "text": "Blue Character C"
         },
         {
+          "id": "OP18-046",
+          "name": "Mr. 0 & Ms. All Sunday",
+          "image": null,
+          "thumb": "OP18-046.webp",
+          "text": "Blue Character (SR) 9 Cost / 10000 Power The Seven Warlords of the Sea / Baroque Works [On Play] Draw 2 cards and give up to 2 rested DON!! cards to your Leader and all of your Characters. [On Opponent's Attack] You may trash 1 card from your hand: Your Leader with a type including \"Baroque Works\" becomes 7000 base power during this turn."
+        },
+        {
+          "id": "OP18-048",
+          "name": "Mr. 1 & Miss Doublefinger",
+          "image": null,
+          "thumb": "OP18-048.webp",
+          "text": "Blue Character (SR) 6 Cost / 6000 Power Baroque Works [Rush] [On Play] Play up to 1 Character card with a cost of 5 or less with a type including \"Baroque Works\" from your hand."
+        },
+        {
           "id": "OP18-056",
           "name": "Mr.13 & Ms.Friday",
           "image": null,
@@ -94,6 +122,13 @@
           "id": "OP18-060",
           "name": null,
           "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/op18-060-ld.jpg"
+        },
+        {
+          "id": "OP18-061",
+          "name": "Iceburg",
+          "image": null,
+          "thumb": "OP18-061.webp",
+          "text": "Purple Character SR 2 Cost / 0 Power (Wisdom) Counter +1000 Water Seven / Galley-La Company [On Play] Look at 5 cards from the top of your deck; reveal up to a total of 2 Stage cards or {Water Seven} types cards and add them to your hand. Then, place the rest at the bottom of your deck in any order."
         },
         {
           "id": "OP18-065",
@@ -124,6 +159,13 @@
           "name": "Spandam",
           "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/op18-079-l.jpeg",
           "text": "Black / Yellow Leader 4 Life / 5000 Power CP9"
+        },
+        {
+          "id": "OP18-084",
+          "name": "Gunko",
+          "image": null,
+          "thumb": "OP18-084.webp",
+          "text": "Black Character (SR) 1 Cost / 2000 Power Celestial Dragons / Knights of God [On Play] Look at 4 cards from the top of your deck; reveal up to 1 {Knights of God} type card and add it to your hand. Then, place the remaining cards into the trash. [Activate: Main] You may rest 4 of your DON!! cards: Play up to 1 Character card with a cost of 6 or less and the {Knights of God} type from your trash."
         },
         {
           "id": "OP18-086",
@@ -178,7 +220,7 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 45,
+      "revealed": 46,
       "cards": [
         {
           "id": "EB05-001",
@@ -368,6 +410,13 @@
           "text": "Purple Event C 1 Cost Vinsmoke Family / Germa 66 [Main] DON!! -1: If your Leader has the {Vinsmoke Family} type, give up to 1 of your opponent's Characters -4000 power during this turn. [Counter] DON!! -1: Your Leader gains +4000 power during this battle."
         },
         {
+          "id": "EB05-040",
+          "name": "You Need Me, Don't You?!!♡",
+          "image": null,
+          "thumb": "EB05-040.webp",
+          "text": "Purple Event R"
+        },
+        {
           "id": "EB05-042",
           "name": "Shinobu",
           "image": null,
@@ -458,9 +507,9 @@
         },
         {
           "id": "EB05-055",
-          "name": "Nami",
+          "name": "## Kentaro Yabuki (author of the",
           "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/eb05-055-sr.jpg",
-          "text": "Yellow Character SR"
+          "text": "Black Cat series and artist of the To LOVE Ru series) Nami"
         },
         {
           "id": "EB05-056",
