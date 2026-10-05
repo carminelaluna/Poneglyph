@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-04T21:17:53.319Z",
+  "generatedAt": "2026-10-05T05:44:46.037Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 78,
-    "named": 70,
+    "cards": 80,
+    "named": 72,
     "articles": 3
   },
-  "durationMs": 2079,
+  "durationMs": 1938,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 32,
+      "revealed": 33,
       "cards": [
         {
           "id": "OP18-001",
@@ -64,6 +64,13 @@
           "id": "OP18-022",
           "name": null,
           "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/op18-022-690x1024.jpg"
+        },
+        {
+          "id": "OP18-024",
+          "name": "Kokoro",
+          "image": null,
+          "thumb": "OP18-024.webp",
+          "text": "Green Character C"
         },
         {
           "id": "OP18-025",
@@ -248,7 +255,7 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 46,
+      "revealed": 47,
       "cards": [
         {
           "id": "EB05-001",
@@ -395,6 +402,13 @@
           "image": null,
           "thumb": "EB05-029.webp",
           "text": "Blue Event 5 Cost {Navy} [Main] You may trash 1 card from your hand: Negate the effects of up to one of your opponent's characters with a cost of 6 or less during this turn, and return it to their hand. [Trigger] Draw 2 cards and trash 1 from your hand."
+        },
+        {
+          "id": "EB05-030",
+          "name": "Take Care, Everybody. ♡",
+          "image": null,
+          "thumb": "EB05-030.webp",
+          "text": "Blue Event R"
         },
         {
           "id": "EB05-034",
