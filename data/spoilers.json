@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-05T05:44:46.037Z",
+  "generatedAt": "2026-10-06T15:14:24.455Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 80,
-    "named": 72,
+    "cards": 82,
+    "named": 74,
     "articles": 3
   },
-  "durationMs": 1938,
+  "durationMs": 10391,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 33,
+      "revealed": 34,
       "cards": [
         {
           "id": "OP18-001",
@@ -124,6 +124,13 @@
           "image": null,
           "thumb": "OP18-048.webp",
           "text": "Blue Character (SR) 6 Cost / 6000 Power Baroque Works [Rush] [On Play] Play up to 1 Character card with a cost of 5 or less with a type including \"Baroque Works\" from your hand."
+        },
+        {
+          "id": "OP18-055",
+          "name": "Mr. 9 & Ms. Wednesday",
+          "image": null,
+          "thumb": "OP18-055.webp",
+          "text": "Blue Character"
         },
         {
           "id": "OP18-056",
@@ -255,7 +262,7 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 47,
+      "revealed": 48,
       "cards": [
         {
           "id": "EB05-001",
@@ -347,6 +354,13 @@
           "image": null,
           "thumb": "EB05-017.webp",
           "text": "Green Characters C"
+        },
+        {
+          "id": "EB05-019",
+          "name": "I Choose to Open This Country to the World!! I Want to Fight on Your Side!!!",
+          "image": null,
+          "thumb": "EB05-019.webp",
+          "text": "Green Event"
         },
         {
           "id": "EB05-020",
