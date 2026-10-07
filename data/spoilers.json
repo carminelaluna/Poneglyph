@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-06T15:14:24.455Z",
+  "generatedAt": "2026-10-07T08:42:54.845Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 82,
-    "named": 74,
+    "cards": 84,
+    "named": 76,
     "articles": 3
   },
-  "durationMs": 10391,
+  "durationMs": 8836,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 34,
+      "revealed": 35,
       "cards": [
         {
           "id": "OP18-001",
@@ -164,6 +164,13 @@
           "text": "Purple Character C"
         },
         {
+          "id": "OP18-069",
+          "name": "Sodomu & Gomora",
+          "image": null,
+          "thumb": "OP18-069.webp",
+          "text": "Purple Character C"
+        },
+        {
           "id": "OP18-076",
           "name": "Shark Submerge 3",
           "image": null,
@@ -262,7 +269,7 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 48,
+      "revealed": 49,
       "cards": [
         {
           "id": "EB05-001",
@@ -303,6 +310,13 @@
           "image": null,
           "thumb": "EB05-007.webp",
           "text": "Red Character C"
+        },
+        {
+          "id": "EB05-008",
+          "name": "Luffy, Now's Your Chance",
+          "image": null,
+          "thumb": "EB05-008.webp",
+          "text": "Red Event C"
         },
         {
           "id": "EB05-009",
