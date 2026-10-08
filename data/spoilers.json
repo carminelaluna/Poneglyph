@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-07T08:42:54.845Z",
+  "generatedAt": "2026-10-08T06:08:32.138Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 84,
-    "named": 76,
+    "cards": 86,
+    "named": 78,
     "articles": 3
   },
-  "durationMs": 8836,
+  "durationMs": 1981,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 35,
+      "revealed": 36,
       "cards": [
         {
           "id": "OP18-001",
@@ -210,6 +210,13 @@
           "text": "Black Character C"
         },
         {
+          "id": "OP18-091",
+          "name": "Brogy",
+          "image": null,
+          "thumb": "OP18-091.webp",
+          "text": "Black Character"
+        },
+        {
           "id": "OP18-093",
           "name": "MMA",
           "image": null,
@@ -269,7 +276,7 @@
       "code": "EB-05",
       "release": "October 2026",
       "kind": "Extra booster",
-      "revealed": 49,
+      "revealed": 50,
       "cards": [
         {
           "id": "EB05-001",
@@ -594,6 +601,13 @@
           "image": null,
           "thumb": "EB05-057.webp",
           "text": "Yellow Character 2 Cost / 0 Power [+2000 Counter]"
+        },
+        {
+          "id": "EB05-059",
+          "name": "Charlotte Pudding",
+          "image": null,
+          "thumb": "EB05-059.webp",
+          "text": "Yellow Event (R) 1 Cost {Big Mom Pirates}"
         },
         {
           "id": "EB05-061",
