@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-08T13:34:04.442Z",
+  "generatedAt": "2026-10-09T13:09:13.192Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 86,
-    "named": 78,
+    "cards": 87,
+    "named": 79,
     "articles": 3
   },
-  "durationMs": 1726,
+  "durationMs": 9829,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 36,
+      "revealed": 37,
       "cards": [
         {
           "id": "OP18-001",
@@ -236,6 +236,13 @@
           "image": null,
           "thumb": "OP18-106.webp",
           "text": "Yellow Character"
+        },
+        {
+          "id": "OP18-111",
+          "name": "Momonga",
+          "image": null,
+          "thumb": "OP18-111.webp",
+          "text": "Yellow Character C"
         },
         {
           "id": "OP18-112",
