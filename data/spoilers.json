@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-09T13:09:13.192Z",
+  "generatedAt": "2026-10-10T05:56:21.387Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 2,
-    "cards": 87,
-    "named": 79,
+    "cards": 88,
+    "named": 80,
     "articles": 3
   },
-  "durationMs": 9829,
+  "durationMs": 17557,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 37,
+      "revealed": 38,
       "cards": [
         {
           "id": "OP18-001",
@@ -33,6 +33,13 @@
           "image": null,
           "thumb": "OP18-003.webp",
           "text": "Red Character C"
+        },
+        {
+          "id": "OP18-010",
+          "name": "Tony Tony.Chopper",
+          "image": null,
+          "thumb": "OP18-010.webp",
+          "text": "Red Character UC"
         },
         {
           "id": "OP18-011",
