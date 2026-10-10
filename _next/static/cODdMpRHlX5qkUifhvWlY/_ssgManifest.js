@@ -1,0 +1,1 @@
+self.__SSG_MANIFEST=new Set(["\u002Fcards\u002F[id]","\u002Fdeck\u002F[id]","\u002Fdecks\u002F[slug]","\u002Fdecks\u002F[slug]\u002Fdecklists","\u002Fdecks\u002F[slug]\u002Fmatchups","\u002Fevent\u002F[id]","\u002Fplayer\u002F[slug]","\u002Fsets\u002F[slug]"]);self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()
