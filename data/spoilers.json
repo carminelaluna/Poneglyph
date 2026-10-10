@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-10T05:56:21.387Z",
+  "generatedAt": "2026-10-10T12:35:39.506Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -7,12 +7,12 @@
     "category": "Card Leaks"
   },
   "counts": {
-    "sets": 2,
-    "cards": 88,
-    "named": 80,
+    "sets": 4,
+    "cards": 90,
+    "named": 82,
     "articles": 3
   },
-  "durationMs": 17557,
+  "durationMs": 2052,
   "sets": [
     {
       "set": "OP18",
@@ -639,6 +639,42 @@
         }
       ],
       "lastCoverage": "2026-08-23T08:36:00"
+    },
+    {
+      "set": "ST37",
+      "code": "ST-37",
+      "release": null,
+      "kind": "Starter deck",
+      "revealed": 1,
+      "cards": [
+        {
+          "id": "ST37-001",
+          "name": "Monkey D. Luffy",
+          "image": null,
+          "thumb": "ST37-001.webp",
+          "text": "Red / Blue Leader ( ) L 3 Life / 5000 Power (Strike) Alabasta / Straw Hat Crew Under the rules of this game, you may only include {Alabasta} type cards in your deck. [When Attacking] Draw 2 cards. Then, at the end of your turn, trash cards from your hand until you have 7 cards in your hand."
+        }
+      ],
+      "articles": [],
+      "lastCoverage": null
+    },
+    {
+      "set": "ST38",
+      "code": "ST-38",
+      "release": null,
+      "kind": "Starter deck",
+      "revealed": 1,
+      "cards": [
+        {
+          "id": "ST38-001",
+          "name": "Mr. 0 (Crocodile)",
+          "image": null,
+          "thumb": "ST38-001.webp",
+          "text": "Blue / Black Leader ( ) L 4 Life / 5000 Power (Special) Seven Warlords of the Sea / Baroque Works [When Attacking] You may trash 1 card from your hand: Draw 1 card. [Activate:Main] [Once Per Turn] You may K.O. 1 of your Characters with a type including ”Baroque Works” and a base cost of 3 or more: Draw 1 card."
+        }
+      ],
+      "articles": [],
+      "lastCoverage": null
     }
   ],
   "released": [
