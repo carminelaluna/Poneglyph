@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-10T12:35:39.506Z",
+  "generatedAt": "2026-10-11T12:54:14.152Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 4,
-    "cards": 90,
-    "named": 82,
+    "cards": 91,
+    "named": 83,
     "articles": 3
   },
-  "durationMs": 2052,
+  "durationMs": 10617,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 38,
+      "revealed": 39,
       "cards": [
         {
           "id": "OP18-001",
@@ -97,6 +97,13 @@
           "id": "OP18-031",
           "name": "Nico Robin",
           "image": "https://onepiecetopdecks.com/wp-content/uploads/2026/08/OP18-031_p2.jpg"
+        },
+        {
+          "id": "OP18-032",
+          "name": "Buggy",
+          "image": null,
+          "thumb": "OP18-032.webp",
+          "text": "Green Character UC"
         },
         {
           "id": "OP18-034",
