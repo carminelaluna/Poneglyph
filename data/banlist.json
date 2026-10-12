@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-28T23:08:39.636Z",
+  "generatedAt": "2026-10-12T06:10:53.077Z",
   "effectiveFrom": "April 10, 2026",
   "source": {
     "label": "ONE PIECE CARD GAME — official site",
@@ -7,7 +7,7 @@
     "home": "https://en.onepiece-cardgame.com/"
   },
   "counts": {
-    "banned": 5,
+    "banned": 6,
     "restricted": 0,
     "pairs": 3
   },
@@ -70,6 +70,18 @@
       "category": "Event",
       "setCode": "OP-06",
       "blockNumber": 2,
+      "standardLegal": true,
+      "known": true
+    },
+    {
+      "id": "OP14-020",
+      "name": "Dracule Mihawk",
+      "colors": [
+        "Green"
+      ],
+      "category": "Leader",
+      "setCode": "OP14-EB04",
+      "blockNumber": 4,
       "standardLegal": true,
       "known": true
     }
@@ -177,5 +189,5 @@
     "restricted": [],
     "pairs": []
   },
-  "durationMs": 1725
+  "durationMs": 1604
 }
