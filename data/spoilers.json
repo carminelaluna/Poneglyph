@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-12T06:01:56.410Z",
+  "generatedAt": "2026-10-13T06:49:16.217Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 4,
-    "cards": 92,
-    "named": 84,
+    "cards": 93,
+    "named": 85,
     "articles": 3
   },
-  "durationMs": 1847,
+  "durationMs": 11776,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 40,
+      "revealed": 41,
       "cards": [
         {
           "id": "OP18-001",
@@ -171,6 +171,13 @@
           "image": null,
           "thumb": "OP18-061.webp",
           "text": "Purple Character SR 2 Cost / 0 Power (Wisdom) Counter +1000 Water Seven / Galley-La Company [On Play] Look at 5 cards from the top of your deck; reveal up to a total of 2 Stage cards or {Water Seven} types cards and add them to your hand. Then, place the rest at the bottom of your deck in any order."
+        },
+        {
+          "id": "OP18-063",
+          "name": "Kiwi & Mozu",
+          "image": null,
+          "thumb": "OP18-063.webp",
+          "text": "Purple Character UC"
         },
         {
           "id": "OP18-065",
