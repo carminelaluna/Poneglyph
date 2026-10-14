@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-13T06:49:16.217Z",
+  "generatedAt": "2026-10-14T07:40:47.829Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 4,
-    "cards": 93,
-    "named": 85,
+    "cards": 94,
+    "named": 86,
     "articles": 3
   },
-  "durationMs": 11776,
+  "durationMs": 2353,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 41,
+      "revealed": 42,
       "cards": [
         {
           "id": "OP18-001",
@@ -222,6 +222,13 @@
           "image": null,
           "thumb": "OP18-084.webp",
           "text": "Black Character (SR) 1 Cost / 2000 Power Celestial Dragons / Knights of God [On Play] Look at 4 cards from the top of your deck; reveal up to 1 {Knights of God} type card and add it to your hand. Then, place the remaining cards into the trash. [Activate: Main] You may rest 4 of your DON!! cards: Play up to 1 Character card with a cost of 6 or less and the {Knights of God} type from your trash."
+        },
+        {
+          "id": "OP18-085",
+          "name": "Cerberus",
+          "image": null,
+          "thumb": "OP18-085.webp",
+          "text": "Black Character UC"
         },
         {
           "id": "OP18-086",
