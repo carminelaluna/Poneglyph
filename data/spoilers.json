@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-14T07:40:47.829Z",
+  "generatedAt": "2026-10-15T04:43:28.955Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 4,
-    "cards": 94,
-    "named": 86,
+    "cards": 95,
+    "named": 87,
     "articles": 3
   },
-  "durationMs": 2353,
+  "durationMs": 1790,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 42,
+      "revealed": 43,
       "cards": [
         {
           "id": "OP18-001",
@@ -264,6 +264,13 @@
           "image": null,
           "thumb": "OP18-100.webp",
           "text": "Yellow Character (SR) 6 Cost / 7000 Power (Special) [+1000 Counter] CP9 [On Play] Draw 1 card and add up to 1 card with a type including \"CP\" from your hand face-up to the top or bottom of your Life cards. [Trigger] If your Leader has a type including \"CP\", draw 1 card and rest up to 1 of your opponent's Leader or Character cards."
+        },
+        {
+          "id": "OP18-101",
+          "name": "Kumadori",
+          "image": null,
+          "thumb": "OP18-101.webp",
+          "text": "Yellow Character UC"
         },
         {
           "id": "OP18-106",
