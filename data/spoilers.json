@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-15T04:43:28.955Z",
+  "generatedAt": "2026-10-16T11:15:22.823Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 4,
-    "cards": 95,
-    "named": 87,
+    "cards": 96,
+    "named": 88,
     "articles": 3
   },
-  "durationMs": 1790,
+  "durationMs": 2300,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 43,
+      "revealed": 44,
       "cards": [
         {
           "id": "OP18-001",
@@ -47,6 +47,13 @@
           "image": null,
           "thumb": "OP18-011.webp",
           "text": "Red Character SR 2 Cost / 0 Power (Wisdom) Counter +1000 Alabasta All of your Characters with both the {Animal} and {Alabasta} type gain +1000 power. [Opponent’s Turn] This Character gains [Blocker] and +6000 power."
+        },
+        {
+          "id": "OP18-015",
+          "name": "Eyelashes",
+          "image": null,
+          "thumb": "OP18-015.webp",
+          "text": "Red Character UC"
         },
         {
           "id": "OP18-016",
