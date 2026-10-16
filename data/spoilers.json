@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-16T11:15:22.823Z",
+  "generatedAt": "2026-10-16T18:04:55.389Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 4,
-    "cards": 96,
-    "named": 88,
+    "cards": 98,
+    "named": 90,
     "articles": 3
   },
-  "durationMs": 2300,
+  "durationMs": 2249,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 44,
+      "revealed": 46,
       "cards": [
         {
           "id": "OP18-001",
@@ -206,11 +206,25 @@
           "text": "Purple Character C"
         },
         {
+          "id": "OP18-075",
+          "name": "Thousand Sunny",
+          "image": null,
+          "thumb": "OP18-075.webp",
+          "text": "Purple Stage R 5 Cost Straw Hat Crew [On Play] Draw one card, add up to one DON!! Card from your DON!! deck as rested. [Activate Main]DON!!-2, you may rest this stage: Set up to one of your {Straw Hat Crew} type characters with a power of 7000 or lower as active."
+        },
+        {
           "id": "OP18-076",
           "name": "Shark Submerge 3",
           "image": null,
           "thumb": "OP18-076.webp",
           "text": "Purple Stage UC"
+        },
+        {
+          "id": "OP18-077",
+          "name": "White Hobby Horse",
+          "image": null,
+          "thumb": "OP18-077.webp",
+          "text": "Purple Stage UC 5 Cost Straw Hat Crew [On Play] Draw 1 card and add up to 1 DON!! card from your DON!! deck and rest it. [Activate: Main] You may rest this Stage: Up to 1 of your {Straw Hat Crew} type Characters gains [Rush: Character] during this turn."
         },
         {
           "id": "OP18-078",
