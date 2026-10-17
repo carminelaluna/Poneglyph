@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-16T18:04:55.389Z",
+  "generatedAt": "2026-10-17T06:59:09.616Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 4,
-    "cards": 98,
-    "named": 90,
+    "cards": 99,
+    "named": 91,
     "articles": 3
   },
-  "durationMs": 2249,
+  "durationMs": 10604,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 46,
+      "revealed": 47,
       "cards": [
         {
           "id": "OP18-001",
@@ -118,6 +118,13 @@
           "image": null,
           "thumb": "OP18-034.webp",
           "text": "Green Character SR 6 Cost / 7000 Power (Strike) Water Seven / Franky Family / Straw Hat Crew [On Play] Play up to 1 {Franky Family} or {Straw Hat Crew} type card with a cost of 5 or less from your hand. Then, if you have a Stage with a cost of 5 or more, rest up to 1 of your opponent’s Characters with a cost of 6 or less."
+        },
+        {
+          "id": "OP18-036",
+          "name": "Monkey D. Luffy",
+          "image": null,
+          "thumb": "OP18-036.webp",
+          "text": "Green Character UC"
         },
         {
           "id": "OP18-041",
