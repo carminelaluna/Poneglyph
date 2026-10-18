@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-17T06:59:09.616Z",
+  "generatedAt": "2026-10-18T04:37:36.944Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 4,
-    "cards": 99,
-    "named": 91,
+    "cards": 100,
+    "named": 92,
     "articles": 3
   },
-  "durationMs": 10604,
+  "durationMs": 1710,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 47,
+      "revealed": 48,
       "cards": [
         {
           "id": "OP18-001",
@@ -145,6 +145,13 @@
           "image": null,
           "thumb": "OP18-046.webp",
           "text": "Blue Character (SR) 9 Cost / 10000 Power The Seven Warlords of the Sea / Baroque Works [On Play] Draw 2 cards and give up to 2 rested DON!! cards to your Leader and all of your Characters. [On Opponent's Attack] You may trash 1 card from your hand: Your Leader with a type including \"Baroque Works\" becomes 7000 base power during this turn."
+        },
+        {
+          "id": "OP18-047",
+          "name": "Mr.1 (Daz.Bonez)",
+          "image": null,
+          "thumb": "OP18-047.webp",
+          "text": "Blue Character UC"
         },
         {
           "id": "OP18-048",
