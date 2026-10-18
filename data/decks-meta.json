@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-18T12:06:46.008Z",
+  "generatedAt": "2026-10-18T21:35:42.790Z",
   "source": {
     "id": "limitless",
     "label": "Limitless TCG",
@@ -46,5 +46,5 @@
     "regional": 30,
     "treasure": 12
   },
-  "durationMs": 2234
+  "durationMs": 1487
 }
