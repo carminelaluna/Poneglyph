@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-19T22:56:05.233Z",
+  "generatedAt": "2026-10-20T09:37:53.346Z",
   "releases": [
     {
       "code": "OP-17",
@@ -271,8 +271,8 @@
     {
       "id": "EN",
       "label": "English",
-      "decks": 66079,
-      "recent": 4431,
+      "decks": 66099,
+      "recent": 4451,
       "archived": 61648,
       "fieldDecks": 60228,
       "sampling": "mixed",
