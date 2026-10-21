@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-20T11:27:54.445Z",
+  "generatedAt": "2026-10-21T07:42:02.193Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 4,
-    "cards": 101,
-    "named": 93,
+    "cards": 102,
+    "named": 94,
     "articles": 3
   },
-  "durationMs": 8740,
+  "durationMs": 9473,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 49,
+      "revealed": 50,
       "cards": [
         {
           "id": "OP18-001",
@@ -320,6 +320,13 @@
           "image": null,
           "thumb": "OP18-106.webp",
           "text": "Yellow Character"
+        },
+        {
+          "id": "OP18-108",
+          "name": "Funkfreed",
+          "image": null,
+          "thumb": "OP18-108.webp",
+          "text": "Yellow Character UC"
         },
         {
           "id": "OP18-111",
