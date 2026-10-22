@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-21T07:42:02.193Z",
+  "generatedAt": "2026-10-22T04:51:47.539Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 4,
-    "cards": 102,
-    "named": 94,
+    "cards": 103,
+    "named": 95,
     "articles": 3
   },
-  "durationMs": 9473,
+  "durationMs": 2035,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 50,
+      "revealed": 51,
       "cards": [
         {
           "id": "OP18-001",
@@ -47,6 +47,13 @@
           "image": null,
           "thumb": "OP18-011.webp",
           "text": "Red Character SR 2 Cost / 0 Power (Wisdom) Counter +1000 Alabasta All of your Characters with both the {Animal} and {Alabasta} type gain +1000 power. [Opponent’s Turn] This Character gains [Blocker] and +6000 power."
+        },
+        {
+          "id": "OP18-013",
+          "name": "Pell",
+          "image": null,
+          "thumb": "OP18-013.webp",
+          "text": "Red Character R"
         },
         {
           "id": "OP18-015",
