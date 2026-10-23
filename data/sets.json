@@ -21,7 +21,7 @@
     "sortKey": "1-9983",
     "slug": "op-16",
     "cardCount": 119,
-    "printingCount": 150
+    "printingCount": 151
   },
   {
     "id": "569115",
@@ -33,7 +33,7 @@
     "sortKey": "1-9984",
     "slug": "op15-eb04",
     "cardCount": 149,
-    "printingCount": 193
+    "printingCount": 194
   },
   {
     "id": "569114",
@@ -202,6 +202,18 @@
     "slug": "op-01",
     "cardCount": 121,
     "printingCount": 236
+  },
+  {
+    "id": "569205",
+    "code": "EB-05",
+    "name": "ONE PIECE HEROINES EDITION vol.2",
+    "prefix": "EXTRA BOOSTER",
+    "group": "Extra Booster",
+    "rawTitle": "EXTRA BOOSTER -ONE PIECE HEROINES EDITION vol.2- [EB-05]",
+    "sortKey": "2-9994",
+    "slug": "eb-05",
+    "cardCount": 61,
+    "printingCount": 61
   },
   {
     "id": "569203",
@@ -704,8 +716,8 @@
     "rawTitle": "Promotion card",
     "sortKey": "5-9000",
     "slug": "promo",
-    "cardCount": 98,
-    "printingCount": 217
+    "cardCount": 99,
+    "printingCount": 218
   },
   {
     "id": "569801",
@@ -716,7 +728,7 @@
     "rawTitle": "Other Product Card",
     "sortKey": "6-9000",
     "slug": "other",
-    "cardCount": 2,
-    "printingCount": 2
+    "cardCount": 5,
+    "printingCount": 5
   }
 ]
