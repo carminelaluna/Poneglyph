@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-23T13:28:50.353Z",
+  "generatedAt": "2026-10-24T04:40:21.140Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 3,
-    "cards": 54,
-    "named": 49,
+    "cards": 55,
+    "named": 50,
     "articles": 2
   },
-  "durationMs": 2256,
+  "durationMs": 10760,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 52,
+      "revealed": 53,
       "cards": [
         {
           "id": "OP18-001",
@@ -173,6 +173,13 @@
           "image": null,
           "thumb": "OP18-048.webp",
           "text": "Blue Character (SR) 6 Cost / 6000 Power Baroque Works [Rush] [On Play] Play up to 1 Character card with a cost of 5 or less with a type including \"Baroque Works\" from your hand."
+        },
+        {
+          "id": "OP18-051",
+          "name": "Mr.4 & Miss.MerryChristmas",
+          "image": null,
+          "thumb": "OP18-051.webp",
+          "text": "Blue Character R"
         },
         {
           "id": "OP18-052",
