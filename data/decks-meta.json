@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-24T12:05:12.784Z",
+  "generatedAt": "2026-10-24T21:40:44.795Z",
   "source": {
     "id": "limitless",
     "label": "Limitless TCG",
@@ -23,7 +23,7 @@
     "requests": 6
   },
   "coverage": {
-    "tournamentsRead": 2434,
+    "tournamentsRead": 2435,
     "oldest": "2023-03-23T23:15:00.000Z",
     "newest": "2026-10-22T18:30:00.000Z"
   },
@@ -46,5 +46,5 @@
     "regional": 30,
     "treasure": 12
   },
-  "durationMs": 2009
+  "durationMs": 1483
 }
