@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-25T11:17:17.667Z",
+  "generatedAt": "2026-10-25T20:46:09.043Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -12,7 +12,7 @@
     "named": 51,
     "articles": 2
   },
-  "durationMs": 10178,
+  "durationMs": 1860,
   "sets": [
     {
       "set": "OP18",
@@ -447,7 +447,7 @@
       "set": "OP17",
       "code": "OP-17",
       "lastCoverage": "2026-06-18T14:58:21",
-      "name": "THE WORLD’S STRONGEST WARRIORS",
+      "name": "The World's Strongest Warriors",
       "cards": 119,
       "slug": "op-17"
     },
