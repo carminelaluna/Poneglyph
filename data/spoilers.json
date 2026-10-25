@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-24T04:40:21.140Z",
+  "generatedAt": "2026-10-25T11:17:17.667Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 3,
-    "cards": 55,
-    "named": 50,
+    "cards": 56,
+    "named": 51,
     "articles": 2
   },
-  "durationMs": 10760,
+  "durationMs": 10178,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 53,
+      "revealed": 54,
       "cards": [
         {
           "id": "OP18-001",
@@ -241,6 +241,13 @@
           "text": "Purple Character C"
         },
         {
+          "id": "OP18-070",
+          "name": "Tom",
+          "image": null,
+          "thumb": "OP18-070.webp",
+          "text": "Purple Character R"
+        },
+        {
           "id": "OP18-075",
           "name": "Thousand Sunny",
           "image": null,
@@ -440,7 +447,7 @@
       "set": "OP17",
       "code": "OP-17",
       "lastCoverage": "2026-06-18T14:58:21",
-      "name": "The World's Strongest Warriors",
+      "name": "THE WORLD’S STRONGEST WARRIORS",
       "cards": 119,
       "slug": "op-17"
     },
