@@ -227,6 +227,8 @@ describe('the ingest script', () => {
         out,
         '--thumbs',
         thumbs,
+        '--cards',
+        path.join(root, 'tests', 'fixtures', 'discord-cards.json'),
         ...args,
       ],
       {
@@ -243,6 +245,12 @@ describe('the ingest script', () => {
     const written = JSON.parse(await readFile(out, 'utf8'));
     assert.deepEqual(written.sets.map((s: { set: string }) => s.set).sort(), ['EB05', 'OP18']);
     assert.equal(written.counts.cards, 8);
+    assert.ok(
+      !written.sets.some((s: { cards: { id: string }[] }) =>
+        s.cards.some((c) => c.id === 'OP01-025')
+      ),
+      'OP01 is in the fixture archive, so a card of it is a reprint and not a reveal'
+    );
     assert.equal(written.lastMessageId, '1310000000000000009', 'the next run must start after this');
   });
 

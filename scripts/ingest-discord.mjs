@@ -17,6 +17,7 @@ const THUMBS = path.resolve(flag('thumbs', path.join('public', 'spoilers')));
 const THUMB_WIDTH = 320;
 const MAX_DOWNLOAD = 25 * 1024 * 1024;
 const OUT = path.resolve(flag('out', path.join(DATA, 'spoilers-discord.json')));
+const CARDS = path.resolve(flag('cards', path.join(DATA, 'cards.json')));
 const log = (...m) => console.log('[discord]', ...m);
 
 const TOKEN = process.env.DISCORD_BOT_TOKEN ?? '';
@@ -137,7 +138,7 @@ async function readChannel() {
 async function main() {
   const started = Date.now();
 
-  const cards = JSON.parse(await readFile(path.join(DATA, 'cards.json'), 'utf8'));
+  const cards = JSON.parse(await readFile(CARDS, 'utf8'));
   const released = new Set(cards.map((c) => c.id.split('-')[0].toUpperCase()));
   log(`${released.size} set prefixes already in the card archive`);
 
