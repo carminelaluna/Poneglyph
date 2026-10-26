@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-25T20:46:09.043Z",
+  "generatedAt": "2026-10-26T07:50:00.142Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 3,
-    "cards": 56,
-    "named": 51,
+    "cards": 57,
+    "named": 52,
     "articles": 2
   },
-  "durationMs": 1860,
+  "durationMs": 2248,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 54,
+      "revealed": 55,
       "cards": [
         {
           "id": "OP18-001",
@@ -355,6 +355,13 @@
           "image": null,
           "thumb": "OP18-108.webp",
           "text": "Yellow Character UC"
+        },
+        {
+          "id": "OP18-110",
+          "name": "Blueno",
+          "image": null,
+          "thumb": "OP18-110.webp",
+          "text": "Yellow Character R"
         },
         {
           "id": "OP18-111",
