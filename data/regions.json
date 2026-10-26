@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T16:48:46.249Z",
+  "generatedAt": "2026-10-26T23:10:49.696Z",
   "releases": [
     {
       "code": "EB-05",
@@ -276,16 +276,16 @@
     {
       "id": "EN",
       "label": "English",
-      "decks": 66420,
-      "recent": 4515,
-      "archived": 61905,
-      "fieldDecks": 60527,
+      "decks": 66484,
+      "recent": 4492,
+      "archived": 61992,
+      "fieldDecks": 60591,
       "sampling": "mixed",
       "window": {
         "from": "2022-10-29",
-        "to": "2026-10-25"
+        "to": "2026-10-26"
       },
-      "eras": 44,
+      "eras": 45,
       "sources": [
         "Limitless",
         "One Piece Top Decks"
