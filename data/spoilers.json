@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-26T07:50:00.142Z",
+  "generatedAt": "2026-10-27T07:54:57.158Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 3,
-    "cards": 57,
-    "named": 52,
+    "cards": 58,
+    "named": 53,
     "articles": 2
   },
-  "durationMs": 2248,
+  "durationMs": 9168,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 55,
+      "revealed": 56,
       "cards": [
         {
           "id": "OP18-001",
@@ -75,6 +75,13 @@
           "image": null,
           "thumb": "OP18-017.webp",
           "text": "Red Character C"
+        },
+        {
+          "id": "OP18-018",
+          "name": "Let's Go, Karoo!!",
+          "image": null,
+          "thumb": "OP18-018.webp",
+          "text": "Red Event C"
         },
         {
           "id": "OP18-021",
