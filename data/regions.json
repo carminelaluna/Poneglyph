@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-28T16:41:07.819Z",
+  "generatedAt": "2026-10-28T23:19:54.468Z",
   "releases": [
     {
       "code": "EB-05",
@@ -276,14 +276,14 @@
     {
       "id": "EN",
       "label": "English",
-      "decks": 66556,
-      "recent": 4484,
-      "archived": 62072,
-      "fieldDecks": 60661,
+      "decks": 66617,
+      "recent": 4481,
+      "archived": 62136,
+      "fieldDecks": 60722,
       "sampling": "mixed",
       "window": {
         "from": "2022-10-29",
-        "to": "2026-10-27"
+        "to": "2026-10-28"
       },
       "eras": 45,
       "sources": [
