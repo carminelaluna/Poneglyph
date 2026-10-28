@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-27T07:54:57.158Z",
+  "generatedAt": "2026-10-28T08:36:41.659Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -7,19 +7,19 @@
     "category": "Card Leaks"
   },
   "counts": {
-    "sets": 3,
-    "cards": 58,
-    "named": 53,
+    "sets": 4,
+    "cards": 61,
+    "named": 55,
     "articles": 2
   },
-  "durationMs": 9168,
+  "durationMs": 1933,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 56,
+      "revealed": 58,
       "cards": [
         {
           "id": "OP18-001",
@@ -33,6 +33,13 @@
           "image": null,
           "thumb": "OP18-003.webp",
           "text": "Red Character C"
+        },
+        {
+          "id": "OP18-004",
+          "name": "Karoo",
+          "image": null,
+          "thumb": null,
+          "text": "Red Character R 3 Cost / 4000 Power (Strike) Animal / Alabasta Counter +1000 Apply each of the following effects based on this Character’s power: • If it is 5000 or more, this Character gains [Rush]. • If it is 6000 or more, this Character gains [Banish]. • If it is 7000 or more, this Character gains [Unblockable]."
         },
         {
           "id": "OP18-010",
@@ -146,6 +153,13 @@
           "image": null,
           "thumb": "OP18-036.webp",
           "text": "Green Character UC"
+        },
+        {
+          "id": "OP18-040",
+          "name": "Diable Jambe Flambé Shot",
+          "image": null,
+          "thumb": "OP18-040.webp",
+          "text": "Green Event C"
         },
         {
           "id": "OP18-041",
@@ -410,6 +424,24 @@
         }
       ],
       "lastCoverage": "2026-08-23T08:49:21"
+    },
+    {
+      "set": "FBD0",
+      "code": "FBD-0",
+      "release": null,
+      "kind": "Booster set",
+      "revealed": 1,
+      "cards": [
+        {
+          "id": "FBD0-492",
+          "name": null,
+          "image": null,
+          "thumb": "FBD0-492.webp",
+          "text": null
+        }
+      ],
+      "articles": [],
+      "lastCoverage": null
     },
     {
       "set": "ST37",
