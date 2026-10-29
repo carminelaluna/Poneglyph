@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-29T13:05:44.093Z",
+  "generatedAt": "2026-10-29T23:57:43.467Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 4,
-    "cards": 111,
-    "named": 105,
+    "cards": 112,
+    "named": 106,
     "articles": 2
   },
-  "durationMs": 1514,
+  "durationMs": 1910,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 108,
+      "revealed": 109,
       "cards": [
         {
           "id": "OP18-001",
@@ -754,6 +754,13 @@
           "image": null,
           "thumb": "OP18-117.webp",
           "text": "Yellow Event R 10 Cost Navy / CP9 [Main] You may trash all of your Life cards: If your Leader is [Spandam], trash all Characters and play up to 5 {Vice Admiral] type Character cards with different card names from your deck or trash. Then, shuffle your deck."
+        },
+        {
+          "id": "OP18-118",
+          "name": "SEC Monkey D. Luffy",
+          "image": null,
+          "thumb": "OP18-118.webp",
+          "text": "Green Character"
         },
         {
           "id": "OP18-119",
