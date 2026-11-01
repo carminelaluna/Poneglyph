@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-10-31T22:36:07.665Z",
+  "generatedAt": "2026-11-01T11:30:07.431Z",
   "releases": [
     {
       "code": "EB-05",
-      "from": "2026-10-19",
+      "from": "2026-10-20",
       "kind": "Expansion"
     },
     {
@@ -276,14 +276,14 @@
     {
       "id": "EN",
       "label": "English",
-      "decks": 66653,
-      "recent": 4452,
-      "archived": 62201,
+      "decks": 66657,
+      "recent": 4444,
+      "archived": 62213,
       "fieldDecks": 60754,
       "sampling": "mixed",
       "window": {
         "from": "2022-10-29",
-        "to": "2026-10-29"
+        "to": "2026-10-31"
       },
       "eras": 45,
       "sources": [
@@ -294,16 +294,16 @@
     {
       "id": "JP",
       "label": "Japanese",
-      "decks": 6217,
-      "recent": 513,
-      "archived": 5704,
+      "decks": 6195,
+      "recent": 480,
+      "archived": 5715,
       "fieldDecks": 0,
       "sampling": "winners",
       "window": {
         "from": "2022-07-09",
-        "to": "2026-10-28"
+        "to": "2026-10-31"
       },
-      "eras": 47,
+      "eras": 46,
       "sources": [
         "One Piece Top Decks"
       ]
