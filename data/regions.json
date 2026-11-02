@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-01T22:55:16.395Z",
+  "generatedAt": "2026-11-02T12:51:49.894Z",
   "releases": [
     {
       "code": "EB-05",
@@ -294,14 +294,14 @@
     {
       "id": "JP",
       "label": "Japanese",
-      "decks": 6195,
-      "recent": 480,
-      "archived": 5715,
+      "decks": 6203,
+      "recent": 476,
+      "archived": 5727,
       "fieldDecks": 0,
       "sampling": "winners",
       "window": {
         "from": "2022-07-09",
-        "to": "2026-10-31"
+        "to": "2026-11-01"
       },
       "eras": 46,
       "sources": [
