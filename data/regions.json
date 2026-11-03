@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-03T01:40:11.476Z",
+  "generatedAt": "2026-11-03T12:21:21.752Z",
   "releases": [
     {
       "code": "EB-05",
@@ -276,8 +276,8 @@
     {
       "id": "EN",
       "label": "English",
-      "decks": 66736,
-      "recent": 4443,
+      "decks": 66735,
+      "recent": 4442,
       "archived": 62293,
       "fieldDecks": 60833,
       "sampling": "mixed",
@@ -294,14 +294,14 @@
     {
       "id": "JP",
       "label": "Japanese",
-      "decks": 6203,
-      "recent": 476,
+      "decks": 6211,
+      "recent": 484,
       "archived": 5727,
       "fieldDecks": 0,
       "sampling": "winners",
       "window": {
         "from": "2022-07-09",
-        "to": "2026-11-01"
+        "to": "2026-11-02"
       },
       "eras": 46,
       "sources": [
