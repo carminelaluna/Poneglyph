@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-29T23:57:43.467Z",
+  "generatedAt": "2026-11-06T21:31:41.505Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,18 +8,18 @@
   },
   "counts": {
     "sets": 4,
-    "cards": 112,
+    "cards": 113,
     "named": 106,
     "articles": 2
   },
-  "durationMs": 1910,
+  "durationMs": 1909,
   "sets": [
     {
       "set": "OP18",
       "code": "OP-18",
       "release": "November 2026",
       "kind": "Booster set",
-      "revealed": 109,
+      "revealed": 110,
       "cards": [
         {
           "id": "OP18-001",
@@ -333,7 +333,7 @@
           "name": "Mr. 2 Bon Kurei (Bentham)",
           "image": null,
           "thumb": "OP18-049.webp",
-          "text": "Blue Character R 5 Cost / 6000 Power (Strike) Baroque Works +1000 Counter [On Play] You may look at 5 cards from the top of your deck and add up to 1 card with the {Baroque Works} type to your hand, then place the rest at the bottom of your deck in any order. Then you may attach up to 1 rested DON!! card to your Leader or one of your Characters."
+          "text": "## Mr.2.Bon. Kurei (Bentham) OP18 Treasure Rare) ## For English version of the game"
         },
         {
           "id": "OP18-050",
@@ -423,6 +423,13 @@
           "image": null,
           "thumb": "OP18-063.webp",
           "text": "Purple Character UC"
+        },
+        {
+          "id": "OP18-064",
+          "name": null,
+          "image": null,
+          "thumb": "OP18-064.webp",
+          "text": "## Saint Killingham (OP18 Treasure Rare) ## For Japanese version of the game"
         },
         {
           "id": "OP18-065",
