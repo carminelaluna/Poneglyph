@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-06T21:31:41.505Z",
+  "generatedAt": "2026-11-07T01:57:42.364Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -12,7 +12,7 @@
     "named": 106,
     "articles": 2
   },
-  "durationMs": 1909,
+  "durationMs": 1899,
   "sets": [
     {
       "set": "OP18",
@@ -74,7 +74,7 @@
           "name": "Super Spot-Billed Duck Troops",
           "image": null,
           "thumb": "OP18-009.webp",
-          "text": "Red Character R 4 Cost / 5000 Power (Strike) Animal / Alabasta [Rush] (This card can attack on the turn in which it is played.) [Activate: Main] You may trash this Character: If you have 9 or more DON!! cards on your field, play up to 1 [Karoo] from your hand."
+          "text": "Super Spot-Billed Duck Troops Treasure Rare ## For French version of the game"
         },
         {
           "id": "OP18-010",
