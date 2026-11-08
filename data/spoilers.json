@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-07T01:57:42.364Z",
+  "generatedAt": "2026-11-08T13:15:16.662Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -12,7 +12,7 @@
     "named": 106,
     "articles": 2
   },
-  "durationMs": 1899,
+  "durationMs": 10181,
   "sets": [
     {
       "set": "OP18",
@@ -849,7 +849,7 @@
       "set": "EB05",
       "code": "EB-05",
       "lastCoverage": "2026-08-23T08:36:00",
-      "name": "ONE PIECE HEROINES EDITION vol.2",
+      "name": "Extra Booster: One Piece Heroines Edition Vol. 2",
       "cards": 61,
       "slug": "eb-05"
     },
