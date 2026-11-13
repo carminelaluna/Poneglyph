@@ -2,67 +2,67 @@
   "colors": [
     {
       "value": "Red",
-      "count": 514
+      "count": 534
     },
     {
       "value": "Green",
-      "count": 483
+      "count": 504
     },
     {
       "value": "Blue",
-      "count": 496
+      "count": 516
     },
     {
       "value": "Purple",
-      "count": 491
+      "count": 511
     },
     {
       "value": "Black",
-      "count": 470
+      "count": 491
     },
     {
       "value": "Yellow",
-      "count": 465
+      "count": 486
     }
   ],
   "categories": [
     {
       "value": "Character",
-      "count": 2237
+      "count": 2329
     },
     {
       "value": "Event",
-      "count": 422
+      "count": 438
     },
     {
       "value": "Leader",
-      "count": 143
+      "count": 149
     },
     {
       "value": "Stage",
-      "count": 48
+      "count": 53
     }
   ],
   "rarities": [
     {
       "value": "Common",
-      "count": 1191
+      "count": 1236
     },
     {
       "value": "Rare",
-      "count": 561
+      "count": 587
     },
     {
       "value": "Uncommon",
-      "count": 513
+      "count": 543
     },
     {
       "value": "Super Rare",
-      "count": 295
+      "count": 305
     },
     {
       "value": "Leader",
-      "count": 140
+      "count": 146
     },
     {
       "value": "Promo",
@@ -70,75 +70,75 @@
     },
     {
       "value": "Secret Rare",
-      "count": 41
+      "count": 43
     }
   ],
   "attributes": [
     {
       "value": "Strike",
-      "count": 673
-    },
-    {
-      "value": "Special",
-      "count": 634
+      "count": 708
     },
     {
       "value": "Slash",
-      "count": 630
+      "count": 661
+    },
+    {
+      "value": "Special",
+      "count": 649
     },
     {
       "value": "Wisdom",
-      "count": 326
+      "count": 343
     },
     {
       "value": "Ranged",
-      "count": 135
+      "count": 141
     },
     {
       "value": "Unknown",
-      "count": 1
+      "count": 2
     }
   ],
   "costs": [
     {
       "value": 1,
-      "count": 541
+      "count": 566
     },
     {
       "value": 2,
-      "count": 432
+      "count": 445
     },
     {
       "value": 3,
-      "count": 446
+      "count": 459
     },
     {
       "value": 4,
-      "count": 454
+      "count": 470
     },
     {
       "value": 5,
-      "count": 356
+      "count": 376
     },
     {
       "value": 6,
-      "count": 197
+      "count": 203
     },
     {
       "value": 7,
-      "count": 120
+      "count": 127
     },
     {
       "value": 8,
-      "count": 69
+      "count": 73
     },
     {
       "value": 9,
-      "count": 30
+      "count": 34
     },
     {
       "value": 10,
-      "count": 38
+      "count": 41
     }
   ],
   "lives": [
@@ -152,11 +152,11 @@
     },
     {
       "value": 4,
-      "count": 62
+      "count": 66
     },
     {
       "value": 5,
-      "count": 75
+      "count": 77
     },
     {
       "value": 6,
@@ -166,47 +166,47 @@
   "powers": [
     {
       "value": 1000,
-      "count": 120
+      "count": 122
     },
     {
       "value": 2000,
-      "count": 271
+      "count": 280
     },
     {
       "value": 3000,
-      "count": 222
+      "count": 229
     },
     {
       "value": 4000,
-      "count": 260
+      "count": 273
     },
     {
       "value": 5000,
-      "count": 522
+      "count": 537
     },
     {
       "value": 6000,
-      "count": 370
+      "count": 389
     },
     {
       "value": 7000,
-      "count": 207
+      "count": 216
     },
     {
       "value": 8000,
-      "count": 120
+      "count": 121
     },
     {
       "value": 9000,
-      "count": 49
+      "count": 53
     },
     {
       "value": 10000,
-      "count": 40
+      "count": 44
     },
     {
       "value": 11000,
-      "count": 5
+      "count": 7
     },
     {
       "value": 12000,
@@ -220,93 +220,97 @@
   "counters": [
     {
       "value": 1000,
-      "count": 1358
+      "count": 1402
     },
     {
       "value": 2000,
-      "count": 383
+      "count": 413
     }
   ],
   "keywords": [
     {
       "value": "On Play",
-      "count": 970
+      "count": 1011
     },
     {
       "value": "Activate: Main",
-      "count": 383
+      "count": 398
     },
     {
       "value": "Blocker",
-      "count": 378
+      "count": 391
     },
     {
       "value": "Once Per Turn",
-      "count": 322
+      "count": 336
     },
     {
       "value": "Main",
-      "count": 296
+      "count": 308
     },
     {
       "value": "When Attacking",
-      "count": 259
+      "count": 266
     },
     {
       "value": "Counter",
-      "count": 209
+      "count": 217
     },
     {
       "value": "DON!! x1",
-      "count": 177
+      "count": 184
     },
     {
       "value": "On K.O.",
-      "count": 167
+      "count": 182
     },
     {
       "value": "DON!! -1",
-      "count": 126
+      "count": 135
     },
     {
       "value": "Your Turn",
-      "count": 109
+      "count": 114
     },
     {
       "value": "Rush",
-      "count": 94
+      "count": 108
     },
     {
       "value": "Opponent's Turn",
-      "count": 79
+      "count": 85
     },
     {
       "value": "On Your Opponent's Attack",
-      "count": 61
+      "count": 64
     },
     {
       "value": "End of Your Turn",
-      "count": 53
+      "count": 59
     },
     {
       "value": "DON!! x2",
       "count": 43
     },
     {
+      "value": "Double Attack",
+      "count": 34
+    },
+    {
       "value": "Trigger",
       "count": 33
     },
     {
-      "value": "Double Attack",
-      "count": 32
+      "value": "Banish",
+      "count": 31
     },
     {
       "value": "DON!! -2",
-      "count": 29
+      "count": 30
     },
     {
-      "value": "Banish",
-      "count": 24
+      "value": "Unblockable",
+      "count": 15
     },
     {
       "value": "On Block",
@@ -314,11 +318,7 @@
     },
     {
       "value": "Rush: Character",
-      "count": 11
-    },
-    {
-      "value": "Unblockable",
-      "count": 11
+      "count": 12
     },
     {
       "value": "DON!! -3",
@@ -334,6 +334,10 @@
     },
     {
       "value": "DON!! -5",
+      "count": 2
+    },
+    {
+      "value": "DON!! x3",
       "count": 2
     },
     {
@@ -358,10 +362,6 @@
     },
     {
       "value": "DON!! -8",
-      "count": 1
-    },
-    {
-      "value": "DON!! x3",
       "count": 1
     },
     {
@@ -397,6 +397,10 @@
       "count": 1
     },
     {
+      "value": "Sanji",
+      "count": 1
+    },
+    {
       "value": "Shirahoshi",
       "count": 1
     },
@@ -412,11 +416,11 @@
   "types": [
     {
       "value": "Straw Hat Crew",
-      "count": 432
+      "count": 456
     },
     {
       "value": "Navy",
-      "count": 243
+      "count": 251
     },
     {
       "value": "Supernovas",
@@ -428,19 +432,19 @@
     },
     {
       "value": "Whitebeard Pirates",
-      "count": 144
+      "count": 145
     },
     {
       "value": "The Seven Warlords of the Sea",
-      "count": 141
+      "count": 144
     },
     {
       "value": "Dressrosa",
-      "count": 134
+      "count": 135
     },
     {
       "value": "Big Mom Pirates",
-      "count": 133
+      "count": 134
     },
     {
       "value": "FILM",
@@ -452,19 +456,23 @@
     },
     {
       "value": "The Four Emperors",
-      "count": 124
+      "count": 125
     },
     {
       "value": "East Blue",
-      "count": 120
+      "count": 122
     },
     {
       "value": "Revolutionary Army",
-      "count": 117
+      "count": 118
     },
     {
       "value": "Donquixote Pirates",
-      "count": 110
+      "count": 112
+    },
+    {
+      "value": "Animal",
+      "count": 102
     },
     {
       "value": "Impel Down",
@@ -472,27 +480,27 @@
     },
     {
       "value": "Fish-Man",
-      "count": 96
+      "count": 98
     },
     {
       "value": "Sky Island",
       "count": 88
     },
     {
-      "value": "Animal",
+      "value": "Egghead",
       "count": 87
     },
     {
-      "value": "Egghead",
-      "count": 85
+      "value": "Baroque Works",
+      "count": 79
     },
     {
-      "value": "Baroque Works",
-      "count": 63
+      "value": "Alabasta",
+      "count": 69
     },
     {
       "value": "Thriller Bark Pirates",
-      "count": 58
+      "count": 59
     },
     {
       "value": "Heart Pirates",
@@ -503,11 +511,15 @@
       "count": 57
     },
     {
+      "value": "Water Seven",
+      "count": 57
+    },
+    {
       "value": "Red-Haired Pirates",
       "count": 54
     },
     {
-      "value": "Alabasta",
+      "value": "Blackbeard Pirates",
       "count": 47
     },
     {
@@ -515,16 +527,12 @@
       "count": 47
     },
     {
-      "value": "Blackbeard Pirates",
-      "count": 45
+      "value": "Giant",
+      "count": 47
     },
     {
       "value": "Punk Hazard",
       "count": 42
-    },
-    {
-      "value": "Giant",
-      "count": 41
     },
     {
       "value": "Kid Pirates",
@@ -532,7 +540,11 @@
     },
     {
       "value": "Merfolk",
-      "count": 39
+      "count": 40
+    },
+    {
+      "value": "CP9",
+      "count": 38
     },
     {
       "value": "The Sun Pirates",
@@ -559,12 +571,16 @@
       "count": 34
     },
     {
-      "value": "Water Seven",
-      "count": 30
+      "value": "Elbaph",
+      "count": 31
+    },
+    {
+      "value": "Celestial Dragons",
+      "count": 29
     },
     {
       "value": "Cross Guild",
-      "count": 28
+      "count": 29
     },
     {
       "value": "Scientist",
@@ -575,12 +591,8 @@
       "count": 25
     },
     {
-      "value": "CP9",
-      "count": 24
-    },
-    {
-      "value": "Elbaph",
-      "count": 24
+      "value": "Former Baroque Works",
+      "count": 23
     },
     {
       "value": "GERMA 66",
@@ -589,10 +601,6 @@
     {
       "value": "SMILE",
       "count": 23
-    },
-    {
-      "value": "Former Baroque Works",
-      "count": 22
     },
     {
       "value": "Shandian Warrior",
@@ -615,20 +623,16 @@
       "count": 20
     },
     {
-      "value": "Celestial Dragons",
-      "count": 19
-    },
-    {
       "value": "Foxy Pirates",
       "count": 19
     },
     {
-      "value": "SWORD",
+      "value": "Buggy Pirates",
       "count": 18
     },
     {
-      "value": "Buggy Pirates",
-      "count": 17
+      "value": "SWORD",
+      "count": 18
     },
     {
       "value": "Whitebeard Pirates Allies",
@@ -655,15 +659,15 @@
       "count": 13
     },
     {
+      "value": "Galley-La Company",
+      "count": 13
+    },
+    {
       "value": "Music",
       "count": 13
     },
     {
       "value": "Drake Pirates",
-      "count": 12
-    },
-    {
-      "value": "Galley-La Company",
       "count": 12
     },
     {
@@ -683,11 +687,23 @@
       "count": 11
     },
     {
+      "value": "Holy Knights of God",
+      "count": 11
+    },
+    {
       "value": "Muggy Kingdom",
       "count": 11
     },
     {
+      "value": "The Franky Family",
+      "count": 11
+    },
+    {
       "value": "Beautiful Pirates",
+      "count": 10
+    },
+    {
+      "value": "Five Elders",
       "count": 10
     },
     {
@@ -719,15 +735,15 @@
       "count": 10
     },
     {
-      "value": "Five Elders",
-      "count": 9
-    },
-    {
       "value": "Kingdom of GERMA",
       "count": 9
     },
     {
       "value": "Neo Navy",
+      "count": 9
+    },
+    {
+      "value": "New Giant Pirates",
       "count": 9
     },
     {
@@ -756,10 +772,6 @@
     },
     {
       "value": "Caribou Pirates",
-      "count": 7
-    },
-    {
-      "value": "New Giant Pirates",
       "count": 7
     },
     {
@@ -807,15 +819,19 @@
       "count": 5
     },
     {
+      "value": "Vice Admiral",
+      "count": 5
+    },
+    {
+      "value": "World Government",
+      "count": 5
+    },
+    {
       "value": "Former Rocks Pirates",
       "count": 4
     },
     {
-      "value": "The Franky Family",
-      "count": 4
-    },
-    {
-      "value": "World Government",
+      "value": "Giant Pirates",
       "count": 4
     },
     {
@@ -832,6 +848,10 @@
     },
     {
       "value": "Lunarian",
+      "count": 3
+    },
+    {
+      "value": "Sniper Island",
       "count": 3
     },
     {
@@ -863,6 +883,14 @@
       "count": 2
     },
     {
+      "value": "CP6",
+      "count": 2
+    },
+    {
+      "value": "CP7",
+      "count": 2
+    },
+    {
       "value": "Flying Pirates",
       "count": 2
     },
@@ -876,10 +904,6 @@
     },
     {
       "value": "Former Rumbar Pirates",
-      "count": 2
-    },
-    {
-      "value": "Giant Pirates",
       "count": 2
     },
     {
@@ -923,10 +947,6 @@
       "count": 2
     },
     {
-      "value": "Sniper Island",
-      "count": 2
-    },
-    {
       "value": "The Moon",
       "count": 2
     },
@@ -964,14 +984,6 @@
     },
     {
       "value": "Brownbeard Pirates",
-      "count": 1
-    },
-    {
-      "value": "CP6",
-      "count": 1
-    },
-    {
-      "value": "CP7",
       "count": 1
     },
     {
@@ -1102,7 +1114,7 @@
   "setGroups": [
     {
       "value": "Booster Set",
-      "count": 2094
+      "count": 2213
     },
     {
       "value": "Starter Deck",
@@ -1128,11 +1140,11 @@
   "formats": [
     {
       "value": "Extra",
-      "count": 2850
+      "count": 2969
     },
     {
       "value": "Standard",
-      "count": 2237
+      "count": 2356
     }
   ],
   "blocks": [
@@ -1154,10 +1166,17 @@
     },
     {
       "value": 5,
-      "count": 352
+      "count": 471
     }
   ],
   "sets": [
+    {
+      "value": "OP-18",
+      "count": 119,
+      "id": "569118",
+      "name": "THE DOMINANCE OF GOD",
+      "group": "Booster Set"
+    },
     {
       "value": "OP-17",
       "count": 119,

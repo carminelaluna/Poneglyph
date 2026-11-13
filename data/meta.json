@@ -1,27 +1,27 @@
 {
   "site": "Poneglyph",
   "language": "english",
-  "generatedAt": "2026-11-12T22:51:26.765Z",
-  "upstreamBuiltAt": "2026-10-30T12:10:16.000Z",
+  "generatedAt": "2026-11-13T13:25:16.707Z",
+  "upstreamBuiltAt": "2026-11-13T12:10:26.000Z",
   "counts": {
-    "cards": 2850,
-    "printings": 4945,
-    "sets": 61,
-    "withEffect": 2850,
+    "cards": 2969,
+    "printings": 5078,
+    "sets": 62,
+    "withEffect": 2969,
     "withPrice": 2831,
-    "traits": 172,
-    "keywords": 45
+    "traits": 174,
+    "keywords": 46
   },
   "coverage": {
     "effect": 100,
-    "price": 99.3,
+    "price": 95.4,
     "block": 100
   },
   "formats": {
     "standardMinBlock": 2,
     "note": "Block 1 rotated out of Standard on 1 April 2026",
     "keptByBlockUpdate": 20,
-    "standardLegal": 2237,
+    "standardLegal": 2356,
     "extraOnly": 613
   },
   "sources": [
@@ -44,5 +44,5 @@
       "role": "prices & set names"
     }
   ],
-  "durationMs": 23806
+  "durationMs": 26207
 }

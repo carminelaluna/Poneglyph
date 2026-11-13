@@ -1,5 +1,17 @@
 [
   {
+    "id": "569118",
+    "code": "OP-18",
+    "name": "THE DOMINANCE OF GOD",
+    "prefix": "BOOSTER PACK",
+    "group": "Booster Set",
+    "rawTitle": "BOOSTER PACK -THE DOMINANCE OF GOD- [OP-18]",
+    "sortKey": "1-9981",
+    "slug": "op-18",
+    "cardCount": 119,
+    "printingCount": 119
+  },
+  {
     "id": "569117",
     "code": "OP-17",
     "name": "The World's Strongest Warriors",
@@ -21,7 +33,7 @@
     "sortKey": "1-9983",
     "slug": "op-16",
     "cardCount": 119,
-    "printingCount": 151
+    "printingCount": 153
   },
   {
     "id": "569115",
@@ -45,7 +57,7 @@
     "sortKey": "1-9985",
     "slug": "op14-eb04",
     "cardCount": 151,
-    "printingCount": 212
+    "printingCount": 215
   },
   {
     "id": "569113",
@@ -69,7 +81,7 @@
     "sortKey": "1-9987",
     "slug": "op-12",
     "cardCount": 119,
-    "printingCount": 193
+    "printingCount": 195
   },
   {
     "id": "569111",
@@ -93,7 +105,7 @@
     "sortKey": "1-9989",
     "slug": "op-10",
     "cardCount": 119,
-    "printingCount": 192
+    "printingCount": 193
   },
   {
     "id": "569109",
@@ -225,7 +237,7 @@
     "sortKey": "2-9996",
     "slug": "eb-03",
     "cardCount": 62,
-    "printingCount": 93
+    "printingCount": 98
   },
   {
     "id": "569202",
@@ -717,7 +729,7 @@
     "sortKey": "5-9000",
     "slug": "promo",
     "cardCount": 99,
-    "printingCount": 218
+    "printingCount": 219
   },
   {
     "id": "569801",
