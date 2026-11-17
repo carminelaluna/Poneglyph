@@ -1,6 +1,11 @@
 {
-  "generatedAt": "2026-11-16T17:10:27.729Z",
+  "generatedAt": "2026-11-17T02:31:10.824Z",
   "releases": [
+    {
+      "code": "OP-18",
+      "from": "2026-11-16",
+      "kind": "Expansion"
+    },
     {
       "code": "EB-05",
       "from": "2026-10-20",
@@ -276,16 +281,16 @@
     {
       "id": "EN",
       "label": "English",
-      "decks": 67122,
-      "recent": 4350,
-      "archived": 62772,
-      "fieldDecks": 61142,
+      "decks": 67243,
+      "recent": 4331,
+      "archived": 62912,
+      "fieldDecks": 61263,
       "sampling": "mixed",
       "window": {
         "from": "2022-10-29",
-        "to": "2026-11-15"
+        "to": "2026-11-16"
       },
-      "eras": 45,
+      "eras": 46,
       "sources": [
         "Limitless",
         "One Piece Top Decks"
