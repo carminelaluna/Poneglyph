@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-12T18:02:03.885Z",
-  "effectiveFrom": "April 10, 2026",
+  "generatedAt": "2026-11-17T17:41:37.155Z",
+  "effectiveFrom": "October 12, 2026",
   "source": {
     "label": "ONE PIECE CARD GAME — official site",
     "url": "https://en.onepiece-cardgame.com/rules/restriction/",
@@ -170,24 +170,39 @@
     ]
   ],
   "announced": {
-    "effectiveFrom": "October 12, 2026",
-    "announcedAt": "September 24, 2026",
-    "banned": [
-      {
-        "id": "OP14-020",
-        "name": "Dracule Mihawk",
-        "colors": [
-          "Green"
-        ],
-        "category": "Leader",
-        "setCode": "OP14-EB04",
-        "blockNumber": 4,
-        "standardLegal": true,
-        "known": true
-      }
-    ],
+    "effectiveFrom": "November 27, 2026",
+    "announcedAt": "November 17, 2026",
+    "banned": [],
     "restricted": [],
-    "pairs": []
+    "pairs": [
+      [
+        {
+          "id": "EB05-001",
+          "name": "Jewelry Bonney",
+          "colors": [
+            "Red"
+          ],
+          "category": "Character",
+          "setCode": "EB-05",
+          "blockNumber": 5,
+          "standardLegal": true,
+          "known": true
+        },
+        {
+          "id": "OP13-001",
+          "name": "Monkey.D.Luffy",
+          "colors": [
+            "Red",
+            "Green"
+          ],
+          "category": "Leader",
+          "setCode": "OP-13",
+          "blockNumber": 4,
+          "standardLegal": true,
+          "known": true
+        }
+      ]
+    ]
   },
-  "durationMs": 2087
+  "durationMs": 1264
 }
