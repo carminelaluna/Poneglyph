@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T13:29:54.863Z",
+  "generatedAt": "2026-11-21T12:41:54.049Z",
   "source": {
     "id": "topdecks-leaks",
     "label": "One Piece Top Decks",
@@ -8,12 +8,90 @@
   },
   "counts": {
     "sets": 3,
-    "cards": 3,
-    "named": 2,
+    "cards": 9,
+    "named": 8,
     "articles": 0
   },
-  "durationMs": 1815,
+  "durationMs": 9159,
   "sets": [
+    {
+      "set": "ST38",
+      "code": "ST-38",
+      "release": null,
+      "kind": "Starter deck",
+      "revealed": 4,
+      "cards": [
+        {
+          "id": "ST38-001",
+          "name": "Mr. 0 (Crocodile)",
+          "image": null,
+          "thumb": "ST38-001.webp",
+          "text": "Blue / Black Leader ( ) L 4 Life / 5000 Power (Special) Seven Warlords of the Sea / Baroque Works [When Attacking] You may trash 1 card from your hand: Draw 1 card. [Activate:Main] [Once Per Turn] You may K.O. 1 of your Characters with a type including ”Baroque Works” and a base cost of 3 or more: Draw 1 card."
+        },
+        {
+          "id": "ST38-004",
+          "name": "Miss.Goldenweek (Marianne) 4 Cost / 5000 Power (Wisdom)",
+          "image": null,
+          "thumb": "ST38-004.webp",
+          "text": "Blue Character C Baroque Works Counter +1000 [On Play] [On K.O] Return up to 1 Character with a cost of 2 or less to its owner’s hand."
+        },
+        {
+          "id": "ST38-008",
+          "name": "Mr. 0 (Crocodile) 7 Cost / 7000 Power (Special)",
+          "image": null,
+          "thumb": "ST38-008.webp",
+          "text": "Black Character SR The Seven Warlords of the Sea / Baroque Works [On Play] [On K.O] Choose one: • Play up to 1 Character card with a type including ”Baroque Works” and a cost of 5 or less from your trash. • K.O. up to 1 of your opponent’s Characters with a cost of 5 or less."
+        },
+        {
+          "id": "ST38-015",
+          "name": "Don’t Be so Full of Yourself Fishbait 1 Cost",
+          "image": null,
+          "thumb": "ST38-015.webp",
+          "text": "Blue Event C The Seven Warlords of the Sea / Baroque Works [Main] If your Leader’s type includes ”Baroque Works”, return up to 1 Character with a cost of 2 or less to its owner’s hand or bottom of their deck. [Counter] Your Leader gains +3000 power during this battle."
+        }
+      ],
+      "articles": [],
+      "lastCoverage": null
+    },
+    {
+      "set": "ST37",
+      "code": "ST-37",
+      "release": null,
+      "kind": "Starter deck",
+      "revealed": 4,
+      "cards": [
+        {
+          "id": "ST37-001",
+          "name": "Monkey D. Luffy",
+          "image": null,
+          "thumb": "ST37-001.webp",
+          "text": "Red / Blue Leader ( ) L 3 Life / 5000 Power (Strike) Alabasta / Straw Hat Crew Under the rules of this game, you may only include {Alabasta} type cards in your deck. [When Attacking] Draw 2 cards. Then, at the end of your turn, trash cards from your hand until you have 7 cards in your hand."
+        },
+        {
+          "id": "ST37-006",
+          "name": "Portgas.D.Ace",
+          "image": null,
+          "thumb": "ST37-006.webp",
+          "text": "Red Character C 8 Cost / 8000 Power (Special) Whitebeard Pirates / Alabasta [Blocker] [On play] Give up to 1 of your opponent's characters -3000 power during this turn"
+        },
+        {
+          "id": "ST37-007",
+          "name": "Monkey.D.Luffy",
+          "image": null,
+          "thumb": "ST37-007.webp",
+          "text": "Red Character SR 7 Cost / 9000 Power (Strike) Straw Hat Crew / Alabasta [Rush] [Activate Main] [Once Per Turn] You may trash 1 card from your hand: Negate the effects of up to 1 of your opponent's Characters with 10000 power or less during this turn"
+        },
+        {
+          "id": "ST37-015",
+          "name": "Oh yeah?! You're the one who's a minnow!!",
+          "image": null,
+          "thumb": "ST37-015.webp",
+          "text": "Red Event C Straw Hat Crew / Alabasta [Counter] If the only Characters on your field are {Alabasta} type Characters, up to 1 of your Leader or Character cards gains +4000 during this battle [Trigger] Trash up to 1 of your opponent's Characters with 5000 power or less"
+        }
+      ],
+      "articles": [],
+      "lastCoverage": null
+    },
     {
       "set": "FBD0",
       "code": "FBD-0",
@@ -27,42 +105,6 @@
           "image": null,
           "thumb": "FBD0-492.webp",
           "text": null
-        }
-      ],
-      "articles": [],
-      "lastCoverage": null
-    },
-    {
-      "set": "ST37",
-      "code": "ST-37",
-      "release": null,
-      "kind": "Starter deck",
-      "revealed": 1,
-      "cards": [
-        {
-          "id": "ST37-001",
-          "name": "Monkey D. Luffy",
-          "image": null,
-          "thumb": "ST37-001.webp",
-          "text": "Red / Blue Leader ( ) L 3 Life / 5000 Power (Strike) Alabasta / Straw Hat Crew Under the rules of this game, you may only include {Alabasta} type cards in your deck. [When Attacking] Draw 2 cards. Then, at the end of your turn, trash cards from your hand until you have 7 cards in your hand."
-        }
-      ],
-      "articles": [],
-      "lastCoverage": null
-    },
-    {
-      "set": "ST38",
-      "code": "ST-38",
-      "release": null,
-      "kind": "Starter deck",
-      "revealed": 1,
-      "cards": [
-        {
-          "id": "ST38-001",
-          "name": "Mr. 0 (Crocodile)",
-          "image": null,
-          "thumb": "ST38-001.webp",
-          "text": "Blue / Black Leader ( ) L 4 Life / 5000 Power (Special) Seven Warlords of the Sea / Baroque Works [When Attacking] You may trash 1 card from your hand: Draw 1 card. [Activate:Main] [Once Per Turn] You may K.O. 1 of your Characters with a type including ”Baroque Works” and a base cost of 3 or more: Draw 1 card."
         }
       ],
       "articles": [],
