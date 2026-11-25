@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-25T03:05:13.865Z",
+  "generatedAt": "2026-11-25T14:57:00.543Z",
   "releases": [
     {
       "code": "OP-18",
@@ -281,8 +281,8 @@
     {
       "id": "EN",
       "label": "English",
-      "decks": 67568,
-      "recent": 4199,
+      "decks": 67573,
+      "recent": 4204,
       "archived": 63369,
       "fieldDecks": 61570,
       "sampling": "mixed",
@@ -299,16 +299,16 @@
     {
       "id": "JP",
       "label": "Japanese",
-      "decks": 6315,
-      "recent": 469,
-      "archived": 5846,
+      "decks": 6330,
+      "recent": 467,
+      "archived": 5863,
       "fieldDecks": 0,
       "sampling": "winners",
       "window": {
         "from": "2022-07-09",
-        "to": "2026-11-22"
+        "to": "2026-11-24"
       },
-      "eras": 47,
+      "eras": 48,
       "sources": [
         "One Piece Top Decks"
       ]
