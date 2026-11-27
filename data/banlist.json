@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T17:41:37.155Z",
+  "generatedAt": "2026-11-27T00:40:39.970Z",
   "effectiveFrom": "October 12, 2026",
   "source": {
     "label": "ONE PIECE CARD GAME — official site",
@@ -9,7 +9,7 @@
   "counts": {
     "banned": 6,
     "restricted": 0,
-    "pairs": 3
+    "pairs": 5
   },
   "banned": [
     {
@@ -167,6 +167,60 @@
         "standardLegal": true,
         "known": true
       }
+    ],
+    [
+      {
+        "id": "EB05-001",
+        "name": "Jewelry Bonney",
+        "colors": [
+          "Red"
+        ],
+        "category": "Character",
+        "setCode": "EB-05",
+        "blockNumber": 5,
+        "standardLegal": true,
+        "known": true
+      },
+      {
+        "id": "OP13-001",
+        "name": "Monkey.D.Luffy",
+        "colors": [
+          "Red",
+          "Green"
+        ],
+        "category": "Leader",
+        "setCode": "OP-13",
+        "blockNumber": 4,
+        "standardLegal": true,
+        "known": true
+      }
+    ],
+    [
+      {
+        "id": "EB05-001",
+        "name": "Jewelry Bonney",
+        "colors": [
+          "Red"
+        ],
+        "category": "Character",
+        "setCode": "EB-05",
+        "blockNumber": 5,
+        "standardLegal": true,
+        "known": true
+      },
+      {
+        "id": "OP01-002",
+        "name": "Trafalgar Law",
+        "colors": [
+          "Red",
+          "Green"
+        ],
+        "category": "Leader",
+        "setCode": "OP-01",
+        "blockNumber": 1,
+        "standardLegal": false,
+        "known": true
+      }
     ]
   ],
   "announced": {
@@ -204,5 +258,5 @@
       ]
     ]
   },
-  "durationMs": 1264
+  "durationMs": 1554
 }
